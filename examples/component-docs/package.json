@@ -1,0 +1,11 @@
+{
+  "name": "@desktop-foundation/component-docs",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/validate.mjs",
+    "type-check": "node scripts/validate.mjs",
+    "lint": "node scripts/validate.mjs"
+  }
+}

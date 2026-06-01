@@ -1,0 +1,22 @@
+{
+  "name": "@desktop-foundation/desktop-capabilities-demo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@desktop-foundation/app-shell": "workspace:*",
+    "@desktop-foundation/bridge": "workspace:*",
+    "@desktop-foundation/theme-presets": "workspace:*",
+    "@desktop-foundation/ui-react": "workspace:*",
+    "react": "^19.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.15",
+    "typescript": "~5.8.2"
+  }
+}

@@ -1,0 +1,55 @@
+import { useCallback, useState } from "react";
+import { useDesktopClient } from "./DesktopClientProvider";
+import { useSession } from "./SessionProvider";
+import type { DesktopLoginConfig, DesktopLoginPayload, DesktopSessionUser } from "./types";
+
+export function useLogin<TUser extends DesktopSessionUser = DesktopSessionUser, TPayload extends DesktopLoginPayload = DesktopLoginPayload>(
+  config: DesktopLoginConfig<TUser, TPayload>
+) {
+  const client = useDesktopClient();
+  const session = useSession<TUser>();
+  const [payload, setPayload] = useState<TPayload>(
+    {
+      account: "",
+      password: "",
+      remember: true,
+      ...config.defaultPayload
+    } as TPayload
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const setField = useCallback(<K extends keyof TPayload>(key: K, value: TPayload[K]) => {
+    setPayload((current) => ({ ...current, [key]: value }));
+  }, []);
+
+  const submit = useCallback(
+    async (override?: Partial<TPayload>) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const nextPayload = { ...payload, ...override } as TPayload;
+        const reply = await config.login(client, nextPayload);
+        session.setAuthenticated(reply.token, reply.user ?? null, reply.remember ?? nextPayload.remember);
+        config.onSuccess?.(reply);
+        return reply;
+      } catch (caught) {
+        const normalized = caught instanceof Error ? caught : new Error("Login failed");
+        setError(normalized);
+        throw normalized;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [client, config, payload, session]
+  );
+
+  return {
+    payload,
+    setPayload,
+    setField,
+    submit,
+    loading,
+    error
+  };
+}

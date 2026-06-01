@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>desktop-foundation component docs</title>
+    <link rel="stylesheet" href="../../packages/desktop-ui-react/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--df-color-bg);
+        color: var(--df-color-text);
+        font-family: var(--df-font-sans);
+      }
+
+      .docs-page {
+        display: grid;
+        gap: 28px;
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 28px;
+      }
+
+      .docs-section {
+        display: grid;
+        gap: 14px;
+      }
+
+      .docs-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .docs-command-preview,
+      .docs-drawer-preview {
+        position: relative;
+        min-height: 320px;
+        overflow: hidden;
+        border: 1px solid var(--df-color-border);
+        border-radius: var(--df-radius-lg);
+        background: var(--df-color-surface);
+      }
+
+      .docs-command-preview .df-command-palette {
+        position: absolute;
+        top: 18px;
+        left: 50%;
+        width: min(620px, calc(100% - 32px));
+        max-height: none;
+      }
+
+      .docs-drawer-preview .df-overlay {
+        position: absolute;
+        inset: 0;
+      }
+
+      @media (max-width: 860px) {
+        .docs-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="df-desktop-layout docs-page">
+      <header class="df-page-header">
+        <div class="df-page-header__main">
+          <div class="df-page-header__eyebrow">desktop-foundation</div>
+          <div class="df-page-header__title-row">
+            <div>
+              <h1>Component Docs</h1>
+              <p>Reusable desktop UI surfaces, rendered as a zero-dependency visual fixture.</p>
+            </div>
+            <div class="df-page-header__actions">
+              <button class="df-button df-button--primary df-button--md"><span class="df-button__label">Primary</span></button>
+              <button class="df-button df-button--outline df-button--md"><span class="df-button__label">Outline</span></button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="docs-section">
+        <div class="df-metric-grid df-metric-grid--4">
+          <section class="df-metric">
+            <div class="df-metric__label">Requests</div>
+            <div class="df-metric__value">12,480</div>
+            <div class="df-metric__footer"><span>24h</span><span class="df-metric__trend">+8.2%</span></div>
+          </section>
+          <section class="df-metric">
+            <div class="df-metric__label">Exports</div>
+            <div class="df-metric__value">326</div>
+            <div class="df-metric__footer"><span>files</span><span class="df-metric__trend">+3.1%</span></div>
+          </section>
+          <section class="df-metric">
+            <div class="df-metric__label">Secrets</div>
+            <div class="df-metric__value">18</div>
+            <div class="df-metric__footer"><span>secure storage</span></div>
+          </section>
+          <section class="df-metric">
+            <div class="df-metric__label">Windows</div>
+            <div class="df-metric__value">4</div>
+            <div class="df-metric__footer"><span>active</span></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="docs-section">
+        <div class="df-bulk-action-bar">
+          <div class="df-bulk-action-bar__label">3 selected</div>
+          <div class="df-bulk-action-bar__actions">
+            <button class="df-button df-button--outline df-button--sm"><span class="df-button__label">Export</span></button>
+            <button class="df-button df-button--danger df-button--sm"><span class="df-button__label">Disable</span></button>
+            <button class="df-button df-button--ghost df-button--sm"><span class="df-button__label">Clear</span></button>
+          </div>
+        </div>
+        <div class="df-table-wrap df-table-wrap--default">
+          <table class="df-table">
+            <thead>
+              <tr>
+                <th class="df-table__selection-cell"><input type="checkbox" aria-label="Select all" /></th>
+                <th>Account</th>
+                <th>Status</th>
+                <th style="text-align: right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="is-selected">
+                <td class="df-table__selection-cell"><input type="checkbox" checked /></td>
+                <td>CAP-1001</td>
+                <td><span class="df-badge df-badge--success">ready</span></td>
+                <td style="text-align: right">$12,400.00</td>
+              </tr>
+              <tr>
+                <td class="df-table__selection-cell"><input type="checkbox" /></td>
+                <td>CAP-1002</td>
+                <td><span class="df-badge df-badge--warning">review</span></td>
+                <td style="text-align: right">$980.00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="docs-grid">
+        <div class="docs-command-preview">
+          <section class="df-command-palette">
+            <div class="df-command-palette__header">
+              <h2 class="df-command-palette__title">Command</h2>
+              <button class="df-close-button" type="button">x</button>
+            </div>
+            <label class="df-field df-field--full"><span class="df-input-wrap"><input class="df-input" value="export" /></span></label>
+            <div class="df-command-palette__list">
+              <div class="df-command-palette__group">
+                <div class="df-command-palette__group-label">Files</div>
+                <button class="df-command-palette__item">
+                  <span class="df-command-palette__item-main">
+                    <span class="df-command-palette__item-label">Export JSON</span>
+                    <span class="df-command-palette__item-description">Write selected rows to disk</span>
+                  </span>
+                  <span class="df-command-palette__shortcut">E</span>
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="docs-drawer-preview">
+          <div class="df-overlay">
+            <aside class="df-drawer df-drawer--right" role="dialog" aria-modal="true">
+              <div class="df-drawer__header">
+                <h2 class="df-drawer__title"><span class="df-detail-drawer__heading"><span>Capability detail</span><span class="df-detail-drawer__subtitle">CAP-1001</span></span></h2>
+                <button class="df-close-button" type="button">x</button>
+              </div>
+              <div class="df-drawer__body">
+                <dl class="df-detail-drawer__list">
+                  <div class="df-detail-drawer__row"><dt>Status</dt><dd>ready</dd></div>
+                  <div class="df-detail-drawer__row"><dt>Owner</dt><dd>Foundation</dd></div>
+                </dl>
+              </div>
+              <div class="df-drawer__footer"><div class="df-detail-drawer__actions"><button class="df-button df-button--outline df-button--sm"><span class="df-button__label">Copy</span></button></div></div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-section">
+        <div class="df-settings-page">
+          <nav class="df-settings-page__nav">
+            <button class="df-settings-page__nav-item is-active">Runtime</button>
+            <button class="df-settings-page__nav-item">Security</button>
+            <button class="df-settings-page__nav-item">Files</button>
+          </nav>
+          <div class="df-settings-page__content">
+            <section class="df-settings-section">
+              <div class="df-settings-section__header">
+                <h2>Runtime</h2>
+                <p>Platform capability wiring.</p>
+              </div>
+              <div class="df-settings-section__content">
+                <div class="df-editable-table df-table-wrap">
+                  <table class="df-table">
+                    <thead><tr><th>Name</th><th>Mode</th><th>Limit</th></tr></thead>
+                    <tbody>
+                      <tr>
+                        <td><label class="df-field df-field--full"><span class="df-input-wrap"><input class="df-input" value="download" /></span></label></td>
+                        <td><span class="df-select-wrap"><select class="df-select"><option>enabled</option></select></span></td>
+                        <td><label class="df-field df-field--full"><span class="df-input-wrap"><input class="df-input" value="100" /></span></label></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
