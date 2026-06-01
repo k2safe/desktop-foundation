@@ -2645,6 +2645,287 @@ body {
   border-color: color-mix(in srgb, var(--df-color-dark), white 18%);
 }
 
+/* Premium tech refinement: depth, precision, and calmer high-density surfaces. */
+.df-theme {
+  --df-accent-cyan: color-mix(in srgb, var(--df-color-info), white 14%);
+  --df-accent-glow: color-mix(in srgb, var(--df-color-primary), transparent 72%);
+  --df-panel-border: color-mix(in srgb, var(--df-color-border), transparent 8%);
+  --df-panel-shadow: 0 1px 0 rgba(255, 255, 255, 0.78) inset, 0 14px 36px rgba(16, 24, 40, 0.07);
+  --df-popover-shadow: 0 20px 48px rgba(15, 23, 42, 0.18);
+  --df-subtle-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 252, 0.98));
+}
+
+.df-button {
+  border-radius: calc(var(--df-radius-md) + 1px);
+  letter-spacing: 0;
+}
+
+.df-button--primary {
+  border-color: color-mix(in srgb, var(--df-color-primary), white 16%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--df-color-primary), white 6%), var(--df-color-primary-hover));
+  box-shadow: 0 10px 22px var(--df-accent-glow), 0 1px 0 rgba(255, 255, 255, 0.22) inset;
+}
+
+.df-button--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--df-color-primary), white 12%), var(--df-color-primary-hover));
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--df-color-primary), transparent 68%), 0 1px 0 rgba(255, 255, 255, 0.28) inset;
+}
+
+.df-button--secondary {
+  border-color: color-mix(in srgb, var(--df-color-primary), transparent 82%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--df-color-primary-soft), white 18%), var(--df-color-primary-soft));
+}
+
+.df-button--outline,
+.df-icon-button {
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 0 rgba(255, 255, 255, 0.75) inset;
+}
+
+.df-button--ghost:hover:not(:disabled),
+.df-icon-button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--df-color-border-strong), transparent 22%);
+}
+
+.df-input-wrap,
+.df-select-wrap,
+.df-date-range__trigger {
+  border-color: var(--df-panel-border);
+  background: linear-gradient(180deg, var(--df-color-surface), color-mix(in srgb, var(--df-color-elevated), var(--df-color-bg) 18%));
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 0 rgba(255, 255, 255, 0.75) inset;
+}
+
+.df-input-wrap:focus-within,
+.df-select-wrap:focus-within,
+.df-date-range__trigger:focus-visible {
+  border-color: color-mix(in srgb, var(--df-color-primary), transparent 34%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--df-color-primary), transparent 86%), 0 8px 22px color-mix(in srgb, var(--df-color-primary), transparent 90%);
+}
+
+.df-select__panel,
+.df-combobox__panel,
+.df-date-range__panel,
+.df-column-settings__panel {
+  border-color: var(--df-panel-border);
+  background: var(--df-subtle-highlight);
+  box-shadow: var(--df-popover-shadow);
+}
+
+.df-select__option,
+.df-combobox__option {
+  min-height: 36px;
+}
+
+.df-select__option:hover:not(:disabled),
+.df-select__option.is-highlighted,
+.df-select__option.is-selected {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--df-color-primary-soft), white 10%), color-mix(in srgb, var(--df-color-primary-soft), var(--df-color-bg) 12%));
+}
+
+.df-badge {
+  border-radius: 999px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.df-badge::before {
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor, transparent 86%);
+}
+
+.df-badge--success {
+  background: color-mix(in srgb, var(--df-color-success), white 88%);
+}
+
+.df-badge--warning {
+  background: color-mix(in srgb, var(--df-color-warning), white 88%);
+}
+
+.df-badge--danger {
+  background: color-mix(in srgb, var(--df-color-danger), white 90%);
+}
+
+.df-badge--primary,
+.df-badge--info {
+  background: color-mix(in srgb, var(--df-color-primary), white 90%);
+}
+
+.df-desktop-layout {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--df-color-dark), white 3%), var(--df-color-dark));
+}
+
+.df-sidebar {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--df-color-dark), white 4%), var(--df-color-dark) 72%);
+  box-shadow: -1px 0 0 rgba(255, 255, 255, 0.08) inset;
+}
+
+.df-sidebar__brand {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.df-sidebar__brand-name {
+  color: var(--df-color-text-inverse);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.df-sidebar__group-label {
+  color: color-mix(in srgb, var(--df-accent-cyan), white 8%);
+  font-weight: 800;
+}
+
+.df-sidebar__item {
+  position: relative;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--df-color-text-inverse), transparent 30%);
+  transition: background-color 140ms ease, color 140ms ease, transform 120ms ease, box-shadow 140ms ease;
+}
+
+.df-sidebar__item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--df-color-text-inverse);
+}
+
+.df-sidebar__item.is-active {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--df-color-primary), white 8%), var(--df-color-primary-hover));
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--df-color-primary), transparent 68%), 0 1px 0 rgba(255, 255, 255, 0.22) inset;
+}
+
+.df-sidebar__item.is-active::after {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--df-accent-cyan), white 18%);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--df-accent-cyan), transparent 22%);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.df-desktop-layout__main {
+  box-shadow: -1px 0 0 rgba(255, 255, 255, 0.72) inset, -20px 0 48px rgba(2, 6, 23, 0.12);
+}
+
+.df-topbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), color-mix(in srgb, var(--df-color-surface), var(--df-color-bg) 8%));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+}
+
+.df-user-chip__avatar {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--df-color-primary-soft), white 10%), color-mix(in srgb, var(--df-color-primary-soft), var(--df-color-primary) 8%));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--df-color-primary), transparent 90%);
+}
+
+.df-desktop-layout__content {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--df-color-bg), white 4%), var(--df-color-bg) 260px);
+}
+
+.df-card,
+.df-content-panel,
+.df-settings-section__content,
+.df-table-wrap,
+.df-filter-bar,
+.df-form-section__body,
+.df-metric {
+  border-color: var(--df-panel-border);
+  background: var(--df-subtle-highlight);
+  box-shadow: var(--df-panel-shadow);
+}
+
+.df-content-panel__header,
+.df-modal__header,
+.df-drawer__header {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), color-mix(in srgb, var(--df-color-surface), var(--df-color-bg) 7%));
+}
+
+.df-content-panel__header h2,
+.df-page-header h1,
+.df-modal__title,
+.df-drawer__title {
+  color: color-mix(in srgb, var(--df-color-text), black 4%);
+}
+
+.df-filter-bar {
+  align-items: center;
+}
+
+.df-table-wrap {
+  overflow: hidden;
+}
+
+.df-table th {
+  background: linear-gradient(180deg, #f8fafc, #f3f6fa);
+  color: color-mix(in srgb, var(--df-color-text-muted), var(--df-color-text) 12%);
+}
+
+.df-table td {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.df-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--df-color-primary-soft), white 42%);
+}
+
+.df-table tr.is-selected td {
+  background: color-mix(in srgb, var(--df-color-primary-soft), white 24%);
+}
+
+.df-table__sort-indicator.is-asc::before,
+.df-table__sort-indicator.is-desc::before {
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--df-color-primary), transparent 50%));
+}
+
+.df-metric {
+  position: relative;
+  overflow: hidden;
+}
+
+.df-metric::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--df-color-primary), var(--df-accent-cyan));
+  content: "";
+}
+
+.df-metric__value {
+  font-variant-numeric: tabular-nums;
+}
+
+.df-modal,
+.df-drawer,
+.df-command-palette {
+  border-color: var(--df-panel-border);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+}
+
+.df-overlay {
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(5px);
+}
+
+.df-toast {
+  border-color: var(--df-panel-border);
+  background: var(--df-subtle-highlight);
+  box-shadow: var(--df-popover-shadow);
+}
+
+.df-tabs {
+  background: color-mix(in srgb, var(--df-color-border), transparent 62%);
+  padding: 3px;
+  border-radius: var(--df-radius-lg);
+}
+
+.df-tab {
+  border-radius: calc(var(--df-radius-md) + 1px);
+}
+
+.df-tab.is-active {
+  background: var(--df-color-surface);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+}
+
 @media (max-width: 860px) {
   .df-login-shell {
     grid-template-columns: 1fr;

@@ -31,17 +31,25 @@ export const adminThemePreset: DesktopTheme = {
   brand: { name: "Admin" },
   colors: {
     ...defaultThemePreset.colors,
-    primary: "#3400e9",
-    primaryHover: "#2700b8",
-    primarySoft: "#eee9ff",
-    dark: "#020017",
-    background: "#f2f4f7",
-    border: "#e6e9ef",
-    strongBorder: "#cfd6e2",
+    primary: "#3b00f5",
+    primaryHover: "#2700c7",
+    primarySoft: "#f0ebff",
+    dark: "#050017",
+    background: "#f3f5f9",
+    surface: "#ffffff",
+    elevated: "#fbfcff",
+    border: "#e5e9f2",
+    strongBorder: "#cbd4e3",
+    text: "#111827",
     mutedText: "#667085",
     success: "#10b981",
     warning: "#f97316",
     info: "#0e7490"
+  },
+  shadow: {
+    sm: "0 1px 2px rgba(16, 24, 40, 0.06)",
+    md: "0 10px 30px rgba(16, 24, 40, 0.08)",
+    lg: "0 24px 64px rgba(16, 24, 40, 0.16)"
   }
 };
 
