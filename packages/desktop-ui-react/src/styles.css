@@ -1006,6 +1006,7 @@ body {
   min-height: 100dvh;
   grid-template-columns: 260px minmax(0, 1fr);
   background: var(--df-color-dark);
+  box-sizing: border-box;
 }
 
 .df-sidebar {
@@ -2319,8 +2320,11 @@ body {
 }
 
 .df-desktop-layout {
+  --df-desktop-top-offset: 10px;
+
   grid-template-columns: 260px minmax(0, 1fr);
   background: var(--df-color-dark);
+  padding-top: var(--df-desktop-top-offset);
 }
 
 .df-sidebar {
@@ -2357,11 +2361,12 @@ body {
 
 .df-desktop-layout__main {
   border-left: 1px solid color-mix(in srgb, var(--df-color-border), transparent 18%);
+  border-top-left-radius: 18px;
   background: var(--df-color-bg);
 }
 
 .df-topbar {
-  min-height: 58px;
+  min-height: 64px;
   padding-inline: 28px;
   background: var(--df-color-surface);
 }
@@ -2651,6 +2656,7 @@ body {
 
   .df-desktop-layout {
     grid-template-columns: 1fr;
+    padding-top: 0;
   }
 
   .df-sidebar {
