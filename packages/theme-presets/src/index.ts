@@ -31,11 +31,17 @@ export const adminThemePreset: DesktopTheme = {
   brand: { name: "Admin" },
   colors: {
     ...defaultThemePreset.colors,
-    primary: "#3157d5",
-    primaryHover: "#2747b4",
-    primarySoft: "#eef2ff",
-    dark: "#101827",
-    background: "#f5f7fb"
+    primary: "#3400e9",
+    primaryHover: "#2700b8",
+    primarySoft: "#eee9ff",
+    dark: "#020017",
+    background: "#f2f4f7",
+    border: "#e6e9ef",
+    strongBorder: "#cfd6e2",
+    mutedText: "#667085",
+    success: "#10b981",
+    warning: "#f97316",
+    info: "#0e7490"
   }
 };
 

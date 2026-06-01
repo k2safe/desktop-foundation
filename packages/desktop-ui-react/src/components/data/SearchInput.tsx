@@ -6,7 +6,7 @@ export interface SearchInputProps extends Omit<InputProps, "type"> {
 }
 
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({ searchLabel = "Search", placeholder = "Search", ...props }, ref) => (
-  <Input ref={ref} type="search" placeholder={placeholder} prefix={<span className="df-search-input__icon" aria-hidden="true">{searchLabel.slice(0, 1)}</span>} {...props} />
+  <Input ref={ref} type="search" aria-label={props["aria-label"] ?? searchLabel} placeholder={placeholder} prefix={<span className="df-search-input__icon" aria-hidden="true" />} {...props} />
 ));
 
 SearchInput.displayName = "SearchInput";
