@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "../../utils/cn";
-import { Button } from "../primitives/Button";
 
 export interface DesktopUser {
   name?: string;
@@ -27,17 +26,32 @@ export interface DesktopLayoutBrand {
 
 export type DesktopLayoutVariant = "sidebar" | "topnav";
 
+export interface DesktopUserMenuItem {
+  id: string;
+  label: ReactNode;
+  description?: ReactNode;
+  icon?: ReactNode;
+  href?: string;
+  disabled?: boolean;
+  danger?: boolean;
+  onSelect?: () => void;
+}
+
 export interface DesktopLayoutProps {
   brand: DesktopLayoutBrand;
   menus: DesktopMenuItem[];
   variant?: DesktopLayoutVariant;
   user?: DesktopUser;
+  userMenuItems?: DesktopUserMenuItem[];
   topbarLeft?: ReactNode;
   topbarRight?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
   className?: string;
+  showUserMeta?: boolean;
+  editProfileLabel?: string;
   logoutLabel?: string;
+  onEditProfile?: () => void;
   onLogout?: () => void;
   onMenuSelect?: (item: DesktopMenuItem) => void;
 }
@@ -179,27 +193,172 @@ export function TopNavigation({ menus, onMenuSelect }: Pick<DesktopLayoutProps, 
   );
 }
 
+function UserMenu({
+  user,
+  items = [],
+  showMeta,
+  editProfileLabel = "编辑个人信息",
+  logoutLabel = "退出登录",
+  onEditProfile,
+  onLogout
+}: {
+  user: DesktopUser;
+  items?: DesktopUserMenuItem[];
+  showMeta?: boolean;
+  editProfileLabel?: string;
+  logoutLabel?: string;
+  onEditProfile?: () => void;
+  onLogout?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const initial = (user.name || user.account || "U").slice(0, 1).toUpperCase();
+  const menuItems: DesktopUserMenuItem[] = [
+    ...(onEditProfile ? [{ id: "edit-profile", label: editProfileLabel, onSelect: onEditProfile }] : []),
+    ...items,
+    ...(onLogout ? [{ id: "logout", label: logoutLabel, danger: true, onSelect: onLogout }] : [])
+  ];
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  function handleSelect(item: DesktopUserMenuItem) {
+    if (item.disabled) return;
+    setOpen(false);
+    item.onSelect?.();
+  }
+
+  if (!menuItems.length) {
+    return (
+      <span className="df-user-menu__static" aria-label={user.name || user.account || "用户"}>
+        <span className="df-user-menu__avatar">{user.avatar ?? initial}</span>
+      </span>
+    );
+  }
+
+  return (
+    <div className="df-user-menu" ref={menuRef}>
+      <button
+        className={cn("df-user-menu__trigger", open && "is-open")}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="df-user-menu__avatar">{user.avatar ?? initial}</span>
+        {showMeta ? (
+          <span className="df-user-menu__trigger-meta">
+            <span className="df-user-menu__name">{user.name || user.account}</span>
+            {user.role ? <span className="df-user-menu__role">{user.role}</span> : null}
+          </span>
+        ) : null}
+      </button>
+      {open ? (
+        <div className="df-user-menu__panel" role="menu">
+          <div className="df-user-menu__header">
+            <span className="df-user-menu__avatar df-user-menu__avatar--lg">{user.avatar ?? initial}</span>
+            <span className="df-user-menu__meta">
+              <span className="df-user-menu__name">{user.name || user.account || "用户"}</span>
+              {user.role || user.account ? <span className="df-user-menu__role">{user.role || user.account}</span> : null}
+            </span>
+          </div>
+          <div className="df-user-menu__items">
+            {menuItems.map((item) => {
+              const className = cn("df-user-menu__item", item.danger && "is-danger", item.disabled && "is-disabled");
+              const content = (
+                <>
+                  {item.icon ? <span className="df-user-menu__item-icon">{item.icon}</span> : null}
+                  <span className="df-user-menu__item-copy">
+                    <span className="df-user-menu__item-label">{item.label}</span>
+                    {item.description ? <span className="df-user-menu__item-description">{item.description}</span> : null}
+                  </span>
+                </>
+              );
+
+              return item.href ? (
+                <a
+                  key={item.id}
+                  className={className}
+                  href={item.disabled ? undefined : item.href}
+                  role="menuitem"
+                  aria-disabled={item.disabled}
+                  onClick={(event) => {
+                    if (item.disabled) {
+                      event.preventDefault();
+                      return;
+                    }
+                    handleSelect(item);
+                  }}
+                >
+                  {content}
+                </a>
+              ) : (
+                <button
+                  key={item.id}
+                  className={className}
+                  type="button"
+                  role="menuitem"
+                  disabled={item.disabled}
+                  onClick={() => handleSelect(item)}
+                >
+                  {content}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function Topbar({
   user,
+  userMenuItems,
   left,
   right,
   brand,
   menus,
+  showUserMeta,
+  editProfileLabel,
   logoutLabel = "退出登录",
+  onEditProfile,
   onLogout,
   onMenuSelect
 }: {
   user?: DesktopUser;
+  userMenuItems?: DesktopUserMenuItem[];
   left?: ReactNode;
   right?: ReactNode;
   brand?: DesktopLayoutBrand;
   menus?: DesktopMenuItem[];
+  showUserMeta?: boolean;
+  editProfileLabel?: string;
   logoutLabel?: string;
+  onEditProfile?: () => void;
   onLogout?: () => void;
   onMenuSelect?: (item: DesktopMenuItem) => void;
 }) {
-  const initial = (user?.name || user?.account || "U").slice(0, 1).toUpperCase();
-
   return (
     <header className="df-topbar">
       <div className="df-topbar__left">
@@ -215,18 +374,15 @@ export function Topbar({
       <div className="df-topbar__right">
         {right}
         {user ? (
-          <div className="df-user-chip">
-            <span className="df-user-chip__avatar">{user.avatar ?? initial}</span>
-            <span className="df-user-chip__meta">
-              <span className="df-user-chip__name">{user.name || user.account}</span>
-              {user.role ? <span className="df-user-chip__role">{user.role}</span> : null}
-            </span>
-          </div>
-        ) : null}
-        {onLogout ? (
-          <Button variant="ghost" size="sm" onClick={onLogout}>
-            {logoutLabel}
-          </Button>
+          <UserMenu
+            user={user}
+            items={userMenuItems}
+            showMeta={showUserMeta}
+            editProfileLabel={editProfileLabel}
+            logoutLabel={logoutLabel}
+            onEditProfile={onEditProfile}
+            onLogout={onLogout}
+          />
         ) : null}
       </div>
     </header>
@@ -238,12 +394,16 @@ export function DesktopLayout({
   menus,
   variant = "sidebar",
   user,
+  userMenuItems,
   topbarLeft,
   topbarRight,
   footer,
   children,
   className,
+  showUserMeta,
+  editProfileLabel,
   logoutLabel,
+  onEditProfile,
   onLogout,
   onMenuSelect
 }: DesktopLayoutProps) {
@@ -255,11 +415,15 @@ export function DesktopLayout({
       <div className="df-desktop-layout__main">
         <Topbar
           user={user}
+          userMenuItems={userMenuItems}
           left={topbarLeft}
           right={topbarRight}
           brand={topnav ? brand : undefined}
           menus={topnav ? menus : undefined}
+          showUserMeta={showUserMeta}
+          editProfileLabel={editProfileLabel}
           logoutLabel={logoutLabel}
+          onEditProfile={onEditProfile}
           onLogout={onLogout}
           onMenuSelect={onMenuSelect}
         />

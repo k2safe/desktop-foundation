@@ -1,5 +1,5 @@
 export { DesktopLayout, Sidebar, Topbar, TopNavigation } from "./DesktopLayout";
-export type { DesktopLayoutBrand, DesktopLayoutProps, DesktopLayoutVariant, DesktopMenuItem, DesktopUser } from "./DesktopLayout";
+export type { DesktopLayoutBrand, DesktopLayoutProps, DesktopLayoutVariant, DesktopMenuItem, DesktopUser, DesktopUserMenuItem } from "./DesktopLayout";
 export { ContentPanel } from "./ContentPanel";
 export type { ContentPanelProps } from "./ContentPanel";
 export { DetailDrawer } from "./DetailDrawer";

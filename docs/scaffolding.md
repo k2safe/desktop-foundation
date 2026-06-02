@@ -21,6 +21,17 @@ create-desktop-app apps/product-desktop \
 
 The generated Tauri entry uses `DesktopCore::persistent_platform_with_http_adapter`, so product apps get the shared HTTP transport, session persistence, secure storage, file commands, window commands, clipboard, notification, and open-external contract on day one.
 
+## Window Chrome
+
+The scaffold applies the foundation desktop chrome by default on macOS:
+
+- `hiddenTitle: true` hides the native title text.
+- `titleBarStyle: "Overlay"` removes the gray native title strip while keeping normal window controls.
+- `trafficLightPosition` places the red/yellow/green controls on the dark shell background.
+- `--df-desktop-top-offset` reserves the web safe area so product navigation does not collide with native controls.
+
+Product projects can override those values when they need a fully native title bar, but should not patch layout internals for window chrome.
+
 ## Boundary
 
 The scaffold intentionally does not generate:
