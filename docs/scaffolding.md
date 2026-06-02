@@ -16,6 +16,7 @@ create-desktop-app apps/product-desktop \
 
 - `src/theme.ts`: product theme preset.
 - `src/menus.tsx`: product menu config.
+- `src/product-adapter.tsx`: product-owned adapter for brand, menu, layout, user menu, theme, and client defaults.
 - `src/api/client.ts`: Web/Tauri desktop client bootstrap.
 - `src/pages/DashboardPage.tsx`: placeholder page using foundation components.
 - `src-tauri`: Tauri shell wired to `desktop-core-rs` platform capabilities.
@@ -41,6 +42,16 @@ The scaffold applies the foundation desktop chrome preset by default. The preset
 The generated `tauri.conf.json` follows `foundation`: `hiddenTitle: true`, `titleBarStyle: "Overlay"`, `trafficLightPosition`, and a dark `backgroundColor`. CSS also reserves `--df-desktop-top-offset` so product navigation does not collide with the native controls. The default is compact; products that use a fully native title bar can set `--df-desktop-top-offset: 0px`, while products with custom controls can raise it locally. Preset definitions live in `@desktop-foundation/theme-presets`; use `getWindowChromePlatformConfig` or `createTauriWindowChromeConfig` when tooling needs to inspect or generate platform-specific values.
 
 Product projects can override chrome config when they have platform-specific needs, but should not patch layout internals for window chrome.
+
+## Doctor
+
+Generated projects include:
+
+```bash
+pnpm doctor
+```
+
+The script runs `desktop-foundation doctor --report artifacts/foundation-doctor.json` and checks package versions, stylesheet import, app shell usage, theme template runtime, Tauri core wiring, update surface, and expected package scripts. It does not validate product business APIs or permissions.
 
 ## Boundary
 

@@ -23,6 +23,7 @@ const baseTheme = {
   "--df-color-border-strong": "#b9c5d3",
   "--df-color-text": "#111827",
   "--df-color-text-muted": "#6b7280",
+  "--df-color-text-inverse": "#ffffff",
   "--df-color-danger": "#dc2626",
   "--df-color-warning": "#d97706",
   "--df-color-success": "#059669",
@@ -131,7 +132,11 @@ const viewports = [
 
 const guardCaptureTargets = [
   { id: "scroll-boundaries", label: "independent scroll shell", selector: '[data-visual-target="scroll-boundaries"]' },
-  { id: "wide-modal", label: "wide table modal", selector: '[data-visual-target="wide-modal"]' }
+  { id: "wide-modal", label: "wide table modal", selector: '[data-visual-target="wide-modal"]' },
+  { id: "long-modal", label: "long content modal", selector: '[data-visual-target="long-modal"]' },
+  { id: "drawer-wide-table", label: "wide table drawer", selector: '[data-visual-target="drawer-wide-table"]' },
+  { id: "compact-topbar", label: "compact topbar", selector: '[data-visual-target="compact-topbar"]' },
+  { id: "collapsed-sidebar", label: "collapsed sidebar", selector: '[data-visual-target="collapsed-sidebar"]' }
 ];
 
 const baseCaptureTargets = [

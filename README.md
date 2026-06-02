@@ -17,6 +17,8 @@
 ## Docs
 
 - [Product AI Handoff](docs/product-ai-handoff.md)
+- [Product Adapter](docs/product-adapter.md)
+- [Product Onboarding Checklist](docs/product-onboarding-checklist.md)
 - [Product Integration Guide](docs/product-integration.md)
 - [Package Consumption](docs/package-consumption.md)
 - [Package Boundary](docs/package-boundary.md)
@@ -39,6 +41,7 @@
 - 文件打开/保存、JSON 导出、HTTP 下载
 - secure storage 契约，macOS Keychain、Linux Secret Service、Windows DPAPI、文件 fallback
 - 零依赖组件文档页和可选 Playwright 截图入口
+- 通用 `desktop-foundation doctor` 接入检查命令
 - Tauri native plugin 可选适配层，可用官方插件替换部分 Rust command 能力
 - 标准产品接入 DEMO：`examples/demo-product`
 

@@ -17,6 +17,7 @@ node packages/create-desktop-app/bin/create-desktop-app.mjs examples/product-des
 ## Generated Shape
 
 - `src/App.tsx`
+- `src/product-adapter.tsx`
 - `src/theme.ts`
 - `src/menus.tsx`
 - `src/api/client.ts`
@@ -24,6 +25,16 @@ node packages/create-desktop-app/bin/create-desktop-app.mjs examples/product-des
 - `src-tauri`
 
 The scaffold contains no product business model, API path, permission model, or route normalization logic.
+
+`src/product-adapter.tsx` is the intended product-owned adapter entry: brand, menus, theme template, shell layout, user menu, and client defaults live there so product teams do not edit foundation package internals.
+
+## Doctor
+
+Use `desktop-foundation doctor` to check whether the current product app follows the foundation contract:
+
+```bash
+pnpm exec desktop-foundation doctor --report artifacts/foundation-doctor.json
+```
 
 ## CI Wrapper
 

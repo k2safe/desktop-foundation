@@ -21,6 +21,11 @@
         padding: 28px;
       }
 
+      .docs-page input,
+      .docs-page textarea {
+        caret-color: transparent;
+      }
+
       .docs-section {
         display: grid;
         gap: 14px;
@@ -195,6 +200,90 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+
+      .docs-long-modal-preview .df-modal {
+        width: min(720px, calc(100% - 32px));
+      }
+
+      .docs-long-modal-preview .df-modal__body {
+        max-height: 330px;
+        overflow: auto;
+      }
+
+      .docs-long-modal-stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .docs-long-modal-row {
+        display: grid;
+        grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
+        gap: 14px;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid var(--df-color-border);
+        border-radius: var(--df-radius-md);
+        background: var(--df-color-surface);
+      }
+
+      .docs-drawer-table-preview {
+        position: relative;
+        min-height: 560px;
+        overflow: hidden;
+        border: 1px solid var(--df-color-border);
+        border-radius: var(--df-radius-xl);
+        background: var(--df-color-bg);
+      }
+
+      .docs-drawer-table-preview .df-overlay {
+        position: absolute;
+        inset: 0;
+        display: block;
+        padding: 0;
+      }
+
+      .docs-drawer-table-preview .df-drawer {
+        position: absolute;
+        width: min(760px, calc(100% - 42px));
+      }
+
+      .docs-drawer-table-preview .df-table {
+        min-width: 1120px;
+      }
+
+      .docs-compact-topbar-shell {
+        width: min(780px, 100%);
+        height: 460px;
+        min-height: 460px;
+      }
+
+      .docs-compact-topbar-shell.df-desktop-layout--topnav .df-desktop-layout__main {
+        min-height: 460px;
+      }
+
+      .docs-compact-topbar-shell .df-desktop-layout__content {
+        padding: 18px;
+      }
+
+      .docs-collapsed-sidebar-shell {
+        height: 460px;
+        min-height: 460px;
+      }
+
+      .docs-collapsed-sidebar-shell .df-sidebar__brand {
+        min-height: 72px;
+      }
+
+      .docs-icon-box {
+        display: inline-grid;
+        width: 22px;
+        height: 22px;
+        place-items: center;
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.12);
+        font-size: 12px;
+        font-weight: 800;
       }
 
       @media (max-width: 860px) {
@@ -487,6 +576,101 @@
           </div>
           <div class="df-modal__footer"><button class="df-button df-button--outline">Cancel</button><button class="df-button df-button--primary">Save</button></div>
         </section>
+      </section>
+
+      <section class="docs-modal-preview docs-long-modal-preview" data-visual-target="long-modal">
+        <div class="df-overlay"></div>
+        <section class="df-modal" role="dialog" aria-modal="true">
+          <div class="df-modal__header">
+            <div>
+              <h2 class="df-modal__title">Long Content Modal</h2>
+              <p class="df-modal__description">Modal body scrolls without moving the header or footer.</p>
+            </div>
+            <button class="df-close-button">x</button>
+          </div>
+          <div class="df-modal__body">
+            <div class="docs-long-modal-stack">
+              <div class="docs-long-modal-row"><strong>Profile</strong><label class="df-field df-field--full"><span class="df-input-wrap"><input class="df-input" value="Operations workspace" /></span></label></div>
+              <div class="docs-long-modal-row"><strong>Region</strong><span class="df-select-wrap"><button class="df-select-control"><span class="df-select__value">Asia Pacific</span><span class="df-select__chevron"></span></button></span></div>
+              <div class="docs-long-modal-row"><strong>Mode</strong><span class="df-badge df-badge--success">enabled</span></div>
+              <div class="docs-long-modal-row"><strong>Webhook</strong><span class="docs-code-cell">https://hooks.foundation.example.com/events/order-status-updated</span></div>
+              <div class="docs-long-modal-row"><strong>Retry</strong><label class="df-field df-field--full"><span class="df-input-wrap"><input class="df-input" value="3 attempts" /></span></label></div>
+              <div class="docs-long-modal-row"><strong>Notes</strong><textarea class="df-textarea">This row confirms the body can continue beyond the visible modal viewport.</textarea></div>
+              <div class="docs-long-modal-row"><strong>Audit</strong><div class="df-code-block">{ "owner": "product", "scope": "runtime" }</div></div>
+            </div>
+          </div>
+          <div class="df-modal__footer"><button class="df-button df-button--outline">Cancel</button><button class="df-button df-button--primary">Save</button></div>
+        </section>
+      </section>
+
+      <section class="docs-drawer-table-preview" data-visual-target="drawer-wide-table">
+        <div class="df-overlay">
+          <aside class="df-drawer df-drawer--right" role="dialog" aria-modal="true">
+            <div class="df-drawer__header"><h2 class="df-drawer__title">Wide Drawer Table</h2><button class="df-close-button">x</button></div>
+            <div class="df-drawer__body">
+              <div class="df-table-wrap df-table-wrap--default">
+                <table class="df-table">
+                  <thead><tr><th>Job</th><th>Endpoint</th><th>Owner</th><th>Status</th><th>Window</th><th>Retry</th><th style="text-align: right">Latency</th></tr></thead>
+                  <tbody>
+                    <tr><td>sync-default</td><td><span class="docs-code-cell">https://sync.foundation.example.com/jobs/default</span></td><td>Platform</td><td><span class="df-badge df-badge--success">ready</span></td><td>09:00-18:00</td><td>3</td><td style="text-align: right">74 ms</td></tr>
+                    <tr><td>sync-audit</td><td><span class="docs-code-cell">https://audit.foundation.example.com/jobs/events</span></td><td>Ops</td><td><span class="df-badge df-badge--warning">review</span></td><td>always</td><td>5</td><td style="text-align: right">112 ms</td></tr>
+                    <tr><td>sync-export</td><td><span class="docs-code-cell">https://export.foundation.example.com/jobs/monthly-report</span></td><td>Data</td><td><span class="df-badge df-badge--info">queued</span></td><td>nightly</td><td>2</td><td style="text-align: right">140 ms</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="df-drawer__footer"><button class="df-button df-button--outline">Close</button><button class="df-button df-button--primary">Apply</button></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="docs-section" data-visual-target="compact-topbar">
+        <div class="df-desktop-layout df-desktop-layout--topnav docs-mini-shell docs-compact-topbar-shell">
+          <div class="df-desktop-layout__main">
+            <header class="df-topbar">
+              <div class="df-topbar__left">
+                <div class="df-topbar__brand"><span class="df-topbar__brand-name">Foundation</span></div>
+                <nav class="df-topnav">
+                  <ul class="df-topnav__list">
+                    <li class="df-topnav__node"><a class="df-topnav__item is-active">Dashboard</a></li>
+                    <li class="df-topnav__node"><button class="df-topnav__item">Operations<span class="df-topnav__chevron"></span></button></li>
+                    <li class="df-topnav__node"><button class="df-topnav__item">System<span class="df-topnav__chevron"></span></button></li>
+                  </ul>
+                </nav>
+                <label class="df-field"><span class="df-input-wrap"><span class="df-input__addon"><span class="df-search-input__icon"></span></span><input class="df-input" value="Search orders / users / settings" /></span></label>
+              </div>
+              <div class="df-topbar__right">
+                <span class="df-badge df-badge--success">Desktop</span>
+                <span class="df-select-wrap"><button class="df-select-control"><span class="df-select__value">Default workspace</span><span class="df-select__chevron"></span></button></span>
+                <button class="df-button df-button--outline df-button--sm">Command</button>
+                <button class="df-user-menu__trigger"><span class="df-user-menu__avatar">D</span></button>
+              </div>
+            </header>
+            <main class="df-desktop-layout__content">
+              <section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Compact Topbar</h2><p>Controls wrap without colliding with the native window area.</p></div></div><div class="df-content-panel__body"><span class="df-badge df-badge--info">visual guard</span></div></section>
+            </main>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-section" data-visual-target="collapsed-sidebar">
+        <div class="df-desktop-layout df-desktop-layout--sidebar df-desktop-layout--sidebar-collapsed docs-mini-shell docs-collapsed-sidebar-shell">
+          <aside class="df-sidebar">
+            <div class="df-sidebar__brand"><span class="docs-icon-box">F</span><span class="df-sidebar__brand-name">Foundation</span></div>
+            <nav class="df-sidebar__nav">
+              <ul class="df-sidebar__list">
+                <li class="df-sidebar__node"><a class="df-sidebar__item is-active"><span class="df-sidebar__item-icon docs-icon-box">D</span><span class="df-sidebar__item-label">Dashboard</span></a></li>
+                <li class="df-sidebar__node"><a class="df-sidebar__item"><span class="df-sidebar__item-icon docs-icon-box">O</span><span class="df-sidebar__item-label">Orders</span></a></li>
+                <li class="df-sidebar__node"><a class="df-sidebar__item"><span class="df-sidebar__item-icon docs-icon-box">S</span><span class="df-sidebar__item-label">Settings</span></a></li>
+                <li class="df-sidebar__node"><a class="df-sidebar__item"><span class="df-sidebar__item-icon docs-icon-box">R</span><span class="df-sidebar__item-label">Release</span></a></li>
+              </ul>
+            </nav>
+          </aside>
+          <div class="df-desktop-layout__main">
+            <header class="df-topbar"><div class="df-topbar__left"><label class="df-field"><span class="df-input-wrap"><input class="df-input" value="Collapsed shell" /></span></label></div><div class="df-topbar__right"><button class="df-user-menu__trigger"><span class="df-user-menu__avatar">D</span></button></div></header>
+            <main class="df-desktop-layout__content"><section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Collapsed Sidebar</h2><p>Icon rail keeps the main content width stable.</p></div></div><div class="df-content-panel__body"><div class="df-code-block">sidebarCollapsed=true</div></div></section></main>
+          </div>
+        </div>
       </section>
 
       <section class="docs-grid">

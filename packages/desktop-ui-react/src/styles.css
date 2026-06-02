@@ -1108,6 +1108,45 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.df-desktop-layout--sidebar-collapsed {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.df-desktop-layout--sidebar-collapsed .df-sidebar__brand {
+  justify-content: center;
+  padding: 0 10px;
+}
+
+.df-desktop-layout--sidebar-collapsed .df-sidebar__brand-name,
+.df-desktop-layout--sidebar-collapsed .df-sidebar__item-label,
+.df-desktop-layout--sidebar-collapsed .df-sidebar__group-label {
+  display: none;
+}
+
+.df-desktop-layout--sidebar-collapsed .df-sidebar__nav {
+  padding: 14px 10px;
+}
+
+.df-desktop-layout--sidebar-collapsed .df-sidebar__item {
+  justify-content: center;
+  padding: 0;
+}
+
+.df-desktop-layout--sidebar-collapsed .df-sidebar__item-icon {
+  display: inline-grid;
+  width: 22px;
+  min-width: 22px;
+  place-items: center;
+}
+
+.df-desktop-layout--sidebar-collapsed .df-sidebar__node.has-children {
+  margin: 8px 0;
+}
+
+.df-desktop-layout--sidebar-collapsed .df-sidebar__footer {
+  padding: 12px 10px;
+}
+
 .df-desktop-layout__main {
   display: flex;
   min-height: 0;
@@ -2526,6 +2565,10 @@ body {
   grid-template-columns: 260px minmax(0, 1fr);
   background: var(--df-color-dark);
   padding-top: var(--df-desktop-top-offset);
+}
+
+.df-desktop-layout.df-desktop-layout--sidebar-collapsed {
+  grid-template-columns: 76px minmax(0, 1fr);
 }
 
 .df-sidebar {

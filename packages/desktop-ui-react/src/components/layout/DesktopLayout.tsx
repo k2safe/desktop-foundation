@@ -48,6 +48,7 @@ export interface DesktopLayoutProps {
   footer?: ReactNode;
   children: ReactNode;
   className?: string;
+  sidebarCollapsed?: boolean;
   showUserMeta?: boolean;
   editProfileLabel?: string;
   logoutLabel?: string;
@@ -400,6 +401,7 @@ export function DesktopLayout({
   footer,
   children,
   className,
+  sidebarCollapsed,
   showUserMeta,
   editProfileLabel,
   logoutLabel,
@@ -410,7 +412,7 @@ export function DesktopLayout({
   const topnav = variant === "topnav";
 
   return (
-    <div className={cn("df-desktop-layout", `df-desktop-layout--${variant}`, className)}>
+    <div className={cn("df-desktop-layout", `df-desktop-layout--${variant}`, sidebarCollapsed && !topnav && "df-desktop-layout--sidebar-collapsed", className)}>
       {topnav ? null : <Sidebar brand={brand} menus={menus} footer={footer} onMenuSelect={onMenuSelect} />}
       <div className="df-desktop-layout__main">
         <Topbar

@@ -13,6 +13,7 @@ pnpm package:desktop
 
 ## Product Files
 
+- `src/product-adapter.tsx`: product-owned adapter for brand, menus, shell layout, user menu, theme, and client defaults.
 - `src/theme.ts`: product theme preset.
 - `src/menus.tsx`: product menu config.
 - `src/api/client.ts`: Web/Tauri desktop client bootstrap.
@@ -20,6 +21,14 @@ pnpm package:desktop
 - `src-tauri`: Tauri shell with `desktop-core-rs` platform capabilities.
 
 The generated `src-tauri/capabilities/default.json` enables `desktop-core:default` so the shared bridge commands are allowed by Tauri 2 ACL.
+
+## Doctor
+
+```bash
+pnpm doctor
+```
+
+The doctor command checks the foundation contract and writes `artifacts/foundation-doctor.json`.
 
 ## Update Manifest
 

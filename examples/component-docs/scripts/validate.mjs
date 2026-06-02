@@ -17,7 +17,12 @@ const requiredClasses = [
   "df-button",
   "data-visual-target=\"scroll-boundaries\"",
   "data-visual-target=\"wide-modal\"",
-  "docs-wide-modal"
+  "data-visual-target=\"long-modal\"",
+  "data-visual-target=\"drawer-wide-table\"",
+  "data-visual-target=\"compact-topbar\"",
+  "data-visual-target=\"collapsed-sidebar\"",
+  "docs-wide-modal",
+  "docs-drawer-table-preview"
 ];
 
 const missing = requiredClasses.filter((className) => !html.includes(className));

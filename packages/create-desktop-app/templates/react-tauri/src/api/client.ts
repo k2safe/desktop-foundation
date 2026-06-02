@@ -7,6 +7,7 @@ import {
   type DesktopClientConfig
 } from "@desktop-foundation/bridge";
 import { invoke } from "@tauri-apps/api/core";
+import { productAdapter } from "../product-adapter";
 
 const appVersion = import.meta.env.VITE_APP_VERSION || "0.1.0";
 
@@ -44,10 +45,10 @@ function createProductUpdateConfig(currentVersion: string): AppUpdateConfig {
 }
 
 export const clientConfig: DesktopClientConfig = {
-  product: "{{PRODUCT_ID}}",
+  product: productAdapter.clientDefaults.product,
   version: appVersion,
-  apiBaseURL: import.meta.env.VITE_API_BASE_URL || "{{API_BASE_URL}}",
-  tokenKey: "{{PRODUCT_ID}}:desktop:token",
+  apiBaseURL: import.meta.env.VITE_API_BASE_URL || productAdapter.clientDefaults.apiBaseURL,
+  tokenKey: productAdapter.clientDefaults.tokenKey,
   updateConfig: createProductUpdateConfig(appVersion)
 };
 
