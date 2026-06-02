@@ -2,6 +2,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 
 const knownChecks = ["type-check", "build", "lint", "visual:regression"];
 const defaultArtifactDir = "artifacts/desktop";
@@ -33,6 +34,8 @@ function printHelp() {
     "  --no-zip              Skip zip creation for directory-style bundles.",
     "  --preview-bundle-id <id>  Create a macOS preview .app with a distinct bundle id.",
     "  --preview-name <name>     Display name for the preview .app.",
+    "  --signing-identity <id>  macOS codesign identity. Defaults to ad-hoc '-'.",
+    "  --no-checksum        Skip sha256/size metadata for release artifacts.",
     "",
     "Update manifest:",
     "  --manifest            Write an update manifest JSON next to artifacts.",
@@ -43,6 +46,10 @@ function printHelp() {
     "  --release-url <url>   Release notes page URL.",
     "  --notes <text>        Release notes placed in the manifest.",
     "  --mandatory           Mark the update as mandatory.",
+    "  --release-plan       Write release-plan.json with local upload assets and gh args.",
+    "  --release-plan-path <path> Release plan output path. Defaults to <artifact-dir>/release-plan.json.",
+    "  --tag <name>         Release tag for release-plan. Defaults to v<version>.",
+    "  --release-name <name> Release name for release-plan.",
     "",
     "Other:",
     "  --help                Show this help.",
@@ -68,7 +75,9 @@ function parseArgs(argv) {
     manifest: false,
     channel: "stable",
     mandatory: false,
-    zip: true
+    zip: true,
+    checksum: true,
+    releasePlan: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -152,6 +161,15 @@ function parseArgs(argv) {
       index += 1;
       continue;
     }
+    if (arg === "--signing-identity") {
+      options.signingIdentity = readNext(argv, index, arg);
+      index += 1;
+      continue;
+    }
+    if (arg === "--no-checksum") {
+      options.checksum = false;
+      continue;
+    }
     if (arg === "--manifest") {
       options.manifest = true;
       continue;
@@ -188,6 +206,25 @@ function parseArgs(argv) {
     }
     if (arg === "--mandatory") {
       options.mandatory = true;
+      continue;
+    }
+    if (arg === "--release-plan") {
+      options.releasePlan = true;
+      continue;
+    }
+    if (arg === "--release-plan-path") {
+      options.releasePlanPath = readNext(argv, index, arg);
+      index += 1;
+      continue;
+    }
+    if (arg === "--tag") {
+      options.tag = readNext(argv, index, arg);
+      index += 1;
+      continue;
+    }
+    if (arg === "--release-name") {
+      options.releaseName = readNext(argv, index, arg);
+      index += 1;
       continue;
     }
     throw new Error("Unknown argument: " + arg);
@@ -319,7 +356,8 @@ function fixMacosApp(appPath, overrides = {}) {
     setPlistString(plistPath, "CFBundleDisplayName", overrides.displayName);
     setPlistString(plistPath, "CFBundleName", overrides.displayName);
   }
-  runCommand("codesign", ["--force", "--deep", "--sign", "-", appPath]);
+  const signingIdentity = overrides.signingIdentity ?? "-";
+  runCommand("codesign", ["--force", "--deep", "--sign", signingIdentity, appPath]);
   runCommand("codesign", ["--verify", "--deep", "--strict", "--verbose=2", appPath]);
 }
 
@@ -348,6 +386,28 @@ function makeDownloadUrl(baseUrl, fileName) {
   return baseUrl.replace(/\/$/, "") + "/" + encodeURIComponent(fileName).replace(/%2F/g, "/");
 }
 
+function fileSha256(filePath) {
+  return createHash("sha256").update(readFileSync(filePath)).digest("hex");
+}
+
+function releaseFileMetadata(filePath) {
+  if (!filePath || !existsSync(filePath) || isDirectory(filePath)) return null;
+  const fileName = basename(filePath);
+  return {
+    path: filePath,
+    fileName,
+    size: statSync(filePath).size,
+    sha256: fileSha256(filePath),
+    checksumPath: filePath + ".sha256",
+    checksumFileName: fileName + ".sha256"
+  };
+}
+
+function writeChecksumFile(metadata) {
+  if (!metadata) return;
+  writeFileSync(metadata.checksumPath, metadata.sha256 + "  " + metadata.fileName + "\n");
+}
+
 function packageDesktopArtifacts(options, packageJson, tauriConfig) {
   const sourcePath = findPackagedArtifact(options);
   if (!sourcePath || !existsSync(sourcePath)) {
@@ -368,7 +428,7 @@ function packageDesktopArtifacts(options, packageJson, tauriConfig) {
 
   mkdirSync(artifactDir, { recursive: true });
   copyBundle(sourcePath, appPath);
-  fixMacosApp(appPath);
+  fixMacosApp(appPath, { signingIdentity: options.signingIdentity });
 
   let zipPath = null;
   if (options.zip && isDirectory(appPath)) {
@@ -380,9 +440,14 @@ function packageDesktopArtifacts(options, packageJson, tauriConfig) {
     const previewName = options.previewName || productName + " Preview";
     previewAppPath = join(artifactDir, previewName + ".app");
     copyBundle(appPath, previewAppPath);
-    fixMacosApp(previewAppPath, { bundleId: options.previewBundleId, displayName: previewName });
+    fixMacosApp(previewAppPath, { bundleId: options.previewBundleId, displayName: previewName, signingIdentity: options.signingIdentity });
   }
 
+  const releasePath = zipPath ?? (!isDirectory(appPath) ? appPath : null);
+  const releaseMetadata = options.checksum ? releaseFileMetadata(releasePath) : null;
+  if (releaseMetadata) writeChecksumFile(releaseMetadata);
+
+  const indexPath = join(artifactDir, "desktop-artifacts.json");
   const index = {
     productName,
     version,
@@ -393,13 +458,24 @@ function packageDesktopArtifacts(options, packageJson, tauriConfig) {
     appFileName: basename(appPath),
     zipPath,
     zipFileName: zipPath ? basename(zipPath) : undefined,
+    releasePath,
+    releaseFileName: releaseMetadata?.fileName ?? (releasePath ? basename(releasePath) : undefined),
+    releaseSize: releaseMetadata?.size,
+    releaseSha256: releaseMetadata?.sha256,
+    checksumPath: releaseMetadata?.checksumPath,
+    checksumFileName: releaseMetadata?.checksumFileName,
     previewAppPath,
-    previewAppFileName: previewAppPath ? basename(previewAppPath) : undefined
+    previewAppFileName: previewAppPath ? basename(previewAppPath) : undefined,
+    indexPath,
+    signing: {
+      macosIdentity: process.platform === "darwin" ? options.signingIdentity ?? "-" : undefined,
+      notarization: "not-configured"
+    }
   };
-  const indexPath = join(artifactDir, "desktop-artifacts.json");
   writeFileSync(indexPath, JSON.stringify(index, null, 2) + "\n");
   console.log("desktop-foundation-ci: wrote " + indexPath);
   if (zipPath) console.log("desktop-foundation-ci: wrote " + zipPath);
+  if (releaseMetadata) console.log("desktop-foundation-ci: wrote " + releaseMetadata.checksumPath);
   if (previewAppPath) console.log("desktop-foundation-ci: wrote " + previewAppPath);
   return index;
 }
@@ -409,7 +485,7 @@ function writeManifest(options, packageJson, tauriConfig, packageResult) {
   const version = inferVersion(options, packageJson, tauriConfig);
   const artifactDir = resolve(process.cwd(), options.artifactDir);
   const manifestPath = resolve(process.cwd(), options.manifestPath ?? join(options.artifactDir, "latest.json"));
-  const artifactName = packageResult?.zipFileName ?? packageResult?.appFileName;
+  const artifactName = packageResult?.releaseFileName ?? packageResult?.zipFileName ?? packageResult?.appFileName;
   const downloadUrl = options.downloadUrl ?? makeDownloadUrl(options.downloadBaseUrl, artifactName);
   const manifest = {
     version,
@@ -418,11 +494,17 @@ function writeManifest(options, packageJson, tauriConfig, packageResult) {
     pubDate: new Date().toISOString(),
     releasePageUrl: options.releaseUrl,
     downloadUrl,
+    sha256: packageResult?.releaseSha256,
+    size: packageResult?.releaseSize,
     mandatory: options.mandatory || undefined,
     metadata: {
       productName,
       artifactName,
       platform: packageResult?.platform,
+      sizeBytes: packageResult?.releaseSize,
+      sha256: packageResult?.releaseSha256,
+      checksumFileName: packageResult?.checksumFileName,
+      signing: packageResult?.signing,
       generatedBy: "desktop-foundation-ci"
     }
   };
@@ -431,7 +513,63 @@ function writeManifest(options, packageJson, tauriConfig, packageResult) {
   if (!existsSync(artifactDir)) mkdirSync(artifactDir, { recursive: true });
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
   console.log("desktop-foundation-ci: wrote " + manifestPath);
-  return manifest;
+  return { manifest, manifestPath };
+}
+
+function releaseAsset(path, kind) {
+  if (!path || !existsSync(path)) return null;
+  return { path, fileName: basename(path), kind, bytes: isDirectory(path) ? undefined : statSync(path).size };
+}
+
+function writeReleasePlan(options, packageJson, tauriConfig, packageResult, manifestResult) {
+  const productName = inferProductName(options, packageJson, tauriConfig);
+  const version = inferVersion(options, packageJson, tauriConfig);
+  const tagName = options.tag ?? "v" + version;
+  const releaseName = options.releaseName ?? productName + " " + version;
+  const planPath = resolve(process.cwd(), options.releasePlanPath ?? join(options.artifactDir, "release-plan.json"));
+  const assets = [
+    releaseAsset(packageResult?.releasePath, "desktop-update-archive"),
+    releaseAsset(packageResult?.checksumPath, "checksum"),
+    releaseAsset(manifestResult?.manifestPath, "update-manifest"),
+    releaseAsset(packageResult?.indexPath, "artifact-index")
+  ].filter(Boolean);
+  const assetPaths = assets.map((asset) => asset.path);
+  const ghReleaseCreate = [
+    "gh",
+    "release",
+    "create",
+    tagName,
+    ...assetPaths,
+    "--title",
+    releaseName,
+    "--notes",
+    options.notes ?? releaseName
+  ];
+  const plan = {
+    productName,
+    version,
+    channel: options.channel,
+    tagName,
+    releaseName,
+    releasePageUrl: options.releaseUrl,
+    downloadUrl: manifestResult?.manifest.downloadUrl,
+    manifestPath: manifestResult?.manifestPath,
+    manifest: manifestResult?.manifest,
+    assets,
+    ghReleaseCreate,
+    signing: packageResult?.signing ?? { notarization: "not-configured" },
+    notarization: {
+      status: "not-configured",
+      env: ["APPLE_ID", "APPLE_TEAM_ID", "APPLE_APP_SPECIFIC_PASSWORD"],
+      note: "Product projects can add notarization before release upload without changing client update code."
+    },
+    generatedAt: new Date().toISOString(),
+    generatedBy: "desktop-foundation-ci"
+  };
+  mkdirSync(dirname(planPath), { recursive: true });
+  writeFileSync(planPath, JSON.stringify(plan, null, 2) + "\n");
+  console.log("desktop-foundation-ci: wrote " + planPath);
+  return plan;
 }
 
 try {
@@ -442,7 +580,8 @@ try {
   const scripts = [...options.requested, ...options.customScripts];
   for (const script of scripts) runScript(script, packageJson, runner, options.strict);
   const packageResult = options.packageDesktop ? packageDesktopArtifacts(options, packageJson, tauriConfig) : null;
-  if (options.manifest) writeManifest(options, packageJson, tauriConfig, packageResult);
+  const manifestResult = options.manifest ? writeManifest(options, packageJson, tauriConfig, packageResult) : null;
+  if (options.releasePlan) writeReleasePlan(options, packageJson, tauriConfig, packageResult, manifestResult);
   console.log("desktop-foundation-ci: complete");
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);

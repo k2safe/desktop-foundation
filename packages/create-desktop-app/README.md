@@ -52,8 +52,9 @@ pnpm exec desktop-foundation-ci \
   --no-build \
   --package-desktop \
   --manifest \
+  --release-plan \
   --channel stable \
   --download-base-url https://github.com/acme/product/releases/download/v1.0.0
 ```
 
-On macOS the package step writes a local `.app`, a release `.zip`, `desktop-artifacts.json`, and `latest.json` under `artifacts/desktop`.
+On macOS the package step writes a local `.app`, a release `.zip`, `.sha256`, `desktop-artifacts.json`, `latest.json`, and optionally `release-plan.json` under `artifacts/desktop`. This works from a developer machine; GitHub Actions is only one possible caller.

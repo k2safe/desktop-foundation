@@ -105,6 +105,7 @@ export interface DownloadFileOptions {
 export interface DownloadFileResult {
   path: string;
   bytes: number;
+  sha256?: string;
   status?: number;
   requestId?: string;
 }
@@ -118,6 +119,8 @@ export interface AppUpdateManifest {
   pubDate?: string;
   releasePageUrl?: string;
   downloadUrl?: string;
+  sha256?: string;
+  size?: number;
   mandatory?: boolean;
   metadata?: Record<string, unknown>;
 }
@@ -132,6 +135,8 @@ export interface AppUpdateState {
   currentVersion?: string;
   update?: AppUpdateInfo;
   downloadedPath?: string;
+  downloadedBytes?: number;
+  downloadedSha256?: string;
   error?: string;
 }
 
@@ -165,6 +170,7 @@ export interface AppUpdateConfig {
   channel?: string;
   headers?: Record<string, string>;
   assertManifestUrl?: (url: string) => void;
+  requireChecksumVerification?: boolean;
 }
 
 export interface FileCapability {

@@ -22,6 +22,12 @@ function inferFileName(url: string, fallback = "download.bin") {
   }
 }
 
+async function hashBlobSha256(blob: Blob) {
+  if (!globalThis.crypto?.subtle) return undefined;
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export function createWebFileCapability(): FileCapability {
   return {
     async openFileDialog(options: OpenFileDialogOptions = {}) {
@@ -82,12 +88,17 @@ export function createWebFileCapability(): FileCapability {
           headers: options.headers,
           signal: controller?.signal
         });
+        if (!response.ok) {
+          throw new DesktopError({ code: "DOWNLOAD_FAILED", message: "File download failed", status: response.status });
+        }
         const blob = await response.blob();
+        const sha256 = await hashBlobSha256(blob);
         const fileName = options.fileName ?? options.path?.split(/[\\/]/).pop() ?? inferFileName(url);
         triggerDownload(blob, fileName);
         return {
           path: fileName,
           bytes: blob.size,
+          sha256,
           status: response.status,
           requestId: response.headers.get("x-request-id") ?? options.requestId
         };

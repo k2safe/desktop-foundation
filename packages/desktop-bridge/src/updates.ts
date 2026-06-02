@@ -26,13 +26,57 @@ function compareVersions(next: string, current: string) {
   return 0;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function metadataString(update: AppUpdateManifest, key: string) {
+  const value = update.metadata?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function metadataNumber(update: AppUpdateManifest, key: string) {
+  const value = update.metadata?.[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function normalizeSha256(value?: string) {
+  return value?.trim().toLowerCase();
+}
+
+function expectedSha256(update: AppUpdateManifest) {
+  return normalizeSha256(update.sha256 ?? metadataString(update, "sha256"));
+}
+
+function expectedSize(update: AppUpdateManifest) {
+  return update.size ?? metadataNumber(update, "size") ?? metadataNumber(update, "sizeBytes");
+}
+
 function normalizeManifest(payload: unknown): AppUpdateManifest | null {
-  if (!payload || typeof payload !== "object") return null;
-  const candidate = payload as { update?: unknown; version?: unknown };
-  const value = candidate.update && typeof candidate.update === "object" ? candidate.update : payload;
-  if (!value || typeof value !== "object") return null;
-  const manifest = value as AppUpdateManifest;
-  return typeof manifest.version === "string" ? manifest : null;
+  if (!isRecord(payload)) return null;
+  const value = isRecord(payload.update) ? payload.update : payload;
+  if (!isRecord(value) || typeof value.version !== "string") return null;
+
+  const metadata = isRecord(value.metadata) ? value.metadata : undefined;
+  const metadataSha256 = typeof metadata?.sha256 === "string" ? metadata.sha256 : undefined;
+  const metadataSize = typeof metadata?.sizeBytes === "number" && Number.isFinite(metadata.sizeBytes)
+    ? metadata.sizeBytes
+    : typeof metadata?.size === "number" && Number.isFinite(metadata.size)
+      ? metadata.size
+      : undefined;
+
+  return {
+    version: value.version,
+    channel: typeof value.channel === "string" ? value.channel : undefined,
+    notes: typeof value.notes === "string" ? value.notes : undefined,
+    pubDate: typeof value.pubDate === "string" ? value.pubDate : undefined,
+    releasePageUrl: typeof value.releasePageUrl === "string" ? value.releasePageUrl : undefined,
+    downloadUrl: typeof value.downloadUrl === "string" ? value.downloadUrl : undefined,
+    sha256: typeof value.sha256 === "string" ? value.sha256 : metadataSha256,
+    size: typeof value.size === "number" && Number.isFinite(value.size) ? value.size : metadataSize,
+    mandatory: typeof value.mandatory === "boolean" ? value.mandatory : undefined,
+    metadata
+  };
 }
 
 function createState(currentVersion?: string): AppUpdateState {
@@ -48,9 +92,16 @@ function toUpdateInfo(manifest: AppUpdateManifest, currentVersion?: string): App
     pubDate: manifest.pubDate,
     releasePageUrl: manifest.releasePageUrl,
     downloadUrl: manifest.downloadUrl,
+    sha256: manifest.sha256,
+    size: manifest.size,
     mandatory: manifest.mandatory,
     metadata: manifest.metadata
   };
+}
+
+function setError(state: AppUpdateState, error: unknown) {
+  state.status = "error";
+  state.error = error instanceof Error ? error.message : String(error);
 }
 
 export function createNoopUpdateCapability(currentVersion?: string): AppUpdateCapability {
@@ -87,30 +138,35 @@ export function createManifestUpdateCapability(
     const channel = options.channel ?? config.channel;
     state.status = "checking";
     state.currentVersion = currentVersion;
+    state.error = undefined;
 
     if (!manifestUrl) {
       state.status = "not-available";
+      state.update = undefined;
       state.checkedAt = Date.now();
       return { available: false, currentVersion, checkedAt: state.checkedAt };
     }
 
     config.assertManifestUrl?.(manifestUrl);
-    const url = new URL(manifestUrl, typeof window === "undefined" ? "http://localhost" : window.location.href);
-    if (channel) url.searchParams.set("channel", channel);
 
     try {
+      const url = new URL(manifestUrl, typeof window === "undefined" ? "http://localhost" : window.location.href);
+      if (channel) url.searchParams.set("channel", channel);
+
       const response = await fetch(url.toString(), {
         headers: { ...config.headers, ...options.headers }
       });
       if (!response.ok) {
         throw new DesktopError({ code: "UPDATE_MANIFEST_FAILED", message: "Failed to load update manifest", status: response.status });
       }
+
       const manifest = normalizeManifest(await response.json());
       if (!manifest) {
         throw new DesktopError({ code: "UPDATE_MANIFEST_INVALID", message: "Update manifest is invalid" });
       }
       if (channel && manifest.channel && manifest.channel !== channel) {
         state.status = "not-available";
+        state.update = undefined;
         state.checkedAt = Date.now();
         return { available: false, currentVersion, checkedAt: state.checkedAt };
       }
@@ -122,8 +178,7 @@ export function createManifestUpdateCapability(
       state.checkedAt = Date.now();
       return { available, currentVersion, update: available ? update : undefined, checkedAt: state.checkedAt };
     } catch (error) {
-      state.status = "error";
-      state.error = error instanceof Error ? error.message : String(error);
+      setError(state, error);
       state.checkedAt = Date.now();
       throw error;
     }
@@ -136,16 +191,52 @@ export function createManifestUpdateCapability(
     if (!update?.downloadUrl) {
       throw new DesktopError({ code: "UPDATE_DOWNLOAD_URL_MISSING", message: "Update download URL is missing" });
     }
+
     state.status = "downloading";
-    const result = await files.downloadFile(update.downloadUrl, {
-      ...options,
-      fileName: options.fileName,
-      requestId: options.requestId ?? "app-update-download",
-      namespace: options.namespace ?? "app-update"
-    });
-    state.status = "downloaded";
-    state.downloadedPath = result.path;
-    return result;
+    state.error = undefined;
+
+    try {
+      const result = await files.downloadFile(update.downloadUrl, {
+        ...options,
+        fileName: options.fileName,
+        requestId: options.requestId ?? "app-update-download",
+        namespace: options.namespace ?? "app-update"
+      });
+
+      const size = expectedSize(update);
+      if (typeof size === "number" && result.bytes !== size) {
+        throw new DesktopError({
+          code: "UPDATE_SIZE_MISMATCH",
+          message: "Downloaded update size does not match the manifest",
+          details: { expected: size, actual: result.bytes }
+        });
+      }
+
+      const sha256 = expectedSha256(update);
+      const actualSha256 = normalizeSha256(result.sha256);
+      if (sha256 && actualSha256 && sha256 !== actualSha256) {
+        throw new DesktopError({
+          code: "UPDATE_CHECKSUM_MISMATCH",
+          message: "Downloaded update checksum does not match the manifest",
+          details: { expected: sha256, actual: actualSha256 }
+        });
+      }
+      if (sha256 && !actualSha256 && config.requireChecksumVerification) {
+        throw new DesktopError({
+          code: "UPDATE_CHECKSUM_UNVERIFIED",
+          message: "Downloaded update checksum could not be verified by the current file capability"
+        });
+      }
+
+      state.status = "downloaded";
+      state.downloadedPath = result.path;
+      state.downloadedBytes = result.bytes;
+      state.downloadedSha256 = actualSha256;
+      return result;
+    } catch (error) {
+      setError(state, error);
+      throw error;
+    }
   }
 
   async function openUpdatePage(update = state.update) {

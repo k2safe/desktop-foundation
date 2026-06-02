@@ -12,8 +12,8 @@
     "preview": "vite preview --host=127.0.0.1",
     "type-check": "tsc -p tsconfig.json --noEmit",
     "ci": "desktop-foundation-ci --type-check --build --strict",
-    "package:desktop": "pnpm build:desktop && desktop-foundation-ci --no-type-check --no-build --package-desktop --manifest",
-    "release:manifest": "desktop-foundation-ci --no-type-check --no-build --manifest"
+    "package:desktop": "pnpm build:desktop && desktop-foundation-ci --no-type-check --no-build --package-desktop --manifest --release-plan",
+    "release:manifest": "desktop-foundation-ci --no-type-check --no-build --manifest --release-plan"
   },
   "dependencies": {
     "@desktop-foundation/app-shell": "workspace:*",

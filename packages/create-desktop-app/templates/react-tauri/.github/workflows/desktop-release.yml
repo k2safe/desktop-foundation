@@ -47,6 +47,7 @@ jobs:
           --no-build
           --package-desktop
           --manifest
+          --release-plan
           --channel "${{ inputs.channel || 'stable' }}"
           --download-base-url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
           --release-url "https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"

@@ -89,7 +89,7 @@ if (check.available) {
 }
 ```
 
-Products can keep release publishing in CI/CD while rendering update status in the desktop client.
+Products can keep release publishing in CI/CD or a local release script while rendering update status in the desktop client. Manifest updates support `downloadUrl`, `sha256`, and `size`; when the active file capability returns a checksum, the bridge verifies it before marking the update as downloaded.
 
 ## Files
 
