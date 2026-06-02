@@ -22,6 +22,8 @@ create-desktop-app apps/product-desktop \
 
 The generated Tauri entry uses `DesktopCore::persistent_platform_with_http_adapter`, so product apps get the shared HTTP transport, session persistence, secure storage, file commands, window commands, clipboard, notification, and open-external contract on day one.
 
+The Tauri template also emits `src-tauri/capabilities/default.json` with `core:default` and `desktop-core:default` enabled. That keeps the generated desktop package aligned with Tauri 2 ACL rules without product teams editing the Rust plugin manifest.
+
 ## Template Selection
 
 Generated apps accept a foundation template id through `--template`. Current ids are `default`, `admin`, `command`, `merchant`, `ledger`, `studio`, and `dark`. Templates control the shell layout, login layout, surface density, and theme tokens while keeping product code outside component internals.

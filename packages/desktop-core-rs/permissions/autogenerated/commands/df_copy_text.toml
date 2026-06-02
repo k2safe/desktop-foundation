@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-df-copy-text"
+description = "Enables the df_copy_text command without any pre-configured scope."
+commands.allow = ["df_copy_text"]
+
+[[permission]]
+identifier = "deny-df-copy-text"
+description = "Denies the df_copy_text command without any pre-configured scope."
+commands.deny = ["df_copy_text"]

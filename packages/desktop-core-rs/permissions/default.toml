@@ -1,0 +1,37 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = """
+Default permissions for desktop-foundation core capabilities.
+
+#### Granted Permissions
+
+This exposes the platform bridge commands used by the TypeScript desktop client:
+HTTP, session, storage, secure storage, desktop actions, file operations, downloads,
+and window state.
+"""
+
+permissions = [
+  "allow-df-http-request",
+  "allow-df-session-get",
+  "allow-df-session-set",
+  "allow-df-session-clear",
+  "allow-df-storage-get",
+  "allow-df-storage-set",
+  "allow-df-storage-remove",
+  "allow-df-open-external",
+  "allow-df-copy-text",
+  "allow-df-notify",
+  "allow-df-file-open-dialog",
+  "allow-df-file-save-dialog",
+  "allow-df-file-read-text",
+  "allow-df-file-write-text",
+  "allow-df-file-export-json",
+  "allow-df-file-download",
+  "allow-df-secure-storage-get",
+  "allow-df-secure-storage-set",
+  "allow-df-secure-storage-remove",
+  "allow-df-window-get-state",
+  "allow-df-window-set-state",
+  "allow-df-window-set-title"
+]

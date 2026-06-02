@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use base64::engine::general_purpose;
 use base64::Engine as _;
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 use crate::adapters::{
     DesktopAdapter, FileAdapter, HttpAdapter, NoopFileAdapter, NoopHttpAdapter, NoopSecureStorageAdapter,
@@ -430,10 +431,15 @@ impl DesktopCore {
             content_base64: body_base64,
             create_dir: true,
         })?;
+        let sha256 = Sha256::digest(&bytes)
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
         Ok(DownloadFileReply {
             path: path.to_string_lossy().to_string(),
             bytes: bytes.len() as u64,
             status: response.status,
+            sha256: Some(sha256),
             request_id: response.request_id,
         })
     }

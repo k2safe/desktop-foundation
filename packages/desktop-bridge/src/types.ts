@@ -110,7 +110,17 @@ export interface DownloadFileResult {
   requestId?: string;
 }
 
-export type AppUpdateStatus = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
+export type AppUpdateStatus =
+  | "idle"
+  | "checking"
+  | "available"
+  | "not-available"
+  | "downloading"
+  | "downloaded"
+  | "installable"
+  | "installing"
+  | "installed"
+  | "error";
 
 export interface AppUpdateManifest {
   version: string;
@@ -137,6 +147,8 @@ export interface AppUpdateState {
   downloadedPath?: string;
   downloadedBytes?: number;
   downloadedSha256?: string;
+  installMessage?: string;
+  installedAt?: number;
   error?: string;
 }
 
@@ -156,10 +168,26 @@ export interface AppUpdateCheckResult {
 
 export type AppUpdateDownloadOptions = DownloadFileOptions;
 
+export interface AppUpdateInstallContext {
+  update: AppUpdateInfo;
+  downloadedPath?: string;
+  downloadedBytes?: number;
+  downloadedSha256?: string;
+}
+
+export interface AppUpdateInstallResult {
+  status?: Extract<AppUpdateStatus, "installable" | "installing" | "installed">;
+  message?: string;
+  path?: string;
+  relaunchRequired?: boolean;
+}
+
+export type AppUpdateInstallAdapter = (context: AppUpdateInstallContext) => Promise<AppUpdateInstallResult | void>;
+
 export interface AppUpdateCapability {
   checkForUpdate(options?: AppUpdateCheckOptions): Promise<AppUpdateCheckResult>;
   downloadUpdate(update?: AppUpdateInfo, options?: AppUpdateDownloadOptions): Promise<DownloadFileResult>;
-  installUpdate(update?: AppUpdateInfo): Promise<void>;
+  installUpdate(update?: AppUpdateInfo): Promise<AppUpdateInstallResult | void>;
   openUpdatePage(update?: AppUpdateInfo): Promise<void>;
   getState(): AppUpdateState;
 }
@@ -171,6 +199,7 @@ export interface AppUpdateConfig {
   headers?: Record<string, string>;
   assertManifestUrl?: (url: string) => void;
   requireChecksumVerification?: boolean;
+  installUpdate?: AppUpdateInstallAdapter;
 }
 
 export interface FileCapability {

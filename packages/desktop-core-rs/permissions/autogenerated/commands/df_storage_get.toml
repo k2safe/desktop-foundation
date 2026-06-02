@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-df-storage-get"
+description = "Enables the df_storage_get command without any pre-configured scope."
+commands.allow = ["df_storage_get"]
+
+[[permission]]
+identifier = "deny-df-storage-get"
+description = "Denies the df_storage_get command without any pre-configured scope."
+commands.deny = ["df_storage_get"]

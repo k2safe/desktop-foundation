@@ -89,7 +89,25 @@ if (check.available) {
 }
 ```
 
-Products can keep release publishing in CI/CD or a local release script while rendering update status in the desktop client. Manifest updates support `downloadUrl`, `sha256`, and `size`; when the active file capability returns a checksum, the bridge verifies it before marking the update as downloaded.
+Products can keep release publishing in CI/CD or a local release script while rendering update status in the desktop client. Manifest updates support `downloadUrl`, `sha256`, and `size`; when the active file capability returns a checksum, the bridge verifies it before marking the update as downloaded. Update downloads default to `auth: false`, which keeps product session tokens out of public release hosts.
+
+`client.updates.installUpdate(update)` is adapter-backed. Manifest updates expose `installable`, `installing`, and `installed` states, but the product decides how to apply the package:
+
+```ts
+createDesktopClient({
+  product: "admin",
+  apiBaseURL: "https://api.example.com",
+  version: "1.0.0",
+  updateConfig: {
+    manifestUrl: "https://releases.example.com/admin/latest.json",
+    requireChecksumVerification: true,
+    installUpdate: async ({ update, downloadedPath }) => {
+      await installer.apply(downloadedPath, update.version);
+      return { status: "installed", message: "Update installed. Restart the app." };
+    }
+  }
+});
+```
 
 ## Files
 
@@ -166,6 +184,15 @@ let core = DesktopCore::persistent_platform_with_http_adapter(
 ```
 
 Command groups:
+
+Tauri 2 products must grant the foundation plugin in their capability file:
+
+```json
+{
+  "permissions": ["core:default", "desktop-core:default"]
+}
+```
+
 
 - HTTP: `df_http_request`
 - Session: `df_session_get`, `df_session_set`, `df_session_clear`

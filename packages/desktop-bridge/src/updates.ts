@@ -6,6 +6,8 @@ import type {
   AppUpdateConfig,
   AppUpdateDownloadOptions,
   AppUpdateInfo,
+  AppUpdateInstallContext,
+  AppUpdateInstallResult,
   AppUpdateManifest,
   AppUpdateState,
   DesktopCapability,
@@ -152,6 +154,11 @@ export function createManifestUpdateCapability(
     state.status = "checking";
     state.currentVersion = currentVersion;
     state.error = undefined;
+    state.downloadedPath = undefined;
+    state.downloadedBytes = undefined;
+    state.downloadedSha256 = undefined;
+    state.installMessage = undefined;
+    state.installedAt = undefined;
 
     if (!manifestUrl) {
       state.status = "not-available";
@@ -208,6 +215,8 @@ export function createManifestUpdateCapability(
 
     state.status = "downloading";
     state.error = undefined;
+    state.installMessage = undefined;
+    state.installedAt = undefined;
 
     try {
       const result = await files.downloadFile(update.downloadUrl, {
@@ -247,6 +256,8 @@ export function createManifestUpdateCapability(
       state.downloadedPath = result.path;
       state.downloadedBytes = result.bytes;
       state.downloadedSha256 = actualSha256;
+      state.installMessage = undefined;
+      state.installedAt = undefined;
       return result;
     } catch (error) {
       setError(state, error);
@@ -265,8 +276,46 @@ export function createManifestUpdateCapability(
   return {
     checkForUpdate,
     downloadUpdate,
-    async installUpdate() {
-      throw new DesktopError({ code: "UPDATE_INSTALL_UNAVAILABLE", message: "Update install is not configured" });
+    async installUpdate(update = state.update): Promise<AppUpdateInstallResult> {
+      if (!update) {
+        throw new DesktopError({ code: "UPDATE_INSTALL_UPDATE_MISSING", message: "Update information is missing" });
+      }
+      if (!state.downloadedPath) {
+        state.status = "installable";
+        state.installMessage = "Download the update before installing it.";
+        throw new DesktopError({ code: "UPDATE_INSTALL_DOWNLOAD_MISSING", message: state.installMessage });
+      }
+
+      const context: AppUpdateInstallContext = {
+        update,
+        downloadedPath: state.downloadedPath,
+        downloadedBytes: state.downloadedBytes,
+        downloadedSha256: state.downloadedSha256
+      };
+
+      state.status = "installing";
+      state.error = undefined;
+      state.installMessage = undefined;
+
+      try {
+        const adapterResult = await config.installUpdate?.(context);
+        const result: AppUpdateInstallResult = adapterResult ?? (config.installUpdate
+          ? { status: "installed", message: "Update install completed.", path: state.downloadedPath }
+          : {
+              status: "installable",
+              message: "Update package is downloaded and verified. Provide an install adapter to apply it.",
+              path: state.downloadedPath,
+              relaunchRequired: true
+            });
+
+        state.status = result.status ?? "installed";
+        state.installMessage = result.message;
+        if (state.status === "installed") state.installedAt = Date.now();
+        return result;
+      } catch (error) {
+        setError(state, error);
+        throw error;
+      }
     },
     openUpdatePage,
     getState: () => ({ ...state })

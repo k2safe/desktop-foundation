@@ -160,9 +160,16 @@ createDesktopClient({
   apiBaseURL: 'https://api.example.com',
   updateConfig: {
     manifestUrl: 'https://releases.example.com/admin/latest.json',
-    channel: 'stable'
+    channel: 'stable',
+    requireChecksumVerification: true,
+    installUpdate: async ({ update, downloadedPath }) => {
+      await nativeInstaller.apply(downloadedPath, update.version);
+      return { status: 'installed', message: 'Update installed. Restart the app.' };
+    }
   }
 });
 ```
 
-For Tauri updater, product apps pass adapters through `nativePlugins`; the UI still calls `client.updates`.
+`downloadUpdate` defaults to `auth: false`, so public GitHub Releases or static manifest hosts do not receive product session tokens. If a private update server requires auth, pass `client.updates.downloadUpdate(update, { auth: true })` from product UI.
+
+`installUpdate` is intentionally an adapter boundary. Without `updateConfig.installUpdate`, the manifest updater moves a verified package to `installable` and returns a message telling the product to provide an installer. Products can keep it lightweight by opening release notes, opening the downloaded package, or handing the path to a native installer. Products that use Tauri updater can pass adapters through `nativePlugins`; the UI still calls `client.updates`.

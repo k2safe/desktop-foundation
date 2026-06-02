@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-df-notify"
+description = "Enables the df_notify command without any pre-configured scope."
+commands.allow = ["df_notify"]
+
+[[permission]]
+identifier = "deny-df-notify"
+description = "Denies the df_notify command without any pre-configured scope."
+commands.deny = ["df_notify"]

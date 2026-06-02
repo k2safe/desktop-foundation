@@ -130,6 +130,8 @@ pub struct DownloadFileReply {
     pub path: String,
     pub bytes: u64,
     pub status: u16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sha256: Option<String>,
     #[serde(default)]
     pub request_id: Option<String>,
 }

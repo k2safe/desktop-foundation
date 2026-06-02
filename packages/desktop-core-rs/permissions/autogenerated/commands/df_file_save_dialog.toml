@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-df-file-save-dialog"
+description = "Enables the df_file_save_dialog command without any pre-configured scope."
+commands.allow = ["df_file_save_dialog"]
+
+[[permission]]
+identifier = "deny-df-file-save-dialog"
+description = "Denies the df_file_save_dialog command without any pre-configured scope."
+commands.deny = ["df_file_save_dialog"]

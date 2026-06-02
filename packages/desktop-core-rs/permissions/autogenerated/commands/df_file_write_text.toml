@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-df-file-write-text"
+description = "Enables the df_file_write_text command without any pre-configured scope."
+commands.allow = ["df_file_write_text"]
+
+[[permission]]
+identifier = "deny-df-file-write-text"
+description = "Denies the df_file_write_text command without any pre-configured scope."
+commands.deny = ["df_file_write_text"]

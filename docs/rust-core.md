@@ -64,6 +64,16 @@ When registered as the `desktop-core` plugin, TypeScript can invoke them through
 
 `@desktop-foundation/bridge` exports `createTauriHttpTransport` and `createTauriDesktopCapability` for this command contract.
 
+For Tauri 2 products, enable the plugin permission set in `src-tauri/capabilities/default.json`:
+
+```json
+{
+  "permissions": ["core:default", "desktop-core:default"]
+}
+```
+
+The scaffold includes this by default. Products with tighter policies can replace `desktop-core:default` with specific generated permissions such as `desktop-core:allow-df-file-download`.
+
 It also exports `createTauriDesktopClient`, which wires:
 
 - Rust HTTP command transport
