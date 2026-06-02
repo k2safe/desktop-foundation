@@ -2497,6 +2497,8 @@ body {
 
 .df-desktop-layout {
   --df-desktop-top-offset: 36px;
+  --df-desktop-window-control-left-offset: 112px;
+  --df-desktop-window-control-top-offset: 34px;
 
   grid-template-columns: 260px minmax(0, 1fr);
   background: var(--df-color-dark);
@@ -3244,9 +3246,12 @@ body {
 .df-desktop-layout--topnav .df-topbar {
   position: relative;
   z-index: 30;
-  min-height: 72px;
-  gap: 12px;
-  padding-inline: 22px;
+  min-height: calc(var(--df-desktop-window-control-top-offset) + 66px);
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 14px;
+  row-gap: 12px;
+  padding: calc(var(--df-desktop-window-control-top-offset) + 12px) 28px 16px;
   border-bottom-color: color-mix(in srgb, var(--df-color-dark), white 22%);
   background: linear-gradient(180deg, color-mix(in srgb, var(--df-color-dark), white 5%), var(--df-color-dark));
   color: var(--df-color-text-inverse);
@@ -3254,12 +3259,15 @@ body {
 }
 
 .df-desktop-layout--topnav .df-topbar__left {
-  flex: 1;
-  gap: 14px;
+  flex: 1 1 540px;
+  flex-wrap: wrap;
+  gap: 18px;
 }
 
 .df-desktop-layout--topnav .df-topbar__right {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -3285,11 +3293,12 @@ body {
 }
 
 .df-desktop-layout--topnav .df-topbar__left .df-field {
-  width: min(260px, 20vw);
+  width: clamp(240px, 24vw, 360px);
 }
 
 .df-desktop-layout--topnav .df-topbar__right .df-field {
-  min-width: 140px;
+  width: clamp(148px, 14vw, 220px);
+  min-width: 0;
 }
 
 .df-desktop-layout--topnav .df-topbar__right .df-button--sm {
@@ -3536,7 +3545,7 @@ body {
 }
 
 .df-template-ledger .df-desktop-layout--topnav .df-topbar {
-  min-height: 68px;
+  min-height: calc(var(--df-desktop-window-control-top-offset) + 66px);
   border-bottom-color: color-mix(in srgb, var(--df-color-primary), transparent 64%);
   background: linear-gradient(180deg, color-mix(in srgb, var(--df-color-dark), white 6%), var(--df-color-dark));
 }
@@ -3565,7 +3574,7 @@ body {
 }
 
 .df-template-studio .df-desktop-layout--topnav .df-topbar {
-  min-height: 70px;
+  min-height: calc(var(--df-desktop-window-control-top-offset) + 66px);
   border-bottom-color: color-mix(in srgb, var(--df-color-border), transparent 18%);
   background: color-mix(in srgb, var(--df-color-surface), transparent 4%);
   color: var(--df-color-text);
@@ -3655,7 +3664,7 @@ body {
   .df-desktop-layout--topnav .df-topbar {
     align-items: flex-start;
     min-height: auto;
-    padding-block: 14px;
+    padding: 50px 18px 14px;
   }
 
   .df-desktop-layout--topnav .df-topbar__left,
