@@ -3501,6 +3501,104 @@ body {
   min-height: 34px;
 }
 
+
+.df-template-command .df-sidebar {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--df-color-dark), white 7%), var(--df-color-dark) 76%),
+    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--df-color-info), transparent 72%), transparent 34%);
+}
+
+.df-template-command .df-sidebar__brand {
+  min-height: 54px;
+}
+
+.df-template-command .df-sidebar__nav {
+  padding: 12px;
+}
+
+.df-template-command .df-sidebar__item {
+  min-height: 34px;
+  border-radius: calc(var(--df-radius-md) - 1px);
+}
+
+.df-template-command .df-sidebar__item.is-active {
+  background: linear-gradient(135deg, var(--df-color-primary), color-mix(in srgb, var(--df-color-info), black 8%));
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--df-color-primary), transparent 70%);
+}
+
+.df-template-command .df-topbar {
+  min-height: 60px;
+}
+
+.df-template-command .df-metric__value,
+.df-template-command .df-amount__value {
+  font-variant-numeric: tabular-nums;
+}
+
+.df-template-ledger .df-desktop-layout--topnav .df-topbar {
+  min-height: 68px;
+  border-bottom-color: color-mix(in srgb, var(--df-color-primary), transparent 64%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--df-color-dark), white 6%), var(--df-color-dark));
+}
+
+.df-template-ledger .df-desktop-layout__content {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--df-color-bg), white 32%), var(--df-color-bg));
+}
+
+.df-template-ledger .df-table th {
+  height: 42px;
+  background: color-mix(in srgb, var(--df-color-primary-soft), var(--df-color-surface) 50%);
+  color: color-mix(in srgb, var(--df-color-text), var(--df-color-primary) 18%);
+}
+
+.df-template-ledger .df-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.df-template-ledger .df-badge--success {
+  color: var(--df-color-success);
+}
+
+.df-template-studio .df-desktop-layout {
+  background: color-mix(in srgb, var(--df-color-bg), var(--df-color-dark) 8%);
+}
+
+.df-template-studio .df-desktop-layout--topnav .df-topbar {
+  min-height: 70px;
+  border-bottom-color: color-mix(in srgb, var(--df-color-border), transparent 18%);
+  background: color-mix(in srgb, var(--df-color-surface), transparent 4%);
+  color: var(--df-color-text);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.86) inset, 0 12px 28px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.df-template-studio .df-desktop-layout--topnav .df-topbar__brand,
+.df-template-studio .df-desktop-layout--topnav .df-topnav__item,
+.df-template-studio .df-desktop-layout--topnav .df-user-menu__trigger {
+  color: var(--df-color-text);
+}
+
+.df-template-studio .df-desktop-layout--topnav .df-topnav__item:hover,
+.df-template-studio .df-desktop-layout--topnav .df-topnav__item.is-active,
+.df-template-studio .df-desktop-layout--topnav .df-topnav__node:focus-within > .df-topnav__item {
+  background: var(--df-color-primary-soft);
+  color: var(--df-color-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--df-color-primary), transparent 82%) inset;
+}
+
+.df-template-studio .df-desktop-layout--topnav .df-user-menu__avatar {
+  border-color: color-mix(in srgb, var(--df-color-primary), transparent 72%);
+  background: var(--df-color-primary-soft);
+  color: var(--df-color-primary);
+}
+
+.df-template-studio .df-filter-bar,
+.df-template-studio .df-content-panel,
+.df-template-studio .df-table-wrap {
+  border-radius: calc(var(--df-radius-xl) + 10px);
+}
+
 .df-theme[data-theme="dark"] {
   --df-panel-border: color-mix(in srgb, var(--df-color-border), transparent 10%);
   --df-panel-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 18px 42px rgba(0, 0, 0, 0.24);

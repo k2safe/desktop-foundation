@@ -8,7 +8,8 @@
     "build": "pnpm -r build",
     "type-check": "pnpm -r type-check",
     "lint": "pnpm -r lint",
-    "visual:regression": "node scripts/visual-regression.mjs"
+    "visual:regression": "node scripts/visual-regression.mjs",
+    "visual:regression:update": "node scripts/visual-regression.mjs --update"
   },
   "devDependencies": {
     "typescript": "~5.8.2"

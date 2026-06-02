@@ -7,7 +7,8 @@ Open `index.html` directly in a browser to inspect the core UI surfaces. The pag
 Optional screenshot workflow:
 
 ```bash
-node scripts/visual-regression.mjs --update
+pnpm visual:regression:update
+pnpm visual:regression
 ```
 
-Run from the repository root. If Playwright is installed, screenshots are written to `examples/component-docs/__screenshots__`.
+Run from the repository root. With Playwright installed, `visual:regression:update` writes baselines for every built-in template at desktop and mobile widths. `visual:regression` captures actual screenshots into `examples/component-docs/__screenshots__/.actual` and compares them with the committed baselines. Without Playwright, the script exits successfully and reports that visual capture was skipped.

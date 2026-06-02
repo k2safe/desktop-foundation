@@ -1,6 +1,6 @@
 import type { DesktopLayoutVariant, DesktopTheme, DesktopThemeInput, LoginShellVariant } from "@desktop-foundation/ui-react";
 
-export type ThemeTemplateCategory = "system" | "admin" | "merchant" | "dark";
+export type ThemeTemplateCategory = "system" | "admin" | "merchant" | "dark" | "ops" | "finance" | "minimal";
 export type ThemeTemplateSurfaceVariant = "crisp" | "glass" | "dense";
 
 export interface ThemeTemplatePreview {
@@ -28,6 +28,118 @@ export interface ThemeTemplate {
 }
 
 export type ThemeTemplateSource = ThemeTemplate | ThemeTemplateId | string;
+
+export type WindowChromePresetId = "foundation" | "native" | "frameless";
+export type WindowChromePlatform = "macos" | "windows" | "linux";
+export type TauriTitleBarStyle = "Visible" | "Transparent" | "Overlay";
+
+export interface LogicalPosition {
+  x: number;
+  y: number;
+}
+
+export interface PlatformWindowChrome {
+  decorations?: boolean;
+  hiddenTitle?: boolean;
+  titleBarStyle?: TauriTitleBarStyle;
+  trafficLightPosition?: LogicalPosition;
+  backgroundColor?: string;
+  shadow?: boolean;
+  transparent?: boolean;
+}
+
+export interface WindowChromePreset {
+  id: WindowChromePresetId;
+  name: string;
+  description: string;
+  defaultBackgroundColor: string;
+  platforms: Record<WindowChromePlatform, PlatformWindowChrome>;
+}
+
+export interface TauriWindowChromeConfig extends PlatformWindowChrome {
+  backgroundColor?: string;
+}
+
+export const foundationWindowChromePreset: WindowChromePreset = {
+  id: "foundation",
+  name: "Foundation Chrome",
+  description: "Overlay macOS title bar with native window controls and conservative decorated windows elsewhere.",
+  defaultBackgroundColor: "#050314",
+  platforms: {
+    macos: {
+      decorations: true,
+      hiddenTitle: true,
+      titleBarStyle: "Overlay",
+      trafficLightPosition: { x: 18, y: 18 },
+      backgroundColor: "#050314",
+      shadow: true
+    },
+    windows: {
+      decorations: true,
+      backgroundColor: "#050314",
+      shadow: true
+    },
+    linux: {
+      decorations: true,
+      backgroundColor: "#050314",
+      shadow: true
+    }
+  }
+};
+
+export const nativeWindowChromePreset: WindowChromePreset = {
+  id: "native",
+  name: "Native Chrome",
+  description: "Keep the operating system title bar intact for products that prefer platform defaults.",
+  defaultBackgroundColor: "#ffffff",
+  platforms: {
+    macos: { decorations: true, hiddenTitle: false, titleBarStyle: "Visible", backgroundColor: "#ffffff", shadow: true },
+    windows: { decorations: true, backgroundColor: "#ffffff", shadow: true },
+    linux: { decorations: true, backgroundColor: "#ffffff", shadow: true }
+  }
+};
+
+export const framelessWindowChromePreset: WindowChromePreset = {
+  id: "frameless",
+  name: "Frameless Chrome",
+  description: "No native decorations. Product apps must provide their own drag and window controls.",
+  defaultBackgroundColor: "#050314",
+  platforms: {
+    macos: { decorations: false, hiddenTitle: true, backgroundColor: "#050314", shadow: true },
+    windows: { decorations: false, backgroundColor: "#050314", shadow: true },
+    linux: { decorations: false, backgroundColor: "#050314", shadow: true }
+  }
+};
+
+export const windowChromePresets = {
+  foundation: foundationWindowChromePreset,
+  native: nativeWindowChromePreset,
+  frameless: framelessWindowChromePreset
+};
+
+export function getWindowChromePreset(presetId: WindowChromePresetId | string = "foundation"): WindowChromePreset {
+  return windowChromePresets[presetId as WindowChromePresetId] ?? foundationWindowChromePreset;
+}
+
+export function getWindowChromePlatformConfig(
+  preset: WindowChromePresetId | WindowChromePreset = "foundation",
+  platform: WindowChromePlatform = "macos"
+): PlatformWindowChrome {
+  const resolved = typeof preset === "string" ? getWindowChromePreset(preset) : preset;
+  return resolved.platforms[platform];
+}
+
+export function createTauriWindowChromeConfig(
+  preset: WindowChromePresetId | WindowChromePreset = "foundation",
+  platform: WindowChromePlatform = "macos"
+): TauriWindowChromeConfig {
+  const resolved = typeof preset === "string" ? getWindowChromePreset(preset) : preset;
+  const chrome = resolved.platforms[platform];
+  return {
+    ...chrome,
+    backgroundColor: chrome.backgroundColor ?? resolved.defaultBackgroundColor
+  };
+}
 
 function mergeTheme(base: DesktopTheme, overrides: DesktopThemeInput = {}): DesktopTheme {
   return {
@@ -150,6 +262,77 @@ export const darkThemePreset: DesktopTheme = {
   }
 };
 
+export const commandThemePreset: DesktopTheme = {
+  ...defaultThemePreset,
+  id: "command",
+  brand: { name: "Command" },
+  colors: {
+    ...defaultThemePreset.colors,
+    primary: "#2563eb",
+    primaryHover: "#1d4ed8",
+    primarySoft: "#e0f2fe",
+    dark: "#07111f",
+    background: "#eef3f8",
+    surface: "#ffffff",
+    elevated: "#f8fbff",
+    border: "#dbe5ef",
+    strongBorder: "#b9c7d8",
+    text: "#101828",
+    mutedText: "#607086",
+    success: "#0f9f6e",
+    warning: "#d97706",
+    info: "#0e7490"
+  },
+  density: "compact"
+};
+
+export const ledgerThemePreset: DesktopTheme = {
+  ...defaultThemePreset,
+  id: "ledger",
+  brand: { name: "Ledger" },
+  colors: {
+    ...defaultThemePreset.colors,
+    primary: "#177e5f",
+    primaryHover: "#10674d",
+    primarySoft: "#e9f8f1",
+    dark: "#0f1720",
+    background: "#f4f7f2",
+    surface: "#ffffff",
+    elevated: "#fbfcf8",
+    border: "#dfe7dc",
+    strongBorder: "#bdcabb",
+    text: "#111827",
+    mutedText: "#66725f",
+    success: "#177e5f",
+    warning: "#b7791f",
+    info: "#2563eb"
+  }
+};
+
+export const studioThemePreset: DesktopTheme = {
+  ...defaultThemePreset,
+  id: "studio",
+  brand: { name: "Studio" },
+  colors: {
+    ...defaultThemePreset.colors,
+    primary: "#365ac7",
+    primaryHover: "#2947a3",
+    primarySoft: "#edf2ff",
+    dark: "#162033",
+    background: "#f6f7fb",
+    surface: "#ffffff",
+    elevated: "#ffffff",
+    border: "#e0e5ef",
+    strongBorder: "#c2cada",
+    text: "#111827",
+    mutedText: "#697386",
+    success: "#14a46c",
+    warning: "#c47a14",
+    info: "#2563eb"
+  },
+  density: "comfortable"
+};
+
 export const defaultThemeTemplate: ThemeTemplate = {
   id: "default",
   name: "Foundation Light",
@@ -230,10 +413,73 @@ export const darkThemeTemplate: ThemeTemplate = {
   theme: darkThemePreset
 };
 
+export const commandThemeTemplate: ThemeTemplate = {
+  id: "command",
+  name: "Command Center",
+  description: "Compact sidebar, workbench login, and telemetry-friendly dense surfaces for operations consoles.",
+  category: "ops",
+  preview: {
+    primary: commandThemePreset.colors.primary,
+    chrome: commandThemePreset.colors.dark,
+    background: commandThemePreset.colors.background,
+    surface: commandThemePreset.colors.surface
+  },
+  layout: {
+    appShell: "sidebar",
+    login: "workbench",
+    surface: "dense"
+  },
+  className: "df-template-command df-surface-dense",
+  theme: commandThemePreset
+};
+
+export const ledgerThemeTemplate: ThemeTemplate = {
+  id: "ledger",
+  name: "Ledger Console",
+  description: "Top navigation, centered login, and crisp financial tables for reconciliation tools.",
+  category: "finance",
+  preview: {
+    primary: ledgerThemePreset.colors.primary,
+    chrome: ledgerThemePreset.colors.dark,
+    background: ledgerThemePreset.colors.background,
+    surface: ledgerThemePreset.colors.surface
+  },
+  layout: {
+    appShell: "topnav",
+    login: "centered",
+    surface: "crisp"
+  },
+  className: "df-template-ledger df-surface-crisp",
+  theme: ledgerThemePreset
+};
+
+export const studioThemeTemplate: ThemeTemplate = {
+  id: "studio",
+  name: "Clean Studio",
+  description: "Top navigation, split login, relaxed controls, and glass surfaces for lighter SaaS products.",
+  category: "minimal",
+  preview: {
+    primary: studioThemePreset.colors.primary,
+    chrome: studioThemePreset.colors.dark,
+    background: studioThemePreset.colors.background,
+    surface: studioThemePreset.colors.surface
+  },
+  layout: {
+    appShell: "topnav",
+    login: "split",
+    surface: "glass"
+  },
+  className: "df-template-studio df-surface-glass",
+  theme: studioThemePreset
+};
+
 export const themeTemplateMap = {
   default: defaultThemeTemplate,
   admin: adminThemeTemplate,
+  command: commandThemeTemplate,
   merchant: merchantThemeTemplate,
+  ledger: ledgerThemeTemplate,
+  studio: studioThemeTemplate,
   dark: darkThemeTemplate
 };
 
@@ -242,14 +488,20 @@ export type ThemeTemplateId = keyof typeof themeTemplateMap;
 export const themeTemplates: ThemeTemplate[] = [
   defaultThemeTemplate,
   adminThemeTemplate,
+  commandThemeTemplate,
   merchantThemeTemplate,
+  ledgerThemeTemplate,
+  studioThemeTemplate,
   darkThemeTemplate
 ];
 
 export const themePresets = {
   default: defaultThemePreset,
   admin: adminThemePreset,
+  command: commandThemePreset,
   merchant: merchantThemePreset,
+  ledger: ledgerThemePreset,
+  studio: studioThemePreset,
   dark: darkThemePreset
 };
 

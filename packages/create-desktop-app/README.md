@@ -5,7 +5,7 @@ Product desktop app scaffold for `desktop-foundation`.
 ## Usage
 
 ```bash
-pnpm create @desktop-foundation/desktop-app apps/product-desktop --product product --app-name "Product Desktop"
+pnpm create @desktop-foundation/desktop-app apps/product-desktop --product product --app-name "Product Desktop" --template command
 ```
 
 Local development:
@@ -24,3 +24,9 @@ node packages/create-desktop-app/bin/create-desktop-app.mjs examples/product-des
 - `src-tauri`
 
 The scaffold contains no product business model, API path, permission model, or route normalization logic.
+
+## Templates
+
+Use `--template` to pick a foundation template at scaffold time. Available ids: `default`, `admin`, `command`, `merchant`, `ledger`, `studio`, `dark`.
+
+The generated app stores the template in `src/theme.ts`, so product teams can switch templates without editing component internals.

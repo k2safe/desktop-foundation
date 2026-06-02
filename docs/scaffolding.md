@@ -8,7 +8,8 @@
 create-desktop-app apps/product-desktop \
   --product product \
   --app-name "Product Desktop" \
-  --api-base "http://127.0.0.1:8891"
+  --api-base "http://127.0.0.1:8891" \
+  --template command
 ```
 
 ## Generated Files
@@ -21,16 +22,23 @@ create-desktop-app apps/product-desktop \
 
 The generated Tauri entry uses `DesktopCore::persistent_platform_with_http_adapter`, so product apps get the shared HTTP transport, session persistence, secure storage, file commands, window commands, clipboard, notification, and open-external contract on day one.
 
+## Template Selection
+
+Generated apps accept a foundation template id through `--template`. Current ids are `default`, `admin`, `command`, `merchant`, `ledger`, `studio`, and `dark`. Templates control the shell layout, login layout, surface density, and theme tokens while keeping product code outside component internals.
+
 ## Window Chrome
 
-The scaffold applies the foundation desktop chrome by default on macOS:
+The scaffold applies the foundation desktop chrome preset by default. The preset keeps the native operating-system controls while removing the awkward gray title strip on macOS:
 
-- `hiddenTitle: true` hides the native title text.
-- `titleBarStyle: "Overlay"` removes the gray native title strip while keeping normal window controls.
-- `trafficLightPosition` places the red/yellow/green controls on the dark shell background.
-- `--df-desktop-top-offset` reserves the web safe area so product navigation does not collide with native controls.
+| Preset | macOS | Windows / Linux | Use case |
+| --- | --- | --- | --- |
+| `foundation` | decorated window, hidden title, overlay title bar, traffic lights on the dark shell | decorated native frame | default product desktop shell |
+| `native` | fully native title bar | fully native title bar | conservative internal tools |
+| `frameless` | no native decorations | no native decorations | products that implement their own drag region and window controls |
 
-Product projects can override those values when they need a fully native title bar, but should not patch layout internals for window chrome.
+The generated `tauri.conf.json` follows `foundation`: `hiddenTitle: true`, `titleBarStyle: "Overlay"`, `trafficLightPosition`, and a dark `backgroundColor`. CSS also reserves `--df-desktop-top-offset` so product navigation does not collide with the native controls. Preset definitions live in `@desktop-foundation/theme-presets`; use `getWindowChromePlatformConfig` or `createTauriWindowChromeConfig` when tooling needs to inspect or generate platform-specific values.
+
+Product projects can override chrome config when they have platform-specific needs, but should not patch layout internals for window chrome.
 
 ## Boundary
 

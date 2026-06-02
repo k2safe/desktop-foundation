@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const templateRoot = join(packageRoot, "templates", "react-tauri");
+const themeTemplateIds = new Set(["default", "admin", "command", "merchant", "ledger", "studio", "dark"]);
 
 const textExtensions = new Set([
   ".css",
@@ -29,6 +30,7 @@ Options:
   --product <id>       Product id, used for package names and token keys.
   --app-name <name>    Human readable app name.
   --api-base <url>     Default API base URL.
+  --template <id>      Theme template: default, admin, command, merchant, ledger, studio, dark.
   --force              Allow generating into a non-empty directory.
   --help               Show this help.
 
@@ -44,6 +46,7 @@ function parseArgs(argv) {
     product: "",
     appName: "",
     apiBase: "http://127.0.0.1:8891",
+    template: "admin",
     force: false
   };
 
@@ -70,6 +73,10 @@ function parseArgs(argv) {
       options.apiBase = args.shift() || "";
       continue;
     }
+    if (arg === "--template") {
+      options.template = args.shift() || "";
+      continue;
+    }
     if (!options.targetDir) {
       options.targetDir = arg;
       continue;
@@ -84,6 +91,10 @@ function parseArgs(argv) {
   const fallbackProduct = slugify(options.targetDir.split(/[\\/]/).filter(Boolean).pop() || "desktop-app");
   options.product = slugify(options.product || fallbackProduct);
   options.appName = options.appName || toTitle(options.product);
+  options.template = slugify(options.template || "admin");
+  if (!themeTemplateIds.has(options.template)) {
+    throw new Error(`Unknown template: ${options.template}. Use one of: ${[...themeTemplateIds].join(", ")}.`);
+  }
   return options;
 }
 
@@ -159,7 +170,8 @@ function main() {
       PACKAGE_NAME: `${options.product}-desktop`,
       RUST_PACKAGE_NAME: `${options.product.replace(/-/g, "_")}_desktop`,
       PASCAL_NAME: toPascal(options.product),
-      API_BASE_URL: options.apiBase
+      API_BASE_URL: options.apiBase,
+      THEME_TEMPLATE_ID: options.template
     };
 
     assertCanWrite(targetDir, options.force);

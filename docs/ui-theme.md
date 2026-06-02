@@ -45,6 +45,24 @@ export const productTheme: DesktopTheme = {
 };
 ```
 
+## Template Runtime
+
+Theme templates are intentionally lightweight. A template combines theme tokens, app shell layout, login layout, and surface density; product teams still own business pages, data, and copy.
+
+Current built-in template ids:
+
+| Id | Shell | Login | Surface | Best for |
+| --- | --- | --- | --- | --- |
+| `default` | sidebar | centered | crisp | neutral internal desktop apps |
+| `admin` | sidebar | split | crisp | admin consoles similar to CoinPay |
+| `command` | sidebar | workbench | dense | operations and monitoring tools |
+| `merchant` | topnav | split | glass | merchant-facing SaaS surfaces |
+| `ledger` | topnav | centered | crisp | finance, reconciliation, ledger tables |
+| `studio` | topnav | split | glass | lighter product and settings workspaces |
+| `dark` | sidebar | workbench | dense | dark command-center products |
+
+Use `createThemeTemplateRuntime(templateId, overrides)` when a product wants to select one template and then override brand, colors, radius, density, or layout fields without editing component internals.
+
 ## Rules
 
 - 组件只能读取 `--df-*` token。
