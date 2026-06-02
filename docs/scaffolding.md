@@ -38,7 +38,7 @@ The scaffold applies the foundation desktop chrome preset by default. The preset
 | `native` | fully native title bar | fully native title bar | conservative internal tools |
 | `frameless` | no native decorations | no native decorations | products that implement their own drag region and window controls |
 
-The generated `tauri.conf.json` follows `foundation`: `hiddenTitle: true`, `titleBarStyle: "Overlay"`, `trafficLightPosition`, and a dark `backgroundColor`. CSS also reserves `--df-desktop-top-offset` so product navigation does not collide with the native controls. Preset definitions live in `@desktop-foundation/theme-presets`; use `getWindowChromePlatformConfig` or `createTauriWindowChromeConfig` when tooling needs to inspect or generate platform-specific values.
+The generated `tauri.conf.json` follows `foundation`: `hiddenTitle: true`, `titleBarStyle: "Overlay"`, `trafficLightPosition`, and a dark `backgroundColor`. CSS also reserves `--df-desktop-top-offset` so product navigation does not collide with the native controls. The default is compact; products that use a fully native title bar can set `--df-desktop-top-offset: 0px`, while products with custom controls can raise it locally. Preset definitions live in `@desktop-foundation/theme-presets`; use `getWindowChromePlatformConfig` or `createTauriWindowChromeConfig` when tooling needs to inspect or generate platform-specific values.
 
 Product projects can override chrome config when they have platform-specific needs, but should not patch layout internals for window chrome.
 
