@@ -315,6 +315,9 @@ function detectRunner(packageManager = "") {
   if (agent.startsWith("pnpm@")) return { command: "pnpm", argsFor: (script) => [script] };
   if (agent.startsWith("yarn@")) return { command: "yarn", argsFor: (script) => [script] };
   if (agent.startsWith("bun@")) return { command: "bun", argsFor: (script) => ["run", script] };
+  if (existsSync(resolve(process.cwd(), "pnpm-lock.yaml"))) return { command: "pnpm", argsFor: (script) => [script] };
+  if (existsSync(resolve(process.cwd(), "yarn.lock"))) return { command: "yarn", argsFor: (script) => [script] };
+  if (existsSync(resolve(process.cwd(), "bun.lockb")) || existsSync(resolve(process.cwd(), "bun.lock"))) return { command: "bun", argsFor: (script) => ["run", script] };
   return { command: "npm", argsFor: (script) => ["run", script] };
 }
 
