@@ -14,7 +14,10 @@ const requiredClasses = [
   "df-editable-table",
   "df-detail-drawer__list",
   "df-settings-page",
-  "df-button"
+  "df-button",
+  "data-visual-target=\"scroll-boundaries\"",
+  "data-visual-target=\"wide-modal\"",
+  "docs-wide-modal"
 ];
 
 const missing = requiredClasses.filter((className) => !html.includes(className));

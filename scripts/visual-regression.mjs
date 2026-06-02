@@ -129,8 +129,14 @@ const viewports = [
   { id: "mobile", width: 390, height: 1200 }
 ];
 
+const guardCaptureTargets = [
+  { id: "scroll-boundaries", label: "independent scroll shell", selector: '[data-visual-target="scroll-boundaries"]' },
+  { id: "wide-modal", label: "wide table modal", selector: '[data-visual-target="wide-modal"]' }
+];
+
 const baseCaptureTargets = [
-  { id: "page", label: "full page" }
+  { id: "page", label: "full page" },
+  ...guardCaptureTargets
 ];
 
 const expandedCaptureTargets = [

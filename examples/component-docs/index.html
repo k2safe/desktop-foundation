@@ -133,10 +133,68 @@
 
       .docs-modal-preview .df-modal {
         position: absolute;
+        z-index: 60;
         top: 50%;
         left: 50%;
         width: min(560px, calc(100% - 32px));
         transform: translate(-50%, -50%);
+      }
+
+      .docs-scroll-shell {
+        height: 560px;
+        min-height: 560px;
+        overflow: hidden;
+      }
+
+      .docs-scroll-shell .df-desktop-layout__main,
+      .docs-scroll-shell .df-desktop-layout__content {
+        min-height: 0;
+      }
+
+      .docs-scroll-shell .df-sidebar__brand {
+        min-height: 84px;
+      }
+
+      .docs-scroll-content {
+        display: grid;
+        gap: 14px;
+      }
+
+      .docs-scroll-content .df-content-panel {
+        min-height: 124px;
+      }
+
+      .docs-wide-modal-preview {
+        min-height: 660px;
+      }
+
+      .docs-wide-modal-preview .df-modal {
+        width: min(1040px, calc(100% - 32px));
+      }
+
+      .docs-wide-modal-preview .df-modal__body {
+        max-height: 430px;
+        overflow: hidden;
+      }
+
+      .docs-wide-modal-preview .df-filter-bar {
+        margin-bottom: 16px;
+      }
+
+      .docs-wide-modal-preview .df-table {
+        min-width: 1320px;
+      }
+
+      .docs-wide-modal-preview .docs-code-cell {
+        display: inline-flex;
+        max-width: 320px;
+        padding: 6px 10px;
+        overflow: hidden;
+        border-radius: var(--df-radius-sm);
+        background: color-mix(in srgb, var(--df-color-border) 45%, transparent);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       @media (max-width: 860px) {
@@ -197,6 +255,67 @@
               <header class="df-topbar"><div class="df-topbar__left"><div class="df-topbar__brand"><span class="df-topbar__brand-name">Foundation</span></div><nav class="df-topnav"><ul class="df-topnav__list"><li class="df-topnav__node"><a class="df-topnav__item is-active">Dashboard</a></li><li class="df-topnav__node"><button class="df-topnav__item">Business<span class="df-topnav__chevron"></span></button></li><li class="df-topnav__node"><button class="df-topnav__item">System<span class="df-topnav__chevron"></span></button></li></ul></nav><label class="df-field"><span class="df-input-wrap"><span class="df-input__addon"><span class="df-search-input__icon"></span></span><input class="df-input" value="Global search" /></span></label></div><div class="df-topbar__right"><span class="df-badge df-badge--success">Desktop</span><span class="df-select-wrap"><button class="df-select-control"><span class="df-select__value">Ledger Console</span><span class="df-select__chevron"></span></button></span><button class="df-button df-button--outline df-button--sm">Command</button><button class="df-user-menu__trigger"><span class="df-user-menu__avatar">D</span></button></div></header>
               <main class="df-desktop-layout__content"><section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Top Navigation</h2><p>Overlay titlebar spacing and compact controls.</p></div></div><div class="df-content-panel__body"><div class="df-table-wrap"><table class="df-table"><thead><tr><th>Asset</th><th>Status</th><th style="text-align: right">Amount</th></tr></thead><tbody><tr><td>USDT</td><td><span class="df-badge df-badge--success">ready</span></td><td style="text-align: right">12,400</td></tr><tr><td>ETH</td><td><span class="df-badge df-badge--warning">review</span></td><td style="text-align: right">980</td></tr></tbody></table></div></div></section></main>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-section" data-visual-target="scroll-boundaries">
+        <header class="df-page-header">
+          <div class="df-page-header__main">
+            <div class="df-page-header__eyebrow">layout guard</div>
+            <div class="df-page-header__title-row">
+              <div>
+                <h1>Independent Scroll Shell</h1>
+                <p>Long navigation and long business content stay in their own scroll containers.</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div class="df-desktop-layout df-desktop-layout--sidebar docs-mini-shell docs-scroll-shell">
+          <aside class="df-sidebar">
+            <div class="df-sidebar__brand"><span class="df-sidebar__brand-name">Foundation</span></div>
+            <nav class="df-sidebar__nav">
+              <div class="df-sidebar__group">
+                <div class="df-sidebar__group-label">Workspace</div>
+                <a class="df-sidebar__item is-active">Dashboard</a>
+                <a class="df-sidebar__item">Orders</a>
+                <a class="df-sidebar__item">Customers</a>
+                <a class="df-sidebar__item">Inventory</a>
+              </div>
+              <div class="df-sidebar__group">
+                <div class="df-sidebar__group-label">Operations</div>
+                <a class="df-sidebar__item">Shipments</a>
+                <a class="df-sidebar__item">Refunds</a>
+                <a class="df-sidebar__item">Settlements</a>
+                <a class="df-sidebar__item">Invoices</a>
+                <a class="df-sidebar__item">Risk Review</a>
+                <a class="df-sidebar__item">Audit Trail</a>
+              </div>
+              <div class="df-sidebar__group">
+                <div class="df-sidebar__group-label">System</div>
+                <a class="df-sidebar__item">Members</a>
+                <a class="df-sidebar__item">Roles</a>
+                <a class="df-sidebar__item">Permissions</a>
+                <a class="df-sidebar__item">API Keys</a>
+                <a class="df-sidebar__item">Release Center</a>
+                <a class="df-sidebar__item">Settings</a>
+              </div>
+            </nav>
+          </aside>
+          <div class="df-desktop-layout__main">
+            <header class="df-topbar">
+              <div class="df-topbar__left"><label class="df-field"><span class="df-input-wrap"><span class="df-input__addon"><span class="df-search-input__icon"></span></span><input class="df-input" value="Search everything" /></span></label></div>
+              <div class="df-topbar__right"><span class="df-badge df-badge--success">Desktop</span><button class="df-user-menu__trigger"><span class="df-user-menu__avatar">D</span></button></div>
+            </header>
+            <main class="df-desktop-layout__content">
+              <div class="docs-scroll-content">
+                <section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Summary</h2><p>The page area owns this vertical scroll.</p></div></div><div class="df-content-panel__body"><div class="df-metric-grid df-metric-grid--3"><section class="df-metric"><div class="df-metric__label">Open tasks</div><div class="df-metric__value">128</div></section><section class="df-metric"><div class="df-metric__label">Alerts</div><div class="df-metric__value">7</div></section><section class="df-metric"><div class="df-metric__label">Jobs</div><div class="df-metric__value">36</div></section></div></div></section>
+                <section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Queue</h2><p>Compact rows keep the content readable.</p></div></div><div class="df-content-panel__body"><div class="df-table-wrap"><table class="df-table"><tbody><tr><td>ORD-1001</td><td><span class="df-badge df-badge--success">ready</span></td><td style="text-align: right">$320.00</td></tr><tr><td>ORD-1002</td><td><span class="df-badge df-badge--warning">review</span></td><td style="text-align: right">$84.00</td></tr></tbody></table></div></div></section>
+                <section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Fulfillment</h2><p>Extra content should not push the sidebar.</p></div></div><div class="df-content-panel__body"><div class="df-code-block">sidebar.scrollTop !== content.scrollTop</div></div></section>
+                <section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Ledger</h2><p>Long business pages remain inside the shell viewport.</p></div></div><div class="df-content-panel__body"><div class="df-bulk-action-bar"><div class="df-bulk-action-bar__label">6 selected</div><div class="df-bulk-action-bar__actions"><button class="df-button df-button--outline df-button--sm">Export</button><button class="df-button df-button--primary df-button--sm">Approve</button></div></div></div></section>
+                <section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Release</h2><p>Bottom content confirms the content pane can overflow.</p></div></div><div class="df-content-panel__body"><span class="df-badge df-badge--info">visual guard</span></div></section>
+              </div>
+            </main>
           </div>
         </div>
       </section>
@@ -295,6 +414,78 @@
           <div class="df-modal__header"><div><h2 class="df-modal__title">Update available</h2><p class="df-modal__description">Show release metadata without leaving the desktop app.</p></div><button class="df-close-button">x</button></div>
           <div class="df-modal__body"><div class="df-code-block">{ "version": "0.1.1", "channel": "stable" }</div></div>
           <div class="df-modal__footer"><button class="df-button df-button--outline">Later</button><button class="df-button df-button--primary">Download</button></div>
+        </section>
+      </section>
+
+      <section class="docs-modal-preview docs-wide-modal-preview" data-visual-target="wide-modal">
+        <div class="df-overlay"></div>
+        <section class="df-modal docs-wide-modal" role="dialog" aria-modal="true">
+          <div class="df-modal__header">
+            <div>
+              <h2 class="df-modal__title">Node Configuration</h2>
+              <p class="df-modal__description">Wide operational tables overflow horizontally inside the modal body.</p>
+            </div>
+            <button class="df-close-button">x</button>
+          </div>
+          <div class="df-modal__body">
+            <div class="df-filter-bar">
+              <label class="df-field"><span class="df-field__label">Status</span><span class="df-select-wrap"><button class="df-select-control"><span class="df-select__value">All status</span><span class="df-select__chevron"></span></button></span></label>
+              <label class="df-field"><span class="df-field__label">Keyword</span><span class="df-input-wrap"><input class="df-input" value="gateway" /></span></label>
+            </div>
+            <div class="df-table-wrap df-table-wrap--default">
+              <table class="df-table">
+                <thead>
+                  <tr>
+                    <th>Node</th>
+                    <th>Endpoint</th>
+                    <th>Region</th>
+                    <th>Priority / Weight</th>
+                    <th>Failures</th>
+                    <th>Status</th>
+                    <th>Last used</th>
+                    <th>Owner</th>
+                    <th style="text-align: right">Latency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>gateway-default</strong><br /><span class="df-text-muted">primary</span></td>
+                    <td><span class="docs-code-cell">https://gateway-default.foundation.example.com/rpc/mainnet</span></td>
+                    <td>Singapore</td>
+                    <td>100 / 1</td>
+                    <td>1</td>
+                    <td><span class="df-badge df-badge--success">enabled</span></td>
+                    <td>2026-06-03 09:18</td>
+                    <td>Platform</td>
+                    <td style="text-align: right">82 ms</td>
+                  </tr>
+                  <tr>
+                    <td><strong>gateway-backup</strong><br /><span class="df-text-muted">backup</span></td>
+                    <td><span class="docs-code-cell">https://gateway-backup.foundation.example.com/rpc/mainnet</span></td>
+                    <td>Tokyo</td>
+                    <td>90 / 1</td>
+                    <td>0</td>
+                    <td><span class="df-badge df-badge--warning">standby</span></td>
+                    <td>2026-06-03 08:47</td>
+                    <td>Operations</td>
+                    <td style="text-align: right">96 ms</td>
+                  </tr>
+                  <tr>
+                    <td><strong>gateway-archive</strong><br /><span class="df-text-muted">archive</span></td>
+                    <td><span class="docs-code-cell">https://archive.foundation.example.com/rpc/mainnet?network=ledger</span></td>
+                    <td>Virginia</td>
+                    <td>60 / 1</td>
+                    <td>2</td>
+                    <td><span class="df-badge df-badge--info">limited</span></td>
+                    <td>2026-06-02 23:12</td>
+                    <td>Data</td>
+                    <td style="text-align: right">128 ms</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="df-modal__footer"><button class="df-button df-button--outline">Cancel</button><button class="df-button df-button--primary">Save</button></div>
         </section>
       </section>
 
