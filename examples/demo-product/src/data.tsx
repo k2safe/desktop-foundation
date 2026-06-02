@@ -22,18 +22,18 @@ export interface OrderRow {
 }
 
 export const demoUser: DemoUser = {
-  id: "u_demo_admin",
-  name: "Demo Operator",
-  account: "demo",
-  role: "Operations",
-  permissions: ["orders:read", "orders:export", "settings:read"]
+  id: "u_commerce_admin",
+  name: "Store Admin",
+  account: "store-admin",
+  role: "Commerce Ops",
+  permissions: ["orders:read", "orders:export", "catalog:read", "settings:read"]
 };
 
 export const orders: OrderRow[] = [
-  { id: "PAY-20260601-001", merchant: "Acme Studio", channel: "Card", status: "success", amount: 1280.5, currency: "USD", createdAt: "2026-06-01 09:12" },
-  { id: "PAY-20260601-002", merchant: "Northwind", channel: "Wallet", status: "pending", amount: 640, currency: "USD", createdAt: "2026-06-01 10:26" },
-  { id: "PAY-20260601-003", merchant: "Blue Harbor", channel: "Bank", status: "warning", amount: 429.9, currency: "USD", createdAt: "2026-06-01 11:02" },
-  { id: "PAY-20260601-004", merchant: "Orbit Labs", channel: "Card", status: "danger", amount: 96.2, currency: "USD", createdAt: "2026-06-01 12:18" }
+  { id: "ORD-20260601-001", merchant: "Urban Outfitters", channel: "App Store", status: "success", amount: 1280.5, currency: "USD", createdAt: "2026-06-01 09:12" },
+  { id: "ORD-20260601-002", merchant: "Northwind Market", channel: "Web Shop", status: "pending", amount: 640, currency: "USD", createdAt: "2026-06-01 10:26" },
+  { id: "ORD-20260601-003", merchant: "Blue Harbor Home", channel: "Marketplace", status: "warning", amount: 429.9, currency: "USD", createdAt: "2026-06-01 11:02" },
+  { id: "ORD-20260601-004", merchant: "Orbit Gadgets", channel: "POS", status: "danger", amount: 96.2, currency: "USD", createdAt: "2026-06-01 12:18" }
 ];
 
 export function createMenus(active: DemoScreen): DesktopMenuItem[] {
@@ -42,7 +42,7 @@ export function createMenus(active: DemoScreen): DesktopMenuItem[] {
     {
       id: "business",
       label: "业务",
-      children: [{ id: "orders", label: "订单中心", href: "#orders", active: active === "orders" }]
+      children: [{ id: "orders", label: "商城订单", href: "#orders", active: active === "orders" }]
     },
     {
       id: "system",
@@ -54,8 +54,8 @@ export function createMenus(active: DemoScreen): DesktopMenuItem[] {
 
 export const orderColumns: TableColumn<OrderRow>[] = [
   { key: "id", header: "订单号", accessor: "id", sortable: true, sticky: "left", minWidth: 170 },
-  { key: "merchant", header: "商户", accessor: "merchant", sortable: true, minWidth: 140 },
-  { key: "channel", header: "渠道", accessor: "channel", minWidth: 100 },
+  { key: "merchant", header: "店铺", accessor: "merchant", sortable: true, minWidth: 140 },
+  { key: "channel", header: "来源", accessor: "channel", minWidth: 100 },
   { key: "status", header: "状态", render: (row) => <StatusTag status={row.status} />, minWidth: 100 },
   {
     key: "amount",

@@ -54,7 +54,7 @@ Current built-in template ids:
 | Id | Shell | Login | Surface | Best for |
 | --- | --- | --- | --- | --- |
 | `default` | sidebar | split | crisp | neutral internal desktop apps |
-| `admin` | sidebar | brand-split | dense | admin consoles similar to CoinPay |
+| `admin` | sidebar | brand-split | dense | admin consoles and commerce operations |
 | `command` | topnav | workbench | dense | operations and monitoring tools |
 | `merchant` | topnav | centered | glass | merchant-facing SaaS surfaces |
 | `ledger` | topnav | centered | crisp | finance, reconciliation, ledger tables |
@@ -66,7 +66,7 @@ Use `createThemeTemplateRuntime(templateId, overrides)` when a product wants to 
 Login variants stay intentionally small:
 
 - `split`: form panel plus dark visual area.
-- `brand-split`: CoinPay-style admin login, with a wider form/brand panel and stronger right-side product stage.
+- `brand-split`: admin login, with a wider form/brand panel and stronger right-side product stage.
 - `centered`: simple centered login card.
 - `workbench`: operational login surface for command-center products.
 
@@ -74,7 +74,7 @@ Business-only fields such as tenant code, Google OTP, or invite token should be 
 
 Recommended starting points:
 
-- `admin`: left navigation, brand-split login, dense admin tables and CoinPay-style console spacing.
+- `admin`: left navigation, brand-split login, dense admin tables and admin-console spacing.
 - `command`: top navigation, workbench login, compact telemetry panels, and stronger dark chrome.
 - `ledger`: top navigation, centered login, financial table emphasis, and tabular numeric rhythm.
 

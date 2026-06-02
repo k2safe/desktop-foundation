@@ -32,7 +32,7 @@ Collect these before editing:
 - current theme/CSS entry
 - current Tauri `Cargo.toml`, `tauri.conf.json`, and capability files
 - desired template id: `admin`, `command`, `ledger`, `merchant`, `studio`, `dark`, or `default`
-- GitHub release repository for desktop updates, for example `k2safe/coinpay-admin`
+- GitHub release repository for desktop updates, for example `k2safe/commerce-ops-admin`
 
 ## Package Install
 

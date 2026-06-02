@@ -60,9 +60,9 @@ import { DesktopLoginPage } from "@desktop-foundation/app-shell";
 import { Input } from "@desktop-foundation/ui-react";
 
 <DesktopLoginPage
-  brand={{ name: "CoinPay", logo: <Logo /> }}
-  title="管理端登录"
-  subtitle="商户、链资产、钱包流水和权限配置统一在桌面端处理。"
+  brand={{ name: "Commerce Ops", logo: <Logo /> }}
+  title="商城运营登录"
+  subtitle="订单、库存、履约和运营配置统一在桌面端处理。"
   variant="brand-split"
   accountLabel="管理员账号"
   passwordLabel="登录密码"

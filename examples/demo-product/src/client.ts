@@ -98,15 +98,15 @@ function demoFileCapability(pushLog: (value: string) => void): FileCapability {
   return {
     async openFileDialog() {
       pushLog("openFileDialog");
-      return { paths: ["/tmp/foundation-demo.csv"], canceled: false };
+      return { paths: ["/tmp/commerce-orders.csv"], canceled: false };
     },
     async saveFileDialog() {
       pushLog("saveFileDialog");
-      return { path: "/tmp/foundation-export.json", canceled: false };
+      return { path: "/tmp/commerce-export.json", canceled: false };
     },
     async readTextFile(path) {
       pushLog(`readTextFile ${path}`);
-      return "id,merchant,amount";
+      return "id,store,amount";
     },
     async writeTextFile(path) {
       pushLog(`writeTextFile ${path}`);
@@ -118,15 +118,15 @@ function demoFileCapability(pushLog: (value: string) => void): FileCapability {
     },
     async downloadFile(url) {
       pushLog(`downloadFile ${url}`);
-      return { path: "/tmp/foundation-report.csv", bytes: 2048, status: 200 };
+      return { path: "/tmp/commerce-report.csv", bytes: 2048, status: 200 };
     }
   };
 }
 
 export function createDemoProductClient(pushLog: (value: string) => void): DesktopClient {
   return createDesktopClient({
-    product: "demo-product",
-    apiBaseURL: "https://api.foundation-demo.local",
+    product: "commerce-ops",
+    apiBaseURL: "https://api.commerce-demo.local",
     session: demoSessionStore(),
     storage: memoryStore({ "orders.density": "default" }),
     secureStorage: memorySecureStore(),
@@ -134,7 +134,7 @@ export function createDemoProductClient(pushLog: (value: string) => void): Deskt
     desktop: demoDesktopCapability(pushLog),
     files: demoFileCapability(pushLog),
     security: {
-      allowedRequestOrigins: ["api.foundation-demo.local"],
+      allowedRequestOrigins: ["api.commerce-demo.local"],
       allowedExternalOrigins: ["github.com", "docs.example.com"],
       allowedExternalSchemes: ["https"],
       allowedDownloadDirectories: ["/tmp"]

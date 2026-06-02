@@ -1,6 +1,6 @@
-# Demo Product
+# Commerce Product Demo
 
-`examples/demo-product` is the standard product integration demo for `desktop-foundation`.
+`examples/demo-product` is the standard commerce product integration demo for `desktop-foundation`.
 
 It is intentionally structured like a real business desktop project:
 

@@ -35,7 +35,7 @@ Use a template first, then override product-specific brand and tokens.
 import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
 
 export const productTemplate = createThemeTemplateRuntime("admin", {
-  brand: { name: "CoinPay" },
+  brand: { name: "Commerce Ops" },
   colors: {
     primary: "#3b00f5",
     primaryHover: "#2700c7"
@@ -57,13 +57,13 @@ export function App() {
     <DesktopAppShell
       theme={productTemplate.theme}
       client={{
-        product: "coinpay-admin",
+        product: "commerce-ops",
         apiBaseURL: "https://api.example.com"
       }}
     >
       <DesktopLayout
         variant={productTemplate.layout.appShell}
-        brand={{ name: "CoinPay", logo: <Logo /> }}
+        brand={{ name: "Commerce Ops", logo: <Logo /> }}
         menus={menus}
         user={session.user}
       >
@@ -91,9 +91,9 @@ interface LoginPayload {
 }
 
 <DesktopLoginPage
-  brand={{ name: "CoinPay", logo: <Logo /> }}
-  title="管理端登录"
-  subtitle="商户、链资产、钱包流水和权限配置统一在桌面端处理。"
+  brand={{ name: "Commerce Ops", logo: <Logo /> }}
+  title="商城运营登录"
+  subtitle="订单、库存、履约和运营配置统一在桌面端处理。"
   variant={productTemplate.layout.login}
   accountLabel="管理员账号"
   passwordLabel="登录密码"
@@ -106,7 +106,7 @@ interface LoginPayload {
     />
   )}
   login={{
-    defaultPayload: { account: "admin", password: "", remember: true },
+    defaultPayload: { account: "store-admin", password: "", remember: true },
     login: async (client, payload: LoginPayload) => {
       return client.request("/admin/login", {
         method: "POST",

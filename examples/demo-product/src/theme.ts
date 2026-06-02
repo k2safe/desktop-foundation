@@ -3,8 +3,8 @@ import { adminThemePreset } from "@desktop-foundation/theme-presets";
 
 export const demoProductTheme: DesktopTheme = {
   ...adminThemePreset,
-  id: "demo-product",
-  brand: { name: "Foundation Demo" },
+  id: "commerce-ops",
+  brand: { name: "Commerce Ops" },
   colors: {
     ...adminThemePreset.colors,
     primary: "#0f766e",

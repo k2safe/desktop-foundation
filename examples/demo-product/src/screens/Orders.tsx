@@ -12,7 +12,7 @@ export function Orders({ client }: OrdersProps) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [selectedRow, setSelectedRow] = useState<OrderRow | null>(null);
   const { visibleColumns, sort, density, setSort, setDensity } = useTablePreferences({
-    key: "demo-product:orders-table",
+    key: "commerce-ops:orders-table",
     columns: orderColumns,
     defaultSort: { key: "createdAt", direction: "desc" }
   });
@@ -20,8 +20,8 @@ export function Orders({ client }: OrdersProps) {
   return (
     <>
       <DataTable
-        title="订单中心"
-        description="产品项目只负责业务字段和交互，表格能力来自底座组件。"
+        title="商城订单"
+        description="商城项目只负责订单字段和交互，表格能力来自底座组件。"
         columns={visibleColumns}
         rows={orders}
         rowKey="id"
@@ -35,8 +35,8 @@ export function Orders({ client }: OrdersProps) {
         onRowClick={(row) => setSelectedRow(row)}
         filters={
           <>
-            <SearchInput placeholder="搜索订单号" />
-            <Input placeholder="商户名称" />
+            <SearchInput placeholder="搜索订单号 / 店铺" />
+            <Input placeholder="店铺名称" />
             <Select
               placeholder="状态"
               options={[
@@ -77,7 +77,7 @@ export function Orders({ client }: OrdersProps) {
         title={selectedRow?.merchant ?? ""}
         subtitle={selectedRow?.id}
         rows={[
-          { label: "渠道", value: selectedRow?.channel },
+          { label: "来源", value: selectedRow?.channel },
           { label: "状态", value: selectedRow?.status },
           { label: "金额", value: selectedRow ? `$${selectedRow.amount.toFixed(2)} ${selectedRow.currency}` : null },
           { label: "创建时间", value: selectedRow?.createdAt }
