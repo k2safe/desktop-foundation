@@ -22,6 +22,7 @@ node packages/create-desktop-app/bin/create-desktop-app.mjs examples/product-des
 - `src/api/client.ts`
 - `src/pages/DashboardPage.tsx`
 - `src-tauri`
+- `.github/workflows/desktop-release.yml`
 
 The scaffold contains no product business model, API path, permission model, or route normalization logic.
 
@@ -34,3 +35,25 @@ The generated app stores the template in `src/theme.ts`, so product teams can sw
 ## CI Wrapper
 
 `desktop-foundation-ci` is exposed as a bin so product repositories can call foundation checks from GitHub Actions or any other CI system without copying workflow logic.
+
+Verification examples:
+
+```bash
+pnpm exec desktop-foundation-ci --type-check --build --strict
+pnpm exec desktop-foundation-ci --no-type-check --no-build --visual --strict
+```
+
+Packaging and update-manifest example:
+
+```bash
+pnpm tauri build
+pnpm exec desktop-foundation-ci \
+  --no-type-check \
+  --no-build \
+  --package-desktop \
+  --manifest \
+  --channel stable \
+  --download-base-url https://github.com/acme/product/releases/download/v1.0.0
+```
+
+On macOS the package step writes a local `.app`, a release `.zip`, `desktop-artifacts.json`, and `latest.json` under `artifacts/desktop`.

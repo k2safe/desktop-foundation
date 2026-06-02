@@ -55,6 +55,90 @@
         inset: 0;
       }
 
+
+
+      .docs-shell-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+      }
+
+      .docs-mini-shell {
+        min-height: 420px;
+        overflow: hidden;
+        border: 1px solid var(--df-color-border);
+        border-radius: var(--df-radius-xl);
+      }
+
+      .docs-mini-shell.df-desktop-layout,
+      .docs-mini-shell .df-desktop-layout__main {
+        min-height: 420px;
+      }
+
+      .docs-mini-shell .df-desktop-layout__content {
+        padding: 22px;
+      }
+
+      .docs-mini-shell .df-sidebar__brand,
+      .docs-mini-shell .df-sidebar__nav {
+        padding-inline: 16px;
+      }
+
+      .docs-mini-shell .df-topbar__left .df-field {
+        width: min(320px, 32vw);
+      }
+
+      .docs-login-preview,
+      .docs-modal-preview {
+        position: relative;
+        min-height: 520px;
+        overflow: hidden;
+        border: 1px solid var(--df-color-border);
+        border-radius: var(--df-radius-xl);
+        background: var(--df-color-bg);
+      }
+
+      .docs-login-preview .df-login-shell {
+        min-height: 520px;
+      }
+
+      .docs-login-preview .df-login-shell__panel {
+        padding: 28px 32px;
+      }
+
+      .docs-login-preview .df-login-shell__visual {
+        padding: 36px;
+      }
+
+      .docs-login-preview .df-login-shell__visual-copy h2 {
+        font-size: 30px;
+      }
+
+      .docs-form-preview {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .docs-form-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .docs-modal-preview .df-overlay {
+        position: absolute;
+        inset: 0;
+      }
+
+      .docs-modal-preview .df-modal {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: min(560px, calc(100% - 32px));
+        transform: translate(-50%, -50%);
+      }
+
       @media (max-width: 860px) {
         .docs-grid {
           grid-template-columns: 1fr;
@@ -63,7 +147,7 @@
     </style>
   </head>
   <body>
-    <main class="df-desktop-layout docs-page">
+    <main class="docs-page">
       <header class="df-page-header">
         <div class="df-page-header__main">
           <div class="df-page-header__eyebrow">desktop-foundation</div>
@@ -79,6 +163,43 @@
           </div>
         </div>
       </header>
+
+
+      <section class="docs-section">
+        <header class="df-page-header">
+          <div class="df-page-header__main">
+            <div class="df-page-header__eyebrow">shells</div>
+            <div class="df-page-header__title-row">
+              <div>
+                <h1>Desktop Shells</h1>
+                <p>Sidebar and top navigation layouts with native window safe areas.</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div class="docs-shell-grid">
+          <div class="df-desktop-layout df-desktop-layout--sidebar docs-mini-shell">
+            <aside class="df-sidebar">
+              <div class="df-sidebar__brand"><span class="df-sidebar__brand-name">Foundation</span></div>
+              <nav class="df-sidebar__nav">
+                <div class="df-sidebar__group"><div class="df-sidebar__group-label">Main</div><a class="df-sidebar__item is-active">Dashboard</a><a class="df-sidebar__item">Orders</a></div>
+                <div class="df-sidebar__group"><div class="df-sidebar__group-label">System</div><a class="df-sidebar__item">Settings</a></div>
+              </nav>
+            </aside>
+            <div class="df-desktop-layout__main">
+              <header class="df-topbar"><div class="df-topbar__left"><label class="df-field"><span class="df-input-wrap"><span class="df-input__addon"><span class="df-search-input__icon"></span></span><input class="df-input" value="Search orders" /></span></label></div><div class="df-topbar__right"><span class="df-badge df-badge--success">Desktop</span><button class="df-user-menu__trigger"><span class="df-user-menu__avatar">D</span></button></div></header>
+              <main class="df-desktop-layout__content"><section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Workspace</h2><p>Reusable sidebar shell.</p></div></div><div class="df-content-panel__body"><div class="df-metric-grid df-metric-grid--3"><section class="df-metric"><div class="df-metric__label">Orders</div><div class="df-metric__value">42</div></section><section class="df-metric"><div class="df-metric__label">Storage</div><div class="df-metric__value">ready</div></section><section class="df-metric"><div class="df-metric__label">Bridge</div><div class="df-metric__value">on</div></section></div></div></section></main>
+            </div>
+          </div>
+
+          <div class="df-desktop-layout df-desktop-layout--topnav docs-mini-shell">
+            <div class="df-desktop-layout__main">
+              <header class="df-topbar"><div class="df-topbar__left"><div class="df-topbar__brand"><span class="df-topbar__brand-name">Foundation</span></div><nav class="df-topnav"><ul class="df-topnav__list"><li class="df-topnav__node"><a class="df-topnav__item is-active">Dashboard</a></li><li class="df-topnav__node"><button class="df-topnav__item">Business<span class="df-topnav__chevron"></span></button></li><li class="df-topnav__node"><button class="df-topnav__item">System<span class="df-topnav__chevron"></span></button></li></ul></nav><label class="df-field"><span class="df-input-wrap"><span class="df-input__addon"><span class="df-search-input__icon"></span></span><input class="df-input" value="Global search" /></span></label></div><div class="df-topbar__right"><span class="df-badge df-badge--success">Desktop</span><span class="df-select-wrap"><button class="df-select-control"><span class="df-select__value">Ledger Console</span><span class="df-select__chevron"></span></button></span><button class="df-button df-button--outline df-button--sm">Command</button><button class="df-user-menu__trigger"><span class="df-user-menu__avatar">D</span></button></div></header>
+              <main class="df-desktop-layout__content"><section class="df-content-panel"><div class="df-content-panel__header"><div><h2>Top Navigation</h2><p>Overlay titlebar spacing and compact controls.</p></div></div><div class="df-content-panel__body"><div class="df-table-wrap"><table class="df-table"><thead><tr><th>Asset</th><th>Status</th><th style="text-align: right">Amount</th></tr></thead><tbody><tr><td>USDT</td><td><span class="df-badge df-badge--success">ready</span></td><td style="text-align: right">12,400</td></tr><tr><td>ETH</td><td><span class="df-badge df-badge--warning">review</span></td><td style="text-align: right">980</td></tr></tbody></table></div></div></section></main>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section class="docs-section">
         <div class="df-metric-grid df-metric-grid--4">
@@ -140,6 +261,41 @@
             </tbody>
           </table>
         </div>
+      </section>
+
+
+      <section class="docs-grid">
+        <div class="docs-login-preview">
+          <main class="df-login-shell df-login-shell--split">
+            <section class="df-login-shell__panel">
+              <header class="df-login-shell__brand"><span class="df-login-shell__brand-name">Foundation</span></header>
+              <div class="df-login-shell__content">
+                <div class="df-login-shell__heading"><div class="df-login-shell__badge">Desktop</div><h1>Login Preview</h1><p>Split login layout for product apps.</p></div>
+                <div class="df-login-form"><label class="df-field df-field--full"><span class="df-field__label">Account</span><span class="df-input-wrap"><input class="df-input" value="demo" /></span></label><label class="df-field df-field--full"><span class="df-field__label">Password</span><span class="df-input-wrap"><input class="df-input" value="password" type="password" /></span></label><button class="df-button df-button--primary df-button--md">Sign in</button></div>
+              </div>
+              <footer class="df-login-shell__footer">v0.1.0</footer>
+            </section>
+            <section class="df-login-shell__visual"><div class="df-login-shell__visual-copy"><h2>Desktop-first foundation.</h2><p>Shell, bridge, storage, updates, and release surfaces.</p></div></section>
+          </main>
+        </div>
+
+        <div class="df-content-panel">
+          <div class="df-content-panel__header"><div><h2>Forms</h2><p>Controls used by product settings and dialogs.</p></div></div>
+          <div class="docs-form-preview">
+            <div class="docs-form-row"><label class="df-field df-field--full"><span class="df-field__label">Merchant</span><span class="df-input-wrap"><input class="df-input" value="Orbit Labs" /></span></label><label class="df-field df-field--full"><span class="df-field__label">Status</span><span class="df-select-wrap"><button class="df-select-control"><span class="df-select__value">Enabled</span><span class="df-select__chevron"></span></button></span></label></div>
+            <label class="df-field df-field--full"><span class="df-field__label">Notes</span><textarea class="df-textarea">Reusable form surfaces stay compact and legible.</textarea></label>
+            <label class="df-switch"><input type="checkbox" checked /><span class="df-switch__track"><span class="df-switch__thumb"></span></span><span class="df-switch__copy"><span class="df-switch__label">Auto update</span><span class="df-switch__description">Check release manifest on launch.</span></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-modal-preview">
+        <div class="df-overlay"></div>
+        <section class="df-modal" role="dialog" aria-modal="true">
+          <div class="df-modal__header"><div><h2 class="df-modal__title">Update available</h2><p class="df-modal__description">Show release metadata without leaving the desktop app.</p></div><button class="df-close-button">x</button></div>
+          <div class="df-modal__body"><div class="df-code-block">{ "version": "0.1.1", "channel": "stable" }</div></div>
+          <div class="df-modal__footer"><button class="df-button df-button--outline">Later</button><button class="df-button df-button--primary">Download</button></div>
+        </section>
       </section>
 
       <section class="docs-grid">

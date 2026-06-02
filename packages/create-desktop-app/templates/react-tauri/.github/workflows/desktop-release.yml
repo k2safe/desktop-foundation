@@ -1,0 +1,57 @@
+name: desktop-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Release channel
+        default: stable
+        required: true
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec desktop-foundation-ci --type-check --build --strict
+
+  package-macos:
+    needs: verify
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri build
+      - name: Normalize desktop artifacts
+        run: >-
+          pnpm exec desktop-foundation-ci
+          --no-type-check
+          --no-build
+          --package-desktop
+          --manifest
+          --channel "${{ inputs.channel || 'stable' }}"
+          --download-base-url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
+          --release-url "https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          --notes "${{ github.ref_name }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-artifacts-macos
+          path: artifacts/desktop

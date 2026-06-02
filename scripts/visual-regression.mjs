@@ -19,9 +19,9 @@ const baseTheme = {
   "--df-color-surface": "#ffffff",
   "--df-color-elevated": "#ffffff",
   "--df-color-border": "#dde5ee",
-  "--df-color-strong-border": "#b9c5d3",
+  "--df-color-border-strong": "#b9c5d3",
   "--df-color-text": "#111827",
-  "--df-color-muted-text": "#6b7280",
+  "--df-color-text-muted": "#6b7280",
   "--df-color-danger": "#dc2626",
   "--df-color-warning": "#d97706",
   "--df-color-success": "#059669",
@@ -34,8 +34,8 @@ const baseTheme = {
   "--df-shadow-md": "0 10px 24px rgba(15, 23, 42, 0.10)",
   "--df-shadow-lg": "0 24px 60px rgba(15, 23, 42, 0.16)",
   "--df-font-sans": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
-  "--df-density-control-height": "40px",
-  "--df-density-table-row-height": "52px"
+  "--df-control-height": "40px",
+  "--df-table-row-height": "52px"
 };
 
 const scenarios = [
@@ -60,8 +60,8 @@ const scenarios = [
       "--df-color-dark": "#07111f",
       "--df-color-bg": "#eef3f8",
       "--df-color-border": "#dbe5ef",
-      "--df-density-control-height": "36px",
-      "--df-density-table-row-height": "44px"
+      "--df-control-height": "36px",
+      "--df-table-row-height": "44px"
     }
   },
   {
@@ -99,8 +99,8 @@ const scenarios = [
       "--df-color-primary-soft": "#edf2ff",
       "--df-color-dark": "#162033",
       "--df-color-bg": "#f6f7fb",
-      "--df-density-control-height": "44px",
-      "--df-density-table-row-height": "58px"
+      "--df-control-height": "44px",
+      "--df-table-row-height": "58px"
     }
   },
   {
@@ -116,9 +116,9 @@ const scenarios = [
       "--df-color-surface": "#111827",
       "--df-color-elevated": "#1f2937",
       "--df-color-border": "#334155",
-      "--df-color-strong-border": "#475569",
+      "--df-color-border-strong": "#475569",
       "--df-color-text": "#e5e7eb",
-      "--df-color-muted-text": "#94a3b8"
+      "--df-color-text-muted": "#94a3b8"
     }
   }
 ];
@@ -153,11 +153,28 @@ mkdirSync(actualDir, { recursive: true });
 let browser;
 try {
   browser = await playwright.chromium.launch();
-} catch (error) {
-  if (strict) throw error;
-  console.log("Playwright browser is not installed; skipping visual regression.");
-  console.log("Run pnpm exec playwright install chromium, or pass --strict in CI to fail on missing browsers.");
-  process.exit(0);
+} catch (bundledBrowserError) {
+  const fallbackChannel = process.env.DESKTOP_FOUNDATION_VISUAL_CHANNEL || "chrome";
+  try {
+    browser = await playwright.chromium.launch({ channel: fallbackChannel });
+    console.log(`Using installed Chromium channel for visual regression: ${fallbackChannel}`);
+  } catch (channelError) {
+    const executablePath = process.env.DESKTOP_FOUNDATION_VISUAL_EXECUTABLE || (process.platform === "darwin" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : undefined);
+    if (executablePath && existsSync(executablePath)) {
+      try {
+        browser = await playwright.chromium.launch({ executablePath });
+        console.log(`Using installed browser executable for visual regression: ${executablePath}`);
+      } catch (executableError) {
+        if (strict) throw executableError;
+      }
+    }
+    if (!browser) {
+      if (strict) throw channelError;
+      console.log("Playwright browser is not installed; skipping visual regression.");
+      console.log("Run pnpm exec playwright install chromium, set DESKTOP_FOUNDATION_VISUAL_CHANNEL, set DESKTOP_FOUNDATION_VISUAL_EXECUTABLE, or pass --strict in CI to fail on missing browsers.");
+      process.exit(0);
+    }
+  }
 }
 
 const failures = [];
