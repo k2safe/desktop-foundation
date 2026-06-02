@@ -53,6 +53,33 @@ export function App() {
 
 `DesktopLoginPage` pairs `LoginShell` with `useLogin` and `SessionProvider`.
 
+The foundation owns the login layout template, control spacing, submit state, and session handoff. Product apps own brand content, copy, business fields, and the login API.
+
+```tsx
+import { DesktopLoginPage } from "@desktop-foundation/app-shell";
+import { Input } from "@desktop-foundation/ui-react";
+
+<DesktopLoginPage
+  brand={{ name: "CoinPay", logo: <Logo /> }}
+  title="管理端登录"
+  subtitle="商户、链资产、钱包流水和权限配置统一在桌面端处理。"
+  variant="brand-split"
+  accountLabel="管理员账号"
+  passwordLabel="登录密码"
+  extraFields={({ payload, setField }) => (
+    <Input
+      label="Google 验证码"
+      placeholder="未开启时可留空"
+      value={payload.otp ?? ""}
+      onChange={(event) => setField("otp", event.target.value)}
+    />
+  )}
+  login={loginConfig}
+/>
+```
+
+Use `extraFields` for product-specific fields such as OTP, tenant code, region, or invite token. Keep those fields in the product payload type; the shell only provides the slot and state helpers.
+
 ## Guards
 
 - `AuthGuard`: authenticated route/content guard.

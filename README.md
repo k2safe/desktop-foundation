@@ -16,6 +16,7 @@
 
 ## Docs
 
+- [Product Integration Guide](docs/product-integration.md)
 - [Package Consumption](docs/package-consumption.md)
 - [Package Boundary](docs/package-boundary.md)
 - [UI Theme](docs/ui-theme.md)

@@ -4,7 +4,7 @@ export { DesktopAppShell } from "./DesktopAppShell";
 export { DesktopClientProvider, useDesktopClient } from "./DesktopClientProvider";
 export type { DesktopClientProviderProps } from "./DesktopClientProvider";
 export { DesktopLoginPage } from "./DesktopLoginPage";
-export type { DesktopLoginPageProps } from "./DesktopLoginPage";
+export type { DesktopLoginFieldContext, DesktopLoginPageProps } from "./DesktopLoginPage";
 export { DebugPanel } from "./DebugPanel";
 export type { DebugPanelProps } from "./DebugPanel";
 export { FeatureGuard, PermissionGuard } from "./PermissionGuard";

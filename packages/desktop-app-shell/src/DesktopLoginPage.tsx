@@ -3,6 +3,13 @@ import { Button, Checkbox, Input, LoginShell, PasswordInput, type LoginShellVari
 import { useLogin } from "./useLogin";
 import type { DesktopLoginConfig, DesktopLoginPayload, DesktopSessionUser } from "./types";
 
+export interface DesktopLoginFieldContext<TPayload extends DesktopLoginPayload = DesktopLoginPayload> {
+  payload: TPayload;
+  setField: <K extends keyof TPayload>(key: K, value: TPayload[K]) => void;
+  loading: boolean;
+  error: Error | null;
+}
+
 export interface DesktopLoginPageProps<
   TUser extends DesktopSessionUser = DesktopSessionUser,
   TPayload extends DesktopLoginPayload = DesktopLoginPayload
@@ -27,6 +34,7 @@ export interface DesktopLoginPageProps<
   passwordPlaceholder?: string;
   rememberLabel?: ReactNode;
   submitLabel?: ReactNode;
+  extraFields?: ReactNode | ((context: DesktopLoginFieldContext<TPayload>) => ReactNode);
   login: DesktopLoginConfig<TUser, TPayload>;
 }
 
@@ -50,6 +58,7 @@ export function DesktopLoginPage<
   passwordPlaceholder = "Password",
   rememberLabel = "Remember me",
   submitLabel = "Sign in",
+  extraFields,
   login
 }: DesktopLoginPageProps<TUser, TPayload>) {
   const { payload, setField, submit, loading, error } = useLogin(login);
@@ -58,6 +67,9 @@ export function DesktopLoginPage<
     event.preventDefault();
     await submit();
   }
+
+  const renderedExtraFields =
+    typeof extraFields === "function" ? extraFields({ payload, setField, loading, error }) : extraFields;
 
   return (
     <LoginShell
@@ -90,6 +102,7 @@ export function DesktopLoginPage<
           onChange={(event) => setField("password", event.target.value as TPayload["password"])}
           required
         />
+        {renderedExtraFields}
         <Checkbox
           label={rememberLabel}
           checked={Boolean(payload.remember)}

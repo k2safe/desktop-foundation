@@ -53,15 +53,24 @@ Current built-in template ids:
 
 | Id | Shell | Login | Surface | Best for |
 | --- | --- | --- | --- | --- |
-| `default` | sidebar | centered | crisp | neutral internal desktop apps |
-| `admin` | sidebar | split | crisp | admin consoles similar to CoinPay |
+| `default` | sidebar | split | crisp | neutral internal desktop apps |
+| `admin` | sidebar | brand-split | dense | admin consoles similar to CoinPay |
 | `command` | sidebar | workbench | dense | operations and monitoring tools |
-| `merchant` | topnav | split | glass | merchant-facing SaaS surfaces |
+| `merchant` | topnav | centered | glass | merchant-facing SaaS surfaces |
 | `ledger` | topnav | centered | crisp | finance, reconciliation, ledger tables |
 | `studio` | topnav | split | glass | lighter product and settings workspaces |
-| `dark` | sidebar | workbench | dense | dark command-center products |
+| `dark` | topnav | workbench | dense | dark command-center products |
 
 Use `createThemeTemplateRuntime(templateId, overrides)` when a product wants to select one template and then override brand, colors, radius, density, or layout fields without editing component internals.
+
+Login variants stay intentionally small:
+
+- `split`: form panel plus dark visual area.
+- `brand-split`: CoinPay-style admin login, with a wider form/brand panel and stronger right-side product stage.
+- `centered`: simple centered login card.
+- `workbench`: operational login surface for command-center products.
+
+Business-only fields such as tenant code, Google OTP, or invite token should be added through `DesktopLoginPage.extraFields`; they should not be baked into the foundation template.
 
 ## Rules
 

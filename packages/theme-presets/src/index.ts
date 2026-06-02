@@ -356,7 +356,7 @@ export const defaultThemeTemplate: ThemeTemplate = {
 export const adminThemeTemplate: ThemeTemplate = {
   id: "admin",
   name: "Tech Admin",
-  description: "Dark sidebar chrome, split login, precise panels, and high-density admin surfaces.",
+  description: "Dark sidebar chrome, brand split login, precise panels, and high-density admin surfaces.",
   category: "admin",
   preview: {
     primary: adminThemePreset.colors.primary,
@@ -366,7 +366,7 @@ export const adminThemeTemplate: ThemeTemplate = {
   },
   layout: {
     appShell: "sidebar",
-    login: "split",
+    login: "brand-split",
     surface: "dense"
   },
   className: "df-template-admin df-surface-dense",

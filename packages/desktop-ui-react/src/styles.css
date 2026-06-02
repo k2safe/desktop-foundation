@@ -3359,6 +3359,71 @@ body {
   grid-template-columns: minmax(360px, 520px) minmax(0, 1fr);
 }
 
+.df-login-shell--brand-split {
+  grid-template-columns: minmax(430px, clamp(500px, 36vw, 700px)) minmax(0, 1fr);
+  background: var(--df-color-dark);
+}
+
+.df-login-shell--brand-split .df-login-shell__panel {
+  padding: calc(var(--df-desktop-window-control-top-offset, 34px) + 58px) clamp(42px, 5vw, 68px) 42px;
+  border-right: 0;
+  background: var(--df-color-surface);
+}
+
+.df-login-shell--brand-split .df-login-shell__brand {
+  min-height: 52px;
+  justify-content: center;
+}
+
+.df-login-shell--brand-split .df-login-shell__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.df-login-shell--brand-split .df-login-shell__content {
+  width: 100%;
+  max-width: 600px;
+  margin-inline: auto;
+  gap: 28px;
+}
+
+.df-login-shell--brand-split .df-login-shell__heading h1 {
+  font-size: 30px;
+}
+
+.df-login-shell--brand-split .df-login-form {
+  gap: 18px;
+}
+
+.df-login-shell--brand-split .df-login-form .df-button {
+  width: 100%;
+  min-height: 48px;
+}
+
+.df-login-shell--brand-split .df-login-shell__visual {
+  justify-items: center;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--df-color-dark), #10283a 28%),
+      var(--df-color-dark) 58%,
+      color-mix(in srgb, var(--df-color-primary), var(--df-color-dark) 84%)
+    );
+  background-size: 42px 42px, 42px 42px, auto;
+}
+
+.df-login-shell--brand-split .df-login-shell__visual-copy {
+  width: min(640px, 78%);
+  transform: translateY(8vh);
+}
+
+.df-login-shell--brand-split .df-login-shell__visual-copy h2 {
+  font-size: clamp(34px, 3.1vw, 54px);
+}
+
 .df-login-shell--centered {
   grid-template-columns: minmax(0, 1fr);
   place-items: center;
@@ -3643,8 +3708,18 @@ body {
   }
 
   .df-login-shell__visual,
+  .df-login-shell--brand-split .df-login-shell__visual,
   .df-login-shell--workbench .df-login-shell__visual {
     display: none;
+  }
+
+  .df-login-shell--brand-split .df-login-shell__panel {
+    min-height: 100vh;
+    padding: 52px 24px 28px;
+  }
+
+  .df-login-shell--brand-split .df-login-shell__content {
+    max-width: none;
   }
 
   .df-desktop-layout {

@@ -7,7 +7,7 @@ export interface LoginShellBrand {
   mark?: ReactNode;
 }
 
-export type LoginShellVariant = "split" | "centered" | "workbench";
+export type LoginShellVariant = "split" | "centered" | "workbench" | "brand-split";
 
 export interface LoginShellProps {
   brand: LoginShellBrand;

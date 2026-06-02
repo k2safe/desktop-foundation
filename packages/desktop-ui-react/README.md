@@ -34,6 +34,15 @@ import { ThemeProvider, DesktopLayout, Button } from "@desktop-foundation/ui-rea
 - data: `Table`、`DataTable`、`Pagination`、`FilterBar`、`SearchInput`、`DateRangePicker`、`ColumnSettings`、`StatusTag`、`AmountText`、`AddressText`、`CopyableText`、`SecretBlock`。
 - feedback: `ErrorState`、`OfflineBanner`、`ProgressBar`。
 
+## Login Shell Variants
+
+`LoginShell` provides reusable login page skeletons. Product apps pass brand, copy, fields, and submit logic; the foundation keeps the page rhythm consistent.
+
+- `split`: compact left form and dark visual area.
+- `brand-split`: wide brand/login panel with desktop title-bar spacing and a stronger right-side product stage.
+- `centered`: small centered sign-in panel for simple tools.
+- `workbench`: floating form over a more operational command-center background.
+
 ## Table Preferences
 
 `useTablePreferences` can persist table column visibility, column order, column width, sort state, density, and page size by key.
