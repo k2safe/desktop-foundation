@@ -5,7 +5,7 @@ Product desktop app scaffold for `desktop-foundation`.
 ## Usage
 
 ```bash
-pnpm create @desktop-foundation/desktop-app apps/product-desktop --product product --app-name "Product Desktop" --template command
+pnpm create @desktop-foundation/desktop-app apps/product-desktop --product product --app-name "Product Desktop"
 ```
 
 Local development:
@@ -22,39 +22,17 @@ node packages/create-desktop-app/bin/create-desktop-app.mjs examples/product-des
 - `src/api/client.ts`
 - `src/pages/DashboardPage.tsx`
 - `src-tauri`
-- `.github/workflows/desktop-release.yml`
 
 The scaffold contains no product business model, API path, permission model, or route normalization logic.
 
-## Templates
-
-Use `--template` to pick a foundation template at scaffold time. Available ids: `default`, `admin`, `command`, `merchant`, `ledger`, `studio`, `dark`.
-
-The generated app stores the template in `src/theme.ts`, so product teams can switch templates without editing component internals.
-
 ## CI Wrapper
 
-`desktop-foundation-ci` is exposed as a bin so product repositories can call foundation checks from GitHub Actions or any other CI system without copying workflow logic.
-
-Verification examples:
+Use `desktop-foundation-ci` from a product app to keep the foundation contract visible:
 
 ```bash
-pnpm exec desktop-foundation-ci --type-check --build --strict
-pnpm exec desktop-foundation-ci --no-type-check --no-build --visual --strict
+pnpm exec desktop-foundation-ci --integration-check --integration-report artifacts/foundation-integration.json
+pnpm exec desktop-foundation-ci --type-check --build
+pnpm exec desktop-foundation-ci --package-desktop --manifest --release-plan --github-repo acme/admin
 ```
 
-Packaging and update-manifest example:
-
-```bash
-pnpm tauri build
-pnpm exec desktop-foundation-ci \
-  --no-type-check \
-  --no-build \
-  --package-desktop \
-  --manifest \
-  --release-plan \
-  --channel stable \
-  --download-base-url https://github.com/acme/product/releases/download/v1.0.0
-```
-
-On macOS the package step writes a local `.app`, a release `.zip`, `.sha256`, `desktop-artifacts.json`, `latest.json`, and optionally `release-plan.json` under `artifacts/desktop`. This works from a developer machine; GitHub Actions is only one possible caller.
+`--integration-check` validates the required foundation packages, shared stylesheet, app shell, theme template runtime, Tauri core dependency, default capability, update surface, and expected product scripts. `--release-plan --github-repo` writes release metadata with GitHub Release URLs, checksum assets, manifest URL, and `gh release` command arguments without forcing a specific GitHub Actions workflow.

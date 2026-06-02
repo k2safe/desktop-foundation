@@ -6,6 +6,13 @@ import { createHash } from "node:crypto";
 
 const knownChecks = ["type-check", "build", "lint", "visual:regression"];
 const defaultArtifactDir = "artifacts/desktop";
+const foundationRuntimePackages = [
+  "@desktop-foundation/bridge",
+  "@desktop-foundation/ui-react",
+  "@desktop-foundation/app-shell",
+  "@desktop-foundation/theme-presets"
+];
+const foundationDevPackages = ["@desktop-foundation/create-desktop-app"];
 
 function printHelp() {
   console.log([
@@ -24,6 +31,8 @@ function printHelp() {
     "  --no-type-check       Disable the default type-check step.",
     "  --no-build            Disable the default build step.",
     "  --strict              Fail when a requested script or package artifact is missing.",
+    "  --integration-check   Check whether a product project is wired to the foundation contract.",
+    "  --integration-report <path> Write integration check report JSON.",
     "",
     "Desktop packaging:",
     "  --package-desktop     Normalize built desktop artifacts into artifacts/desktop.",
@@ -50,6 +59,13 @@ function printHelp() {
     "  --release-plan-path <path> Release plan output path. Defaults to <artifact-dir>/release-plan.json.",
     "  --tag <name>         Release tag for release-plan. Defaults to v<version>.",
     "  --release-name <name> Release name for release-plan.",
+    "  --github-repo <owner/repo> Infer GitHub Release URLs and gh commands.",
+    "  --github-host <url>  GitHub host. Defaults to https://github.com.",
+    "  --manifest-file-name <name> Release manifest asset name. Defaults to latest.json.",
+    "  --draft              Add --draft to generated gh release command.",
+    "  --prerelease         Add --prerelease to generated gh release command.",
+    "  --signature-path <path> Include a detached signature asset in release-plan.",
+    "  --notarization-note <text> Add product-owned notarization note to release-plan.",
     "",
     "Other:",
     "  --help                Show this help.",
@@ -77,7 +93,8 @@ function parseArgs(argv) {
     mandatory: false,
     zip: true,
     checksum: true,
-    releasePlan: false
+    releasePlan: false,
+    integrationCheck: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -116,6 +133,16 @@ function parseArgs(argv) {
     }
     if (arg === "--strict") {
       options.strict = true;
+      continue;
+    }
+    if (arg === "--integration-check") {
+      options.integrationCheck = true;
+      options.requested.clear();
+      continue;
+    }
+    if (arg === "--integration-report") {
+      options.integrationReportPath = readNext(argv, index, arg);
+      index += 1;
       continue;
     }
     if (arg === "--script") {
@@ -227,6 +254,39 @@ function parseArgs(argv) {
       index += 1;
       continue;
     }
+    if (arg === "--github-repo") {
+      options.githubRepo = readNext(argv, index, arg);
+      index += 1;
+      continue;
+    }
+    if (arg === "--github-host") {
+      options.githubHost = readNext(argv, index, arg);
+      index += 1;
+      continue;
+    }
+    if (arg === "--manifest-file-name") {
+      options.manifestFileName = readNext(argv, index, arg);
+      index += 1;
+      continue;
+    }
+    if (arg === "--draft") {
+      options.draft = true;
+      continue;
+    }
+    if (arg === "--prerelease") {
+      options.prerelease = true;
+      continue;
+    }
+    if (arg === "--signature-path") {
+      options.signaturePath = readNext(argv, index, arg);
+      index += 1;
+      continue;
+    }
+    if (arg === "--notarization-note") {
+      options.notarizationNote = readNext(argv, index, arg);
+      index += 1;
+      continue;
+    }
     throw new Error("Unknown argument: " + arg);
   }
 
@@ -295,6 +355,211 @@ function runCommand(command, args, options = {}) {
     throw new Error(command + " " + args.join(" ") + " failed with exit code " + result.status);
   }
   return true;
+}
+
+function readTextIfExists(path) {
+  return existsSync(path) ? readFileSync(path, "utf8") : "";
+}
+
+function walkProjectFiles(dir, files = []) {
+  if (!existsSync(dir)) return files;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith(".")) continue;
+    if (["node_modules", "dist", "target", "artifacts", "coverage", "__screenshots__"].includes(entry.name)) continue;
+    const filePath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkProjectFiles(filePath, files);
+    } else if (/\.(cjs|mjs|js|jsx|ts|tsx|json|toml|rs|css)$/.test(entry.name)) {
+      files.push(filePath);
+    }
+  }
+  return files;
+}
+
+function mergeDependencies(packageJson) {
+  return {
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies,
+    ...packageJson.peerDependencies,
+    ...packageJson.optionalDependencies
+  };
+}
+
+function packageSpec(packageJson, name) {
+  const all = mergeDependencies(packageJson);
+  return all[name];
+}
+
+function tarballVersion(spec) {
+  const match = String(spec ?? "").match(/desktop-foundation-[a-z-]+-(\d+\.\d+\.\d+)\.tgz/);
+  return match?.[1];
+}
+
+function pushFinding(findings, status, id, message, details = {}) {
+  findings.push({ status, id, message, ...details });
+}
+
+function hasAnyText(files, patterns) {
+  for (const file of files) {
+    const content = readTextIfExists(file);
+    if (patterns.some((pattern) => pattern.test(content))) return true;
+  }
+  return false;
+}
+
+function runIntegrationCheck(options, packageJson) {
+  const cwd = process.cwd();
+  const findings = [];
+  const files = walkProjectFiles(cwd);
+  const sourceFiles = files.filter((file) => /\.(cjs|mjs|js|jsx|ts|tsx)$/.test(file));
+  const packageManager = packageJson.packageManager || process.env.npm_config_user_agent || "";
+
+  pushFinding(findings, "pass", "package-json", "package.json is present.");
+  if (/pnpm@/.test(packageManager) || existsSync(resolve(cwd, "pnpm-lock.yaml"))) {
+    pushFinding(findings, "pass", "package-manager", "pnpm package manager context detected.");
+  } else {
+    pushFinding(findings, "warn", "package-manager", "pnpm was not detected; raw tarball overrides are tested primarily with pnpm.");
+  }
+
+  const specs = new Map();
+  for (const name of foundationRuntimePackages) {
+    const spec = packageSpec(packageJson, name);
+    if (spec) {
+      specs.set(name, spec);
+      pushFinding(findings, "pass", "dependency:" + name, name + " is installed.", { spec });
+    } else {
+      pushFinding(findings, "fail", "dependency:" + name, name + " is missing from dependencies.");
+    }
+  }
+
+  for (const name of foundationDevPackages) {
+    const spec = packageSpec(packageJson, name);
+    if (spec) {
+      specs.set(name, spec);
+      pushFinding(findings, "pass", "dependency:" + name, name + " is installed.", { spec });
+    } else {
+      pushFinding(findings, "warn", "dependency:" + name, name + " is not installed; CI wrapper and scaffolding commands may be unavailable.");
+    }
+  }
+
+  const tarballVersions = [...specs.values()].map(tarballVersion).filter(Boolean);
+  if (tarballVersions.length) {
+    const uniqueVersions = Array.from(new Set(tarballVersions));
+    if (uniqueVersions.length === 1) {
+      pushFinding(findings, "pass", "foundation-version", "Foundation tarball versions are aligned.", { version: uniqueVersions[0] });
+    } else {
+      pushFinding(findings, "fail", "foundation-version", "Foundation tarball versions are mixed.", { versions: uniqueVersions });
+    }
+  }
+
+  const overrides = packageJson.pnpm?.overrides ?? {};
+  for (const name of [...foundationRuntimePackages, ...foundationDevPackages]) {
+    const spec = packageSpec(packageJson, name);
+    if (String(spec ?? "").includes("raw.githubusercontent.com") && overrides[name] !== spec) {
+      pushFinding(findings, "warn", "pnpm-overrides:" + name, name + " should be pinned in pnpm.overrides to avoid transitive drift.", {
+        expected: spec,
+        actual: overrides[name]
+      });
+    }
+  }
+
+  if (hasAnyText(sourceFiles, [/@desktop-foundation\/ui-react\/styles\.css/])) {
+    pushFinding(findings, "pass", "ui-styles", "Shared foundation stylesheet is imported.");
+  } else {
+    pushFinding(findings, "fail", "ui-styles", "Missing import for @desktop-foundation/ui-react/styles.css.");
+  }
+
+  if (hasAnyText(sourceFiles, [/DesktopAppShell/, /from\s+["']@desktop-foundation\/app-shell["']/])) {
+    pushFinding(findings, "pass", "app-shell", "DesktopAppShell/app-shell usage detected.");
+  } else {
+    pushFinding(findings, "fail", "app-shell", "DesktopAppShell from @desktop-foundation/app-shell was not detected.");
+  }
+
+  if (hasAnyText(sourceFiles, [/createThemeTemplateRuntime/, /themeTemplates/, /getThemeTemplateLayout/])) {
+    pushFinding(findings, "pass", "theme-template", "Theme template runtime usage detected.");
+  } else {
+    pushFinding(findings, "fail", "theme-template", "Theme template runtime usage was not detected.");
+  }
+
+  if (hasAnyText(sourceFiles, [/DesktopLoginPage/])) {
+    pushFinding(findings, "pass", "login-shell", "DesktopLoginPage usage detected.");
+  } else {
+    pushFinding(findings, "warn", "login-shell", "DesktopLoginPage was not detected; product may own a custom login flow.");
+  }
+
+  const tauriDir = resolve(cwd, "src-tauri");
+  const cargoTomlPath = join(tauriDir, "Cargo.toml");
+  const capabilitiesPath = join(tauriDir, "capabilities", "default.json");
+  if (existsSync(tauriDir)) {
+    const cargoToml = readTextIfExists(cargoTomlPath);
+    if (/desktop-core-rs\s*=/.test(cargoToml)) {
+      pushFinding(findings, "pass", "tauri-core", "desktop-core-rs dependency detected.");
+    } else {
+      pushFinding(findings, "fail", "tauri-core", "src-tauri exists but desktop-core-rs is missing from Cargo.toml.");
+    }
+
+    const capabilities = readTextIfExists(capabilitiesPath);
+    if (/desktop-core:default/.test(capabilities)) {
+      pushFinding(findings, "pass", "tauri-capability", "desktop-core:default capability detected.");
+    } else {
+      pushFinding(findings, "warn", "tauri-capability", "desktop-core:default capability was not detected in src-tauri/capabilities/default.json.");
+    }
+  } else {
+    pushFinding(findings, "warn", "tauri-core", "src-tauri directory was not found; desktop packaging checks are skipped.");
+  }
+
+  if (hasAnyText(sourceFiles, [/updateConfig\s*:/, /VITE_UPDATE_MANIFEST_URL/, /createGitHubReleasesUpdateCapability/])) {
+    pushFinding(findings, "pass", "updates", "Client update configuration surface detected.");
+  } else {
+    pushFinding(findings, "warn", "updates", "No updateConfig or GitHub Releases updater usage detected.");
+  }
+
+  for (const script of ["type-check", "build"]) {
+    if (packageJson.scripts?.[script]) {
+      pushFinding(findings, "pass", "script:" + script, "package script \"" + script + "\" is present.");
+    } else {
+      pushFinding(findings, "fail", "script:" + script, "package script \"" + script + "\" is missing.");
+    }
+  }
+  for (const script of ["visual:regression", "package:desktop"]) {
+    if (packageJson.scripts?.[script]) {
+      pushFinding(findings, "pass", "script:" + script, "package script \"" + script + "\" is present.");
+    } else {
+      pushFinding(findings, "warn", "script:" + script, "package script \"" + script + "\" is not present.");
+    }
+  }
+
+  const summary = {
+    status: findings.some((finding) => finding.status === "fail") ? "fail" : findings.some((finding) => finding.status === "warn") ? "warn" : "pass",
+    pass: findings.filter((finding) => finding.status === "pass").length,
+    warn: findings.filter((finding) => finding.status === "warn").length,
+    fail: findings.filter((finding) => finding.status === "fail").length
+  };
+  const report = {
+    generatedAt: new Date().toISOString(),
+    cwd,
+    packageName: packageJson.name,
+    summary,
+    findings
+  };
+
+  for (const finding of findings) {
+    const label = finding.status.toUpperCase().padEnd(4);
+    console.log(`desktop-foundation-ci: ${label} ${finding.id} - ${finding.message}`);
+  }
+  console.log(`desktop-foundation-ci: integration ${summary.status} (${summary.pass} pass, ${summary.warn} warn, ${summary.fail} fail)`);
+
+  if (options.integrationReportPath) {
+    const reportPath = resolve(cwd, options.integrationReportPath);
+    mkdirSync(dirname(reportPath), { recursive: true });
+    writeFileSync(reportPath, JSON.stringify(report, null, 2) + "\n");
+    console.log("desktop-foundation-ci: wrote " + reportPath);
+  }
+
+  if (summary.fail > 0) {
+    throw new Error("desktop-foundation-ci: integration check failed.");
+  }
+  return report;
 }
 
 function safeSegment(value) {
@@ -384,6 +649,48 @@ function createZipForBundle(bundlePath, artifactDir, zipName) {
 function makeDownloadUrl(baseUrl, fileName) {
   if (!baseUrl || !fileName) return undefined;
   return baseUrl.replace(/\/$/, "") + "/" + encodeURIComponent(fileName).replace(/%2F/g, "/");
+}
+
+function normalizeGithubHost(value) {
+  const host = value || "https://github.com";
+  return (/^https?:\/\//.test(host) ? host : "https://" + host).replace(/\/$/, "");
+}
+
+function parseGithubRepo(value) {
+  if (!value) return null;
+  const trimmed = String(value).trim().replace(/\.git$/, "");
+  const urlMatch = trimmed.match(/^https?:\/\/[^/]+\/([^/]+\/[^/]+)$/);
+  const repo = (urlMatch ? urlMatch[1] : trimmed).replace(/^\/+|\/+$/g, "");
+  if (!/^[^/]+\/[^/]+$/.test(repo)) {
+    throw new Error("--github-repo must look like owner/repo.");
+  }
+  return repo;
+}
+
+function githubReleaseBaseUrl(options, tagName) {
+  const repo = parseGithubRepo(options.githubRepo);
+  if (!repo) return undefined;
+  return `${normalizeGithubHost(options.githubHost)}/${repo}/releases/download/${encodeURIComponent(tagName)}`;
+}
+
+function githubReleasePageUrl(options, tagName) {
+  const repo = parseGithubRepo(options.githubRepo);
+  if (!repo) return undefined;
+  return `${normalizeGithubHost(options.githubHost)}/${repo}/releases/tag/${encodeURIComponent(tagName)}`;
+}
+
+function githubLatestManifestUrl(options, manifestPath) {
+  const repo = parseGithubRepo(options.githubRepo);
+  if (!repo) return undefined;
+  const manifestFileName = options.manifestFileName ?? (manifestPath ? basename(manifestPath) : "latest.json");
+  return `${normalizeGithubHost(options.githubHost)}/${repo}/releases/latest/download/${encodeURIComponent(manifestFileName)}`;
+}
+
+function githubCliRepoArg(options) {
+  const repo = parseGithubRepo(options.githubRepo);
+  if (!repo) return undefined;
+  const host = new URL(normalizeGithubHost(options.githubHost)).hostname;
+  return host === "github.com" ? repo : `${host}/${repo}`;
 }
 
 function fileSha256(filePath) {
@@ -483,16 +790,19 @@ function packageDesktopArtifacts(options, packageJson, tauriConfig) {
 function writeManifest(options, packageJson, tauriConfig, packageResult) {
   const productName = inferProductName(options, packageJson, tauriConfig);
   const version = inferVersion(options, packageJson, tauriConfig);
+  const tagName = options.tag ?? "v" + version;
   const artifactDir = resolve(process.cwd(), options.artifactDir);
   const manifestPath = resolve(process.cwd(), options.manifestPath ?? join(options.artifactDir, "latest.json"));
   const artifactName = packageResult?.releaseFileName ?? packageResult?.zipFileName ?? packageResult?.appFileName;
-  const downloadUrl = options.downloadUrl ?? makeDownloadUrl(options.downloadBaseUrl, artifactName);
+  const downloadBaseUrl = options.downloadBaseUrl ?? githubReleaseBaseUrl(options, tagName);
+  const releasePageUrl = options.releaseUrl ?? githubReleasePageUrl(options, tagName);
+  const downloadUrl = options.downloadUrl ?? makeDownloadUrl(downloadBaseUrl, artifactName);
   const manifest = {
     version,
     channel: options.channel,
     notes: options.notes ?? productName + " " + version,
     pubDate: new Date().toISOString(),
-    releasePageUrl: options.releaseUrl,
+    releasePageUrl,
     downloadUrl,
     sha256: packageResult?.releaseSha256,
     size: packageResult?.releaseSize,
@@ -505,6 +815,8 @@ function writeManifest(options, packageJson, tauriConfig, packageResult) {
       sha256: packageResult?.releaseSha256,
       checksumFileName: packageResult?.checksumFileName,
       signing: packageResult?.signing,
+      tagName,
+      githubRepo: parseGithubRepo(options.githubRepo) ?? undefined,
       generatedBy: "desktop-foundation-ci"
     }
   };
@@ -526,14 +838,18 @@ function writeReleasePlan(options, packageJson, tauriConfig, packageResult, mani
   const version = inferVersion(options, packageJson, tauriConfig);
   const tagName = options.tag ?? "v" + version;
   const releaseName = options.releaseName ?? productName + " " + version;
+  const releasePageUrl = options.releaseUrl ?? githubReleasePageUrl(options, tagName);
+  const latestManifestUrl = githubLatestManifestUrl(options, manifestResult?.manifestPath);
   const planPath = resolve(process.cwd(), options.releasePlanPath ?? join(options.artifactDir, "release-plan.json"));
   const assets = [
     releaseAsset(packageResult?.releasePath, "desktop-update-archive"),
     releaseAsset(packageResult?.checksumPath, "checksum"),
     releaseAsset(manifestResult?.manifestPath, "update-manifest"),
-    releaseAsset(packageResult?.indexPath, "artifact-index")
+    releaseAsset(packageResult?.indexPath, "artifact-index"),
+    releaseAsset(options.signaturePath ? resolve(process.cwd(), options.signaturePath) : undefined, "signature")
   ].filter(Boolean);
   const assetPaths = assets.map((asset) => asset.path);
+  const ghRepoArg = githubCliRepoArg(options);
   const ghReleaseCreate = [
     "gh",
     "release",
@@ -545,23 +861,43 @@ function writeReleasePlan(options, packageJson, tauriConfig, packageResult, mani
     "--notes",
     options.notes ?? releaseName
   ];
+  if (ghRepoArg) ghReleaseCreate.push("--repo", ghRepoArg);
+  if (options.draft) ghReleaseCreate.push("--draft");
+  if (options.prerelease) ghReleaseCreate.push("--prerelease");
+  const ghReleaseUpload = ["gh", "release", "upload", tagName, ...assetPaths, "--clobber"];
+  if (ghRepoArg) ghReleaseUpload.push("--repo", ghRepoArg);
   const plan = {
     productName,
     version,
     channel: options.channel,
     tagName,
     releaseName,
-    releasePageUrl: options.releaseUrl,
+    releasePageUrl,
+    latestManifestUrl,
     downloadUrl: manifestResult?.manifest.downloadUrl,
     manifestPath: manifestResult?.manifestPath,
     manifest: manifestResult?.manifest,
     assets,
+    checksums: assets
+      .filter((asset) => asset.kind === "desktop-update-archive" || asset.kind === "checksum")
+      .map((asset) => ({ fileName: asset.fileName, path: asset.path, bytes: asset.bytes })),
+    github: parseGithubRepo(options.githubRepo)
+      ? {
+          host: normalizeGithubHost(options.githubHost),
+          repo: parseGithubRepo(options.githubRepo),
+          releasePageUrl,
+          latestManifestUrl,
+          draft: Boolean(options.draft),
+          prerelease: Boolean(options.prerelease)
+        }
+      : undefined,
     ghReleaseCreate,
+    ghReleaseUpload,
     signing: packageResult?.signing ?? { notarization: "not-configured" },
     notarization: {
       status: "not-configured",
       env: ["APPLE_ID", "APPLE_TEAM_ID", "APPLE_APP_SPECIFIC_PASSWORD"],
-      note: "Product projects can add notarization before release upload without changing client update code."
+      note: options.notarizationNote ?? "Product projects can add notarization before release upload without changing client update code."
     },
     generatedAt: new Date().toISOString(),
     generatedBy: "desktop-foundation-ci"
@@ -577,6 +913,7 @@ try {
   const packageJson = readPackageJson();
   const tauriConfig = readTauriConfig();
   const runner = detectRunner(packageJson.packageManager);
+  if (options.integrationCheck) runIntegrationCheck(options, packageJson);
   const scripts = [...options.requested, ...options.customScripts];
   for (const script of scripts) runScript(script, packageJson, runner, options.strict);
   const packageResult = options.packageDesktop ? packageDesktopArtifacts(options, packageJson, tauriConfig) : null;
@@ -585,7 +922,10 @@ try {
   console.log("desktop-foundation-ci: complete");
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
-  console.error("");
-  printHelp();
+  const message = error instanceof Error ? error.message : String(error);
+  if (message.startsWith("Unknown argument:") || message.startsWith("Missing value for ")) {
+    console.error("");
+    printHelp();
+  }
   process.exit(1);
 }

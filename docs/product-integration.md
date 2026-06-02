@@ -19,6 +19,7 @@ Fast path:
 1. Open the manifest.
 2. Copy `consumer.dependencies`, `consumer.devDependencies`, and `consumer.pnpm.overrides` into the product `package.json`.
 3. Run `pnpm install`.
+4. Run `pnpm exec desktop-foundation-ci --integration-check`.
 
 The product should import the shared stylesheet once:
 
@@ -153,6 +154,7 @@ Run these checks in the product repo after integration:
 
 ```bash
 pnpm install
+pnpm exec desktop-foundation-ci --integration-check --integration-report artifacts/foundation-integration.json
 pnpm build
 pnpm visual:regression
 pnpm tauri build

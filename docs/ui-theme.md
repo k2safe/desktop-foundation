@@ -55,7 +55,7 @@ Current built-in template ids:
 | --- | --- | --- | --- | --- |
 | `default` | sidebar | split | crisp | neutral internal desktop apps |
 | `admin` | sidebar | brand-split | dense | admin consoles similar to CoinPay |
-| `command` | sidebar | workbench | dense | operations and monitoring tools |
+| `command` | topnav | workbench | dense | operations and monitoring tools |
 | `merchant` | topnav | centered | glass | merchant-facing SaaS surfaces |
 | `ledger` | topnav | centered | crisp | finance, reconciliation, ledger tables |
 | `studio` | topnav | split | glass | lighter product and settings workspaces |
@@ -71,6 +71,12 @@ Login variants stay intentionally small:
 - `workbench`: operational login surface for command-center products.
 
 Business-only fields such as tenant code, Google OTP, or invite token should be added through `DesktopLoginPage.extraFields`; they should not be baked into the foundation template.
+
+Recommended starting points:
+
+- `admin`: left navigation, brand-split login, dense admin tables and CoinPay-style console spacing.
+- `command`: top navigation, workbench login, compact telemetry panels, and stronger dark chrome.
+- `ledger`: top navigation, centered login, financial table emphasis, and tabular numeric rhythm.
 
 ## Rules
 

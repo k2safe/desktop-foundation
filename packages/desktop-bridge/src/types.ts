@@ -202,6 +202,15 @@ export interface AppUpdateConfig {
   installUpdate?: AppUpdateInstallAdapter;
 }
 
+export interface GitHubReleasesUpdateConfig extends AppUpdateConfig {
+  repository?: string;
+  owner?: string;
+  repo?: string;
+  githubHost?: string;
+  tag?: string;
+  manifestFileName?: string;
+}
+
 export interface FileCapability {
   openFileDialog(options?: OpenFileDialogOptions): Promise<FileDialogResult>;
   saveFileDialog(options?: SaveFileDialogOptions): Promise<SaveFileDialogResult>;

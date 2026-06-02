@@ -11,7 +11,8 @@ import type {
   AppUpdateManifest,
   AppUpdateState,
   DesktopCapability,
-  FileCapability
+  FileCapability,
+  GitHubReleasesUpdateConfig
 } from "./types";
 
 function compareVersions(next: string, current: string) {
@@ -117,6 +118,47 @@ function resolveManifestUrls(manifest: AppUpdateManifest, baseUrl: string): AppU
 function setError(state: AppUpdateState, error: unknown) {
   state.status = "error";
   state.error = error instanceof Error ? error.message : String(error);
+}
+
+function normalizeGitHubHost(value?: string) {
+  const host = value || "https://github.com";
+  return (/^https?:\/\//.test(host) ? host : `https://${host}`).replace(/\/$/, "");
+}
+
+function resolveGitHubRepository(config: GitHubReleasesUpdateConfig) {
+  const value = config.repository ?? (config.owner && config.repo ? `${config.owner}/${config.repo}` : undefined);
+  if (!value) throw new DesktopError({ code: "UPDATE_GITHUB_REPOSITORY_MISSING", message: "GitHub update repository is missing" });
+  const repository = value.trim().replace(/\.git$/, "").replace(/^\/+|\/+$/g, "");
+  if (!/^[^/]+\/[^/]+$/.test(repository)) {
+    throw new DesktopError({ code: "UPDATE_GITHUB_REPOSITORY_INVALID", message: "GitHub update repository must look like owner/repo" });
+  }
+  return repository;
+}
+
+export function createGitHubReleaseManifestUrl(config: GitHubReleasesUpdateConfig): string {
+  if (config.manifestUrl) return config.manifestUrl;
+  const host = normalizeGitHubHost(config.githubHost);
+  const repository = resolveGitHubRepository(config);
+  const manifestFileName = encodeURIComponent(config.manifestFileName ?? "latest.json");
+  if (config.tag) {
+    return `${host}/${repository}/releases/download/${encodeURIComponent(config.tag)}/${manifestFileName}`;
+  }
+  return `${host}/${repository}/releases/latest/download/${manifestFileName}`;
+}
+
+export function createGitHubReleasePageUrl(config: GitHubReleasesUpdateConfig): string {
+  const host = normalizeGitHubHost(config.githubHost);
+  const repository = resolveGitHubRepository(config);
+  return config.tag ? `${host}/${repository}/releases/tag/${encodeURIComponent(config.tag)}` : `${host}/${repository}/releases/latest`;
+}
+
+function assertGitHubManifestUrl(url: string, config: GitHubReleasesUpdateConfig) {
+  const host = new URL(normalizeGitHubHost(config.githubHost));
+  const parsed = new URL(url, host.toString());
+  if (parsed.origin !== host.origin) {
+    throw new DesktopError({ code: "UPDATE_GITHUB_MANIFEST_ORIGIN", message: "GitHub update manifest must use the configured GitHub host" });
+  }
+  config.assertManifestUrl?.(url);
 }
 
 export function createNoopUpdateCapability(currentVersion?: string): AppUpdateCapability {
@@ -320,4 +362,20 @@ export function createManifestUpdateCapability(
     openUpdatePage,
     getState: () => ({ ...state })
   };
+}
+
+export function createGitHubReleasesUpdateCapability(
+  config: GitHubReleasesUpdateConfig,
+  desktop?: DesktopCapability,
+  files?: FileCapability
+): AppUpdateCapability {
+  return createManifestUpdateCapability(
+    {
+      ...config,
+      manifestUrl: createGitHubReleaseManifestUrl(config),
+      assertManifestUrl: (url) => assertGitHubManifestUrl(url, config)
+    },
+    desktop,
+    files
+  );
 }

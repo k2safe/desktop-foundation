@@ -2,7 +2,13 @@ export { createDesktopClient } from "./client";
 export { createWebDesktopCapability } from "./desktop";
 export { createWebFileCapability } from "./files";
 export { createWebSecureStorage } from "./secureStorage";
-export { createManifestUpdateCapability, createNoopUpdateCapability } from "./updates";
+export {
+  createGitHubReleaseManifestUrl,
+  createGitHubReleasePageUrl,
+  createGitHubReleasesUpdateCapability,
+  createManifestUpdateCapability,
+  createNoopUpdateCapability
+} from "./updates";
 export { createTauriNativeDesktopCapability, createTauriNativeFileCapability, createTauriNativeUpdateCapability } from "./tauriPlugins";
 export { DesktopError, UnauthorizedError } from "./errors";
 export { createWebSessionStore, createWebStorage } from "./storage";
@@ -38,6 +44,7 @@ export type {
   DownloadFileResult,
   FileCapability,
   FileDialogResult,
+  GitHubReleasesUpdateConfig,
   HttpMethod,
   HttpRequestOptions,
   HttpResponseType,

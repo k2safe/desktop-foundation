@@ -268,20 +268,20 @@ export const commandThemePreset: DesktopTheme = {
   brand: { name: "Command" },
   colors: {
     ...defaultThemePreset.colors,
-    primary: "#2563eb",
-    primaryHover: "#1d4ed8",
+    primary: "#0f62fe",
+    primaryHover: "#0047c7",
     primarySoft: "#e0f2fe",
-    dark: "#07111f",
-    background: "#eef3f8",
+    dark: "#08111f",
+    background: "#edf3f8",
     surface: "#ffffff",
     elevated: "#f8fbff",
     border: "#dbe5ef",
     strongBorder: "#b9c7d8",
     text: "#101828",
     mutedText: "#607086",
-    success: "#0f9f6e",
+    success: "#12b981",
     warning: "#d97706",
-    info: "#0e7490"
+    info: "#0891b2"
   },
   density: "compact"
 };
@@ -416,7 +416,7 @@ export const darkThemeTemplate: ThemeTemplate = {
 export const commandThemeTemplate: ThemeTemplate = {
   id: "command",
   name: "Command Center",
-  description: "Compact sidebar, workbench login, and telemetry-friendly dense surfaces for operations consoles.",
+  description: "Top navigation, workbench login, and telemetry-friendly dense surfaces for operations consoles.",
   category: "ops",
   preview: {
     primary: commandThemePreset.colors.primary,
@@ -425,7 +425,7 @@ export const commandThemeTemplate: ThemeTemplate = {
     surface: commandThemePreset.colors.surface
   },
   layout: {
-    appShell: "sidebar",
+    appShell: "topnav",
     login: "workbench",
     surface: "dense"
   },
