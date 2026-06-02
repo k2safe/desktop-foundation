@@ -1,7 +1,6 @@
 {
   "name": "@desktop-foundation/ui-react",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "sideEffects": [
     "./src/styles.css"
@@ -25,5 +24,8 @@
   "devDependencies": {
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

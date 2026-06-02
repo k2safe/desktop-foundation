@@ -1,7 +1,6 @@
 {
   "name": "@desktop-foundation/create-desktop-app",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "bin": {
     "create-desktop-app": "./bin/create-desktop-app.mjs",
@@ -15,5 +14,8 @@
     "build": "node --check bin/create-desktop-app.mjs && node --check bin/desktop-foundation-ci.mjs",
     "type-check": "node --check bin/create-desktop-app.mjs && node --check bin/desktop-foundation-ci.mjs",
     "lint": "node --check bin/create-desktop-app.mjs && node --check bin/desktop-foundation-ci.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

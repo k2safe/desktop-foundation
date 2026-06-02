@@ -1,7 +1,6 @@
 {
   "name": "@desktop-foundation/theme-presets",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -16,5 +15,8 @@
   },
   "dependencies": {
     "@desktop-foundation/ui-react": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

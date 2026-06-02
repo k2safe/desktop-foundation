@@ -1,36 +1,28 @@
+# Package Consumption
+
+This page is the handoff contract for product repositories that need to consume `desktop-foundation` before a registry publish is available.
+
+## Fast Path: GitHub Raw Tarballs
+
+The foundation repo publishes package tarballs into `artifacts/npm`. Product apps can install them directly from GitHub raw URLs.
+
+Manifest:
+
+```text
+https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json
+```
+
+Use these dependencies in product `package.json`:
+
+```json
 {
-  "name": "{{PACKAGE_NAME}}",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "dev": "tauri dev",
-    "dev:web": "vite --host=127.0.0.1",
-    "build": "pnpm type-check && pnpm build:web",
-    "build:web": "vite build",
-    "build:desktop": "tauri build",
-    "preview": "vite preview --host=127.0.0.1",
-    "type-check": "tsc -p tsconfig.json --noEmit",
-    "ci": "desktop-foundation-ci --type-check --build --strict",
-    "package:desktop": "pnpm build:desktop && desktop-foundation-ci --no-type-check --no-build --package-desktop --manifest --release-plan",
-    "release:manifest": "desktop-foundation-ci --no-type-check --no-build --manifest --release-plan"
-  },
   "dependencies": {
     "@desktop-foundation/app-shell": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-0.1.0.tgz",
     "@desktop-foundation/bridge": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-0.1.0.tgz",
     "@desktop-foundation/theme-presets": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-0.1.0.tgz",
-    "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.0.tgz",
-    "@tauri-apps/api": "^2.0.0",
-    "@vitejs/plugin-react": "^5.0.4",
-    "react": "^19.0.1",
-    "react-dom": "^19.0.1",
-    "vite": "^6.2.3"
+    "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.0.tgz"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.0.0",
-    "@types/react": "^19.2.15",
-    "@types/react-dom": "^19.2.3",
-    "typescript": "~5.8.2",
     "@desktop-foundation/create-desktop-app": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-0.1.0.tgz"
   },
   "pnpm": {
@@ -43,3 +35,30 @@
     }
   }
 }
+```
+
+Use this Rust dependency in product `src-tauri/Cargo.toml`:
+
+```toml
+desktop-core-rs = { git = "ssh://git@github.com/k2safe/desktop-foundation.git", branch = "main", package = "desktop-core-rs", features = ["tauri"] }
+```
+
+## Generate Package Artifacts
+
+From the foundation repo:
+
+```bash
+pnpm build
+pnpm pack:packages
+```
+
+`pnpm pack:packages` writes:
+
+- `artifacts/npm/*.tgz`
+- `artifacts/npm/foundation-packages.json`
+
+## Later: Registry Publish
+
+The package manifests are publish-ready. When a registry is available, publish the same packages to npm or GitHub Packages and replace the tarball URLs with normal semver ranges such as `0.1.0`.
+
+The product integration shape stays the same.
