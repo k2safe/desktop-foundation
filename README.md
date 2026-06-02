@@ -16,6 +16,7 @@
 
 ## Docs
 
+- [Product AI Handoff](docs/product-ai-handoff.md)
 - [Product Integration Guide](docs/product-integration.md)
 - [Package Consumption](docs/package-consumption.md)
 - [Package Boundary](docs/package-boundary.md)
@@ -25,6 +26,7 @@
 - [Rust Core](docs/rust-core.md)
 - [API Reference](docs/api-reference.md)
 - [Security Policy](docs/security-policy.md)
+- [CI/CD Capability](docs/ci-cd.md)
 - [Demo Gallery](docs/demo-gallery.md)
 - [External Demo](docs/external-demo.md)
 

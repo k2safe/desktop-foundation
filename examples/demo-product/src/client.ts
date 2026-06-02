@@ -1,5 +1,7 @@
 import {
   createDesktopClient,
+  createGitHubReleasesUpdateConfig,
+  type AppUpdateConfig,
   type AsyncKeyValueStore,
   type DesktopCapability,
   type DesktopClient,
@@ -10,6 +12,8 @@ import {
   type SessionStore
 } from "@desktop-foundation/bridge";
 import { demoUser, orders, type DemoUser } from "./data";
+
+const demoVersion = "0.1.0";
 
 function memoryStore(initialValues: Record<string, unknown> = {}): KeyValueStore {
   const values = new Map<string, unknown>(Object.entries(initialValues));
@@ -123,9 +127,25 @@ function demoFileCapability(pushLog: (value: string) => void): FileCapability {
   };
 }
 
+function demoUpdateConfig(): AppUpdateConfig {
+  return createGitHubReleasesUpdateConfig({
+    repository: "k2safe/desktop-foundation-demo",
+    currentVersion: demoVersion,
+    channel: "stable",
+    requireChecksumVerification: true,
+    installUpdate: async ({ update, downloadedPath }) => ({
+      status: "installable",
+      message: `更新包 ${update.version} 已下载并校验完成；产品项目接入 Tauri updater 或安装器后即可执行替换。`,
+      path: downloadedPath,
+      relaunchRequired: true
+    })
+  });
+}
+
 export function createDemoProductClient(pushLog: (value: string) => void): DesktopClient {
   return createDesktopClient({
     product: "commerce-ops",
+    version: demoVersion,
     apiBaseURL: "https://api.commerce-demo.local",
     session: demoSessionStore(),
     storage: memoryStore({ "orders.density": "default" }),
@@ -133,8 +153,9 @@ export function createDemoProductClient(pushLog: (value: string) => void): Deskt
     transport: demoTransport(),
     desktop: demoDesktopCapability(pushLog),
     files: demoFileCapability(pushLog),
+    updateConfig: demoUpdateConfig(),
     security: {
-      allowedRequestOrigins: ["api.commerce-demo.local"],
+      allowedRequestOrigins: ["api.commerce-demo.local", "github.com", "raw.githubusercontent.com", "objects.githubusercontent.com", "github-releases.githubusercontent.com"],
       allowedExternalOrigins: ["github.com", "docs.example.com"],
       allowedExternalSchemes: ["https"],
       allowedDownloadDirectories: ["/tmp"]

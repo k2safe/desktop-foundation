@@ -161,6 +161,14 @@ function assertGitHubManifestUrl(url: string, config: GitHubReleasesUpdateConfig
   config.assertManifestUrl?.(url);
 }
 
+export function createGitHubReleasesUpdateConfig(config: GitHubReleasesUpdateConfig): AppUpdateConfig {
+  return {
+    ...config,
+    manifestUrl: createGitHubReleaseManifestUrl(config),
+    assertManifestUrl: (url) => assertGitHubManifestUrl(url, config)
+  };
+}
+
 export function createNoopUpdateCapability(currentVersion?: string): AppUpdateCapability {
   const state = createState(currentVersion);
   return {
@@ -369,13 +377,5 @@ export function createGitHubReleasesUpdateCapability(
   desktop?: DesktopCapability,
   files?: FileCapability
 ): AppUpdateCapability {
-  return createManifestUpdateCapability(
-    {
-      ...config,
-      manifestUrl: createGitHubReleaseManifestUrl(config),
-      assertManifestUrl: (url) => assertGitHubManifestUrl(url, config)
-    },
-    desktop,
-    files
-  );
+  return createManifestUpdateCapability(createGitHubReleasesUpdateConfig(config), desktop, files);
 }

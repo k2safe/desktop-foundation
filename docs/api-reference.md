@@ -109,22 +109,24 @@ createDesktopClient({
 });
 ```
 
-For GitHub Releases, use the helper to point `updateConfig.manifestUrl` at the release asset:
+For GitHub Releases, use the config helper. It points `manifestUrl` at the release asset and validates the configured GitHub host before fetch:
 
 ```ts
-import { createGitHubReleaseManifestUrl } from "@desktop-foundation/bridge";
+import { createGitHubReleasesUpdateConfig } from "@desktop-foundation/bridge";
 
 createDesktopClient({
   product: "admin",
   version: "1.0.0",
   apiBaseURL: "https://api.example.com",
-  updateConfig: {
-    manifestUrl: createGitHubReleaseManifestUrl({ repository: "acme/admin" }),
+  updateConfig: createGitHubReleasesUpdateConfig({
+    repository: "acme/admin",
     channel: "stable",
     requireChecksumVerification: true
-  }
+  })
 });
 ```
+
+`createGitHubReleaseManifestUrl(config)` and `createGitHubReleasePageUrl(config)` are exported for products that only need URLs.
 
 `createGitHubReleasesUpdateCapability(config, desktop, files)` is also exported for products that manually assemble capabilities and want the GitHub Releases manifest URL plus the standard manifest download/checksum/state flow in one adapter.
 

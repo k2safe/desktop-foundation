@@ -8,7 +8,7 @@ import { createMenus, demoUser, type DemoScreen } from "./data";
 import { Dashboard } from "./screens/Dashboard";
 import { Orders } from "./screens/Orders";
 import { Settings } from "./screens/Settings";
-import { demoProductTheme } from "./theme";
+import { demoProductTemplate, demoProductTheme } from "./theme";
 
 interface ProductWorkspaceProps {
   client: DesktopClient;
@@ -46,6 +46,7 @@ function ProductWorkspace({ client, logs }: ProductWorkspaceProps) {
   return (
     <>
       <DesktopLayout
+        variant={demoProductTemplate.layout.appShell}
         brand={{ name: "Commerce Ops" }}
         menus={createMenus(screen)}
         user={{ name: session.user?.name ?? demoUser.name, role: session.user?.role ?? demoUser.role }}
@@ -104,6 +105,7 @@ export function App() {
         checkingFallback={<LoadingBlock rows={4} />}
         fallback={
           <DesktopLoginPage
+            variant={demoProductTemplate.layout.login}
             brand={{ name: "Commerce Ops" }}
             title="商城运营登录"
             subtitle="输入任意账号密码即可进入，用来演示商城后台的登录与 session 流程。"

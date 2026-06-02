@@ -1,0 +1,173 @@
+# Product AI Handoff
+
+这份文档给接入产品项目的 AI 或工程师使用。目标是先把产品接入桌面底座，再迁移业务页面；不要先改底座，不要把业务样式硬写进底座。
+
+## 1. 接入顺序
+
+先读取 foundation package manifest：
+
+```text
+https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json
+```
+
+把 `consumer.dependencies`、`consumer.devDependencies`、`consumer.pnpm.overrides` 合并进产品 `package.json`，再执行：
+
+```bash
+pnpm install
+pnpm exec desktop-foundation-ci --integration-check --integration-report artifacts/foundation-integration.json
+```
+
+产品入口必须只 import 一次共享样式：
+
+```tsx
+import "@desktop-foundation/ui-react/styles.css";
+```
+
+接入顺序固定为：
+
+1. 安装 packages 和 `desktop-core-rs`。
+2. 用 `DesktopAppShell` 包住产品入口。
+3. 用 `createThemeTemplateRuntime` 选择模板，再覆盖品牌 token。
+4. 用 `DesktopLayout` 接菜单、顶部、用户头像和业务路由。
+5. 用 `DesktopLoginPage` 接登录页，业务字段通过 `extraFields` 传入。
+6. 把表格、表单、弹窗、设置页替换为 foundation 组件。
+7. 配置 `updateConfig`，先接 manifest 检查，安装器后补。
+8. 跑验收命令，失败项先修复再迁移业务页面。
+
+## 2. 最小代码形状
+
+```tsx
+import { DesktopAppShell, DesktopLoginPage } from "@desktop-foundation/app-shell";
+import { DesktopLayout } from "@desktop-foundation/ui-react";
+import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
+
+const template = createThemeTemplateRuntime("admin", {
+  brand: { name: "Product Admin" },
+  colors: { primary: "#3b00f5" }
+});
+
+export function App() {
+  return (
+    <DesktopAppShell theme={template.theme} client={clientConfig}>
+      <DesktopLayout
+        variant={template.layout.appShell}
+        brand={{ name: "Product Admin" }}
+        menus={menus}
+        user={session.user}
+        onLogout={session.clearSession}
+      >
+        <Routes />
+      </DesktopLayout>
+    </DesktopAppShell>
+  );
+}
+```
+
+登录页保留在底座，产品只传文案、认证逻辑和额外字段：
+
+```tsx
+<DesktopLoginPage
+  variant={template.layout.login}
+  brand={{ name: "Product Admin" }}
+  title="管理端登录"
+  subtitle="业务文案由产品项目自己维护。"
+  extraFields={({ payload, setField }) => <OtpField value={payload.otp} onChange={(value) => setField("otp", value)} />}
+  login={{ login: loginProductUser, defaultPayload: { account: "", password: "", remember: true } }}
+/>
+```
+
+## 3. 更新能力
+
+GitHub Releases 方式最轻：
+
+```ts
+import { createDesktopClient, createGitHubReleasesUpdateConfig } from "@desktop-foundation/bridge";
+
+export const clientConfig = {
+  product: "product-admin",
+  version: import.meta.env.VITE_APP_VERSION || "0.1.0",
+  apiBaseURL: import.meta.env.VITE_API_BASE_URL,
+  updateConfig: createGitHubReleasesUpdateConfig({
+    repository: import.meta.env.VITE_UPDATE_GITHUB_REPO || "owner/repo",
+    channel: import.meta.env.VITE_UPDATE_CHANNEL || "stable",
+    requireChecksumVerification: true,
+    installUpdate: async ({ update, downloadedPath }) => ({
+      status: "installable",
+      message: `Update ${update.version} is downloaded and verified.`,
+      path: downloadedPath,
+      relaunchRequired: true
+    })
+  })
+};
+```
+
+真实产品可以把 `installUpdate` 换成 Tauri updater、产品安装器，或只打开 release page。UI 只调用：
+
+```ts
+const result = await client.updates.checkForUpdate();
+await client.updates.downloadUpdate(result.update);
+await client.updates.installUpdate(result.update);
+```
+
+## 4. 发布链路
+
+Actions 没额度时，本地 macOS 也可以完整产出 release 文件：
+
+```bash
+pnpm tauri build
+pnpm exec desktop-foundation-ci \
+  --no-type-check \
+  --no-build \
+  --package-desktop \
+  --manifest \
+  --release-plan \
+  --github-repo owner/repo \
+  --channel stable
+```
+
+输出在 `artifacts/desktop`：
+
+- `<product>-<version>-macos.zip`
+- `<product>-<version>-macos.zip.sha256`
+- `latest.json`
+- `desktop-artifacts.json`
+- `release-plan.json`
+
+`release-plan.json` 里有 `latestManifestUrl`、`downloadUrl`、assets、checksum、`ghReleaseCreate` 和 `ghReleaseUpload`。产品可以手工上传，也可以把命令放进自己的 GitHub Actions。
+
+签名和公证仍归产品项目管理。底座只记录 `--signature-path`、`--signing-identity`、`--notarization-note` 的预留信息，不强制证书和 Apple 账号。
+
+## 5. 验收清单
+
+必须通过：
+
+- `pnpm exec desktop-foundation-ci --integration-check` 没有 fail。
+- `pnpm build` 通过。
+- 桌面包能打开，不白屏，不崩溃。
+- 左侧、顶部、内容区没有异常白边。
+- 登录页使用底座壳，产品字段通过 slot 传入。
+- 菜单、顶部头像、退出入口走 `DesktopLayout`。
+- 表格、筛选、表单、弹窗、设置页优先用 foundation 组件。
+- 主题通过模板选择和 token 覆盖完成，不能在业务页大面积覆盖底座 CSS。
+- 更新中心能看到 `client.updates.getState()` 状态流转。
+- `latest.json` 包含 `version`、`downloadUrl`、`sha256`、`size`。
+
+可后补：
+
+- `pnpm visual:regression`
+- Tauri updater 安装器
+- macOS 签名和公证
+- GitHub Actions 自动 release upload
+
+## 6. 反哺规则
+
+接入时遇到这些情况，先记入接入报告，再决定是否回到底座：
+
+- 多个产品都需要的组件、布局、表单、表格能力：回到底座抽象。
+- 只属于单个产品的字段、接口、权限、业务状态：留在产品。
+- 模板差异是整体布局、登录页结构、表格/表单视觉密度：回到底座模板。
+- 单页为了业务流程做的局部样式：留在产品。
+- integration-check 失败：先修产品接入，再考虑底座规则是否过严。
+- 桌面包白屏、崩溃、窗口异常：优先补底座诊断和脚手架验收。
+
+接入完成后，把 `artifacts/foundation-integration.json`、桌面截图、失败命令输出和需要抽象的点一起回传到底座仓库。

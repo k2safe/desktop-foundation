@@ -511,7 +511,7 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "warn", "tauri-core", "src-tauri directory was not found; desktop packaging checks are skipped.");
   }
 
-  if (hasAnyText(sourceFiles, [/updateConfig\s*:/, /VITE_UPDATE_MANIFEST_URL/, /createGitHubReleasesUpdateCapability/])) {
+  if (hasAnyText(sourceFiles, [/updateConfig\s*:/, /VITE_UPDATE_MANIFEST_URL/, /VITE_UPDATE_GITHUB_REPO/, /createGitHubReleasesUpdateConfig/, /createGitHubReleasesUpdateCapability/])) {
     pushFinding(findings, "pass", "updates", "Client update configuration surface detected.");
   } else {
     pushFinding(findings, "warn", "updates", "No updateConfig or GitHub Releases updater usage detected.");
@@ -530,6 +530,11 @@ function runIntegrationCheck(options, packageJson) {
     } else {
       pushFinding(findings, "warn", "script:" + script, "package script \"" + script + "\" is not present.");
     }
+  }
+  if (packageJson.scripts?.["release:manifest"] || packageJson.scripts?.["release:desktop"]) {
+    pushFinding(findings, "pass", "script:release", "Desktop release manifest script is present.");
+  } else {
+    pushFinding(findings, "warn", "script:release", "No release manifest script detected; add a script that runs desktop-foundation-ci --manifest --release-plan when releases are wired.");
   }
 
   const summary = {

@@ -1,12 +1,10 @@
 import type { DesktopTheme } from "@desktop-foundation/ui-react";
-import { adminThemePreset } from "@desktop-foundation/theme-presets";
+import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
 
-export const demoProductTheme: DesktopTheme = {
-  ...adminThemePreset,
+export const demoProductTemplate = createThemeTemplateRuntime("admin", {
   id: "commerce-ops",
   brand: { name: "Commerce Ops" },
   colors: {
-    ...adminThemePreset.colors,
     primary: "#0f766e",
     primaryHover: "#115e59",
     primarySoft: "#ccfbf1",
@@ -17,4 +15,6 @@ export const demoProductTheme: DesktopTheme = {
     warning: "#b45309",
     danger: "#dc2626"
   }
-};
+});
+
+export const demoProductTheme: DesktopTheme = demoProductTemplate.theme;

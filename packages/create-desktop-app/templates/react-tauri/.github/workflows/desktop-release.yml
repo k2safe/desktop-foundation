@@ -3,13 +3,24 @@ name: desktop-release
 on:
   workflow_dispatch:
     inputs:
+      tag:
+        description: "Release tag, for example v0.1.0"
+        required: false
+        default: ""
       channel:
-        description: Release channel
-        default: stable
-        required: true
-  push:
-    tags:
-      - "v*"
+        description: "Update channel"
+        required: false
+        default: "stable"
+      github_repo:
+        description: "GitHub release repository, owner/repo. Defaults to this repository."
+        required: false
+        default: ""
+  pull_request:
+    paths:
+      - "src/**"
+      - "src-tauri/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
 
 jobs:
   verify:
@@ -27,8 +38,8 @@ jobs:
       - run: pnpm exec desktop-foundation-ci --type-check --build --strict
 
   package-macos:
-    needs: verify
     runs-on: macos-14
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -41,18 +52,25 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm tauri build
       - name: Normalize desktop artifacts
-        run: >-
-          pnpm exec desktop-foundation-ci
-          --no-type-check
-          --no-build
-          --package-desktop
-          --manifest
-          --release-plan
-          --channel "${{ inputs.channel || 'stable' }}"
-          --download-base-url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
-          --release-url "https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
-          --notes "${{ github.ref_name }}"
+        env:
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+          RELEASE_REPO: ${{ inputs.github_repo || github.repository }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          args=(
+            --no-type-check
+            --no-build
+            --package-desktop
+            --manifest
+            --release-plan
+            --channel "$RELEASE_CHANNEL"
+            --github-repo "$RELEASE_REPO"
+          )
+          if [ -n "$RELEASE_TAG" ]; then
+            args+=(--tag "$RELEASE_TAG")
+          fi
+          pnpm exec desktop-foundation-ci "${args[@]}"
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-artifacts-macos
+          name: desktop-artifacts
           path: artifacts/desktop

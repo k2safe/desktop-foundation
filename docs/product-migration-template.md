@@ -147,7 +147,7 @@ Assemble `DesktopClient` once, then pass it through the app shell.
 ```ts
 import {
   createDesktopClient,
-  createGitHubReleaseManifestUrl,
+  createGitHubReleasesUpdateConfig,
   createTauriDesktopCapability,
   createTauriFileCapability,
   createTauriKeyValueStore,
@@ -164,12 +164,12 @@ export async function createProductClient() {
     secureStorage: createTauriSecureStorage(invoke, "product-admin"),
     desktop: createTauriDesktopCapability(invoke),
     files: createTauriFileCapability(invoke, "product-admin"),
-    updateConfig: {
+    updateConfig: createGitHubReleasesUpdateConfig({
       currentVersion: import.meta.env.VITE_APP_VERSION,
-      manifestUrl: createGitHubReleaseManifestUrl({ repository: "k2safe/product-admin" }),
+      repository: "k2safe/product-admin",
       channel: "stable",
       requireChecksumVerification: true
-    }
+    })
   });
 }
 ```
@@ -247,7 +247,7 @@ Tasks:
 4. Replace login layout with DesktopLoginPage, using extraFields for product-only fields such as OTP.
 5. Create a theme adapter with createThemeTemplateRuntime. Do not patch foundation CSS for product colors.
 6. Add desktop-core-rs to src-tauri/Cargo.toml and desktop-core:default to Tauri capabilities.
-7. Configure updateConfig with createGitHubReleaseManifestUrl({ repository: "<owner/repo>" }).
+7. Configure updateConfig with createGitHubReleasesUpdateConfig({ repository: "<owner/repo>" }).
 8. Update package scripts to include desktop-foundation-ci --integration-check and desktop-foundation-ci --package-desktop --manifest --release-plan --github-repo <owner/repo>.
 9. Run pnpm exec desktop-foundation-ci --integration-check, pnpm build, and the product desktop build.
 

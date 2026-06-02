@@ -5,6 +5,7 @@ export { createWebSecureStorage } from "./secureStorage";
 export {
   createGitHubReleaseManifestUrl,
   createGitHubReleasePageUrl,
+  createGitHubReleasesUpdateConfig,
   createGitHubReleasesUpdateCapability,
   createManifestUpdateCapability,
   createNoopUpdateCapability
