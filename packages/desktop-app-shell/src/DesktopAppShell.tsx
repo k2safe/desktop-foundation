@@ -5,12 +5,13 @@ import type { DesktopAppShellProps, DesktopSessionUser } from "./types";
 
 export function DesktopAppShell<TUser extends DesktopSessionUser = DesktopSessionUser>({
   theme,
+  className,
   client,
   session,
   children
 }: DesktopAppShellProps<TUser>) {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme} className={className}>
       <ToastProvider>
         <ConfirmProvider>
           <DesktopClientProvider client={client}>

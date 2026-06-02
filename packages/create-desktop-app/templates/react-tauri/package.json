@@ -14,6 +14,7 @@
   "dependencies": {
     "@desktop-foundation/app-shell": "workspace:*",
     "@desktop-foundation/bridge": "workspace:*",
+    "@desktop-foundation/theme-presets": "workspace:*",
     "@desktop-foundation/ui-react": "workspace:*",
     "@tauri-apps/api": "^2.0.0",
     "@vitejs/plugin-react": "^5.0.4",

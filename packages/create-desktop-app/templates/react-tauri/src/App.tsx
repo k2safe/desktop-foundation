@@ -3,12 +3,13 @@ import { DesktopAppShell } from "@desktop-foundation/app-shell";
 import { Button, DesktopLayout, PageHeader } from "@desktop-foundation/ui-react";
 import { menus } from "./menus";
 import { DashboardPage } from "./pages/DashboardPage";
-import { productTheme } from "./theme";
+import { productTemplate, productTheme } from "./theme";
 
 export function App({ client }: { client: DesktopClient }) {
   return (
-    <DesktopAppShell theme={productTheme} client={client}>
+    <DesktopAppShell theme={productTheme} className={productTemplate.className} client={client}>
       <DesktopLayout
+        variant={productTemplate.layout.appShell}
         brand={{ name: "{{APP_NAME}}" }}
         menus={menus}
         user={{ name: "Admin", role: "Owner" }}

@@ -25,9 +25,12 @@ export interface DesktopLayoutBrand {
   mark?: ReactNode;
 }
 
+export type DesktopLayoutVariant = "sidebar" | "topnav";
+
 export interface DesktopLayoutProps {
   brand: DesktopLayoutBrand;
   menus: DesktopMenuItem[];
+  variant?: DesktopLayoutVariant;
   user?: DesktopUser;
   topbarLeft?: ReactNode;
   topbarRight?: ReactNode;
@@ -98,24 +101,117 @@ export function Sidebar({ brand, menus, footer, onMenuSelect }: Pick<DesktopLayo
   );
 }
 
+function hasActiveChild(item: DesktopMenuItem): boolean {
+  return Boolean(item.active || item.children?.some((child) => hasActiveChild(child)));
+}
+
+function TopNavigationEntry({ item, onSelect }: { item: DesktopMenuItem; onSelect?: (item: DesktopMenuItem) => void }) {
+  const hasChildren = Boolean(item.children?.length);
+  const active = hasActiveChild(item);
+  const content = (
+    <>
+      {item.icon ? <span className="df-topnav__item-icon">{item.icon}</span> : null}
+      <span className="df-topnav__item-label">{item.label}</span>
+    </>
+  );
+
+  if (hasChildren) {
+    return (
+      <li className={cn("df-topnav__node", "has-children", active && "is-active")}>
+        <button className={cn("df-topnav__item", active && "is-active")} type="button" disabled={item.disabled}>
+          {content}
+          <span className="df-topnav__chevron" aria-hidden="true" />
+        </button>
+        <ul className="df-topnav__dropdown">
+          {item.children?.map((child) => (
+            <li key={child.id}>
+              <a
+                className={cn("df-topnav__dropdown-item", child.active && "is-active", child.disabled && "is-disabled")}
+                href={child.disabled ? undefined : child.href}
+                aria-current={child.active ? "page" : undefined}
+                onClick={(event) => {
+                  if (child.disabled) {
+                    event.preventDefault();
+                    return;
+                  }
+                  onSelect?.(child);
+                }}
+              >
+                {child.icon ? <span className="df-topnav__item-icon">{child.icon}</span> : null}
+                <span>{child.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </li>
+    );
+  }
+
+  return (
+    <li className={cn("df-topnav__node", active && "is-active")}>
+      <a
+        className={cn("df-topnav__item", item.active && "is-active", item.disabled && "is-disabled")}
+        href={item.disabled ? undefined : item.href}
+        aria-current={item.active ? "page" : undefined}
+        onClick={(event) => {
+          if (item.disabled) {
+            event.preventDefault();
+            return;
+          }
+          onSelect?.(item);
+        }}
+      >
+        {content}
+      </a>
+    </li>
+  );
+}
+
+export function TopNavigation({ menus, onMenuSelect }: Pick<DesktopLayoutProps, "menus" | "onMenuSelect">) {
+  return (
+    <nav className="df-topnav" aria-label="顶部菜单">
+      <ul className="df-topnav__list">
+        {menus.map((item) => (
+          <TopNavigationEntry key={item.id} item={item} onSelect={onMenuSelect} />
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 export function Topbar({
   user,
   left,
   right,
+  brand,
+  menus,
   logoutLabel = "退出登录",
-  onLogout
+  onLogout,
+  onMenuSelect
 }: {
   user?: DesktopUser;
   left?: ReactNode;
   right?: ReactNode;
+  brand?: DesktopLayoutBrand;
+  menus?: DesktopMenuItem[];
   logoutLabel?: string;
   onLogout?: () => void;
+  onMenuSelect?: (item: DesktopMenuItem) => void;
 }) {
   const initial = (user?.name || user?.account || "U").slice(0, 1).toUpperCase();
 
   return (
     <header className="df-topbar">
-      <div className="df-topbar__left">{left}</div>
+      <div className="df-topbar__left">
+        {brand ? (
+          <div className="df-topbar__brand">
+            {brand.logo ?? brand.mark ? <span className="df-topbar__brand-logo">{brand.logo ?? brand.mark}</span> : null}
+            {!brand.logo ? <span className="df-topbar__brand-name">{brand.name}</span> : null}
+          </div>
+        ) : null}
+        {menus ? <TopNavigation menus={menus} onMenuSelect={onMenuSelect} /> : null}
+        {left}
+      </div>
       <div className="df-topbar__right">
         {right}
         {user ? (
@@ -140,6 +236,7 @@ export function Topbar({
 export function DesktopLayout({
   brand,
   menus,
+  variant = "sidebar",
   user,
   topbarLeft,
   topbarRight,
@@ -150,11 +247,22 @@ export function DesktopLayout({
   onLogout,
   onMenuSelect
 }: DesktopLayoutProps) {
+  const topnav = variant === "topnav";
+
   return (
-    <div className={cn("df-desktop-layout", className)}>
-      <Sidebar brand={brand} menus={menus} footer={footer} onMenuSelect={onMenuSelect} />
+    <div className={cn("df-desktop-layout", `df-desktop-layout--${variant}`, className)}>
+      {topnav ? null : <Sidebar brand={brand} menus={menus} footer={footer} onMenuSelect={onMenuSelect} />}
       <div className="df-desktop-layout__main">
-        <Topbar user={user} left={topbarLeft} right={topbarRight} logoutLabel={logoutLabel} onLogout={onLogout} />
+        <Topbar
+          user={user}
+          left={topbarLeft}
+          right={topbarRight}
+          brand={topnav ? brand : undefined}
+          menus={topnav ? menus : undefined}
+          logoutLabel={logoutLabel}
+          onLogout={onLogout}
+          onMenuSelect={onMenuSelect}
+        />
         <main className="df-desktop-layout__content">{children}</main>
       </div>
     </div>

@@ -51,6 +51,7 @@ export interface DesktopSessionConfig<TUser extends DesktopSessionUser = Desktop
 
 export interface DesktopAppShellProps<TUser extends DesktopSessionUser = DesktopSessionUser> {
   theme?: DesktopThemeInput;
+  className?: string;
   client: DesktopClientConfig | DesktopClient;
   session?: DesktopSessionConfig<TUser>;
   children: ReactNode;

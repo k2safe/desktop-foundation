@@ -1,11 +1,11 @@
-export { DesktopLayout, Sidebar, Topbar } from "./DesktopLayout";
-export type { DesktopLayoutBrand, DesktopLayoutProps, DesktopMenuItem, DesktopUser } from "./DesktopLayout";
+export { DesktopLayout, Sidebar, Topbar, TopNavigation } from "./DesktopLayout";
+export type { DesktopLayoutBrand, DesktopLayoutProps, DesktopLayoutVariant, DesktopMenuItem, DesktopUser } from "./DesktopLayout";
 export { ContentPanel } from "./ContentPanel";
 export type { ContentPanelProps } from "./ContentPanel";
 export { DetailDrawer } from "./DetailDrawer";
 export type { DetailDrawerAction, DetailDrawerProps, DetailDrawerRow } from "./DetailDrawer";
 export { LoginShell } from "./LoginShell";
-export type { LoginShellBrand, LoginShellProps } from "./LoginShell";
+export type { LoginShellBrand, LoginShellProps, LoginShellVariant } from "./LoginShell";
 export { PageHeader } from "./PageHeader";
 export type { PageHeaderProps } from "./PageHeader";
 export { SettingsSection } from "./SettingsSection";

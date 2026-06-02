@@ -7,9 +7,12 @@ export interface LoginShellBrand {
   mark?: ReactNode;
 }
 
+export type LoginShellVariant = "split" | "centered" | "workbench";
+
 export interface LoginShellProps {
   brand: LoginShellBrand;
   title: ReactNode;
+  variant?: LoginShellVariant;
   subtitle?: ReactNode;
   badge?: ReactNode;
   children: ReactNode;
@@ -24,6 +27,7 @@ export interface LoginShellProps {
 export function LoginShell({
   brand,
   title,
+  variant = "split",
   subtitle,
   badge,
   children,
@@ -55,7 +59,7 @@ export function LoginShell({
   );
 
   return (
-    <main className={cn("df-login-shell", className)}>
+    <main className={cn("df-login-shell", `df-login-shell--${variant}`, className)}>
       <section className="df-login-shell__panel">{onSubmit ? <form onSubmit={onSubmit}>{content}</form> : content}</section>
       <section className="df-login-shell__visual" aria-hidden={!visual && !visualTitle && !visualDescription}>
         {visual ?? (

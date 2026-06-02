@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from "react";
-import { Button, Checkbox, Input, LoginShell, PasswordInput } from "@desktop-foundation/ui-react";
+import { Button, Checkbox, Input, LoginShell, PasswordInput, type LoginShellVariant } from "@desktop-foundation/ui-react";
 import { useLogin } from "./useLogin";
 import type { DesktopLoginConfig, DesktopLoginPayload, DesktopSessionUser } from "./types";
 
@@ -15,8 +15,11 @@ export interface DesktopLoginPageProps<
   title?: ReactNode;
   subtitle?: ReactNode;
   badge?: ReactNode;
+  variant?: LoginShellVariant;
+  className?: string;
   visualTitle?: ReactNode;
   visualDescription?: ReactNode;
+  visual?: ReactNode;
   footer?: ReactNode;
   accountLabel?: ReactNode;
   accountPlaceholder?: string;
@@ -35,8 +38,11 @@ export function DesktopLoginPage<
   title = "Sign in",
   subtitle,
   badge,
+  variant,
+  className,
   visualTitle,
   visualDescription,
+  visual,
   footer,
   accountLabel = "Account",
   accountPlaceholder = "Account or email",
@@ -57,10 +63,13 @@ export function DesktopLoginPage<
     <LoginShell
       brand={brand}
       title={title}
+      variant={variant}
       subtitle={subtitle}
       badge={badge}
+      className={className}
       visualTitle={visualTitle}
       visualDescription={visualDescription}
+      visual={visual}
       footer={footer}
       onSubmit={handleSubmit}
     >
