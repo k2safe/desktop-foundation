@@ -29,6 +29,7 @@
 - secure storage
 - desktop capability
 - file dialogs, export, download
+- app update capability
 - events
 - error shape
 
@@ -63,7 +64,7 @@
 
 ## create-desktop-app
 
-负责生成干净的产品桌面端起点：
+负责生成干净的产品桌面端起点和自动化入口：
 
 - React entry
 - Tauri shell
@@ -72,6 +73,8 @@
 - desktop client config
 - Tauri desktop client bootstrap
 - placeholder page
+- CI command wrapper
+- optional GitHub Actions invocation examples
 
 不负责：
 
@@ -80,6 +83,9 @@
 - 权限规则
 - 产品 dashboard
 - 菜单编码映射
+- 项目 release credentials
+- signing / notarization / artifact upload policy
+- 产品专属 smoke tests
 
 ## theme-presets
 
@@ -88,6 +94,9 @@
 - default
 - admin
 - merchant
+- command
+- ledger
+- studio
 - dark
 
 不负责具体产品品牌资产。

@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "bin": {
-    "create-desktop-app": "./bin/create-desktop-app.mjs"
+    "create-desktop-app": "./bin/create-desktop-app.mjs",
+    "desktop-foundation-ci": "./bin/desktop-foundation-ci.mjs"
   },
   "files": [
     "bin",
     "templates"
   ],
   "scripts": {
-    "build": "node --check bin/create-desktop-app.mjs",
-    "type-check": "node --check bin/create-desktop-app.mjs",
-    "lint": "node --check bin/create-desktop-app.mjs"
+    "build": "node --check bin/create-desktop-app.mjs && node --check bin/desktop-foundation-ci.mjs",
+    "type-check": "node --check bin/create-desktop-app.mjs && node --check bin/desktop-foundation-ci.mjs",
+    "lint": "node --check bin/create-desktop-app.mjs && node --check bin/desktop-foundation-ci.mjs"
   }
 }

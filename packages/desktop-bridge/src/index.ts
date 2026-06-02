@@ -2,7 +2,8 @@ export { createDesktopClient } from "./client";
 export { createWebDesktopCapability } from "./desktop";
 export { createWebFileCapability } from "./files";
 export { createWebSecureStorage } from "./secureStorage";
-export { createTauriNativeDesktopCapability, createTauriNativeFileCapability } from "./tauriPlugins";
+export { createManifestUpdateCapability, createNoopUpdateCapability } from "./updates";
+export { createTauriNativeDesktopCapability, createTauriNativeFileCapability, createTauriNativeUpdateCapability } from "./tauriPlugins";
 export { DesktopError, UnauthorizedError } from "./errors";
 export { createWebSessionStore, createWebStorage } from "./storage";
 export {
@@ -16,8 +17,17 @@ export {
 } from "./tauri";
 export { createWebTransport } from "./webTransport";
 export type { TauriInvoke } from "./tauri";
-export type { TauriNativePluginAdapters } from "./tauriPlugins";
+export type { TauriNativePluginAdapters, TauriNativeUpdate } from "./tauriPlugins";
 export type {
+  AppUpdateCapability,
+  AppUpdateCheckOptions,
+  AppUpdateCheckResult,
+  AppUpdateConfig,
+  AppUpdateDownloadOptions,
+  AppUpdateInfo,
+  AppUpdateManifest,
+  AppUpdateState,
+  AppUpdateStatus,
   DesktopClient,
   DesktopClientConfig,
   DesktopCapability,

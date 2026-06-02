@@ -30,3 +30,7 @@ The scaffold contains no product business model, API path, permission model, or 
 Use `--template` to pick a foundation template at scaffold time. Available ids: `default`, `admin`, `command`, `merchant`, `ledger`, `studio`, `dark`.
 
 The generated app stores the template in `src/theme.ts`, so product teams can switch templates without editing component internals.
+
+## CI Wrapper
+
+`desktop-foundation-ci` is exposed as a bin so product repositories can call foundation checks from GitHub Actions or any other CI system without copying workflow logic.

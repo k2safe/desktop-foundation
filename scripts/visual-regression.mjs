@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const update = process.argv.includes("--update");
+const strict = process.argv.includes("--strict") || process.env.DESKTOP_FOUNDATION_VISUAL_STRICT === "1";
 const root = resolve(import.meta.dirname, "..");
 const fixture = resolve(root, "examples/component-docs/index.html");
 const outputDir = resolve(root, "examples/component-docs/__screenshots__");
@@ -149,7 +150,16 @@ if (!existsSync(fixture)) {
 mkdirSync(outputDir, { recursive: true });
 mkdirSync(actualDir, { recursive: true });
 
-const browser = await playwright.chromium.launch();
+let browser;
+try {
+  browser = await playwright.chromium.launch();
+} catch (error) {
+  if (strict) throw error;
+  console.log("Playwright browser is not installed; skipping visual regression.");
+  console.log("Run pnpm exec playwright install chromium, or pass --strict in CI to fail on missing browsers.");
+  process.exit(0);
+}
+
 const failures = [];
 let captured = 0;
 

@@ -17,3 +17,7 @@ pnpm build
 - `src/api/client.ts`: Web/Tauri desktop client bootstrap.
 - `src/pages`: product pages.
 - `src-tauri`: Tauri shell with `desktop-core-rs` platform capabilities.
+
+## Update Manifest
+
+Set `VITE_UPDATE_MANIFEST_URL` when the product wants `client.updates` to check a release manifest. Leave it empty to keep updates disabled.

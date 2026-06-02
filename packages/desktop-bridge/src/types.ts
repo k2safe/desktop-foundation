@@ -109,6 +109,64 @@ export interface DownloadFileResult {
   requestId?: string;
 }
 
+export type AppUpdateStatus = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
+
+export interface AppUpdateManifest {
+  version: string;
+  channel?: string;
+  notes?: string;
+  pubDate?: string;
+  releasePageUrl?: string;
+  downloadUrl?: string;
+  mandatory?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AppUpdateInfo extends AppUpdateManifest {
+  currentVersion?: string;
+}
+
+export interface AppUpdateState {
+  status: AppUpdateStatus;
+  checkedAt?: number;
+  currentVersion?: string;
+  update?: AppUpdateInfo;
+  downloadedPath?: string;
+  error?: string;
+}
+
+export interface AppUpdateCheckOptions {
+  manifestUrl?: string;
+  currentVersion?: string;
+  channel?: string;
+  headers?: Record<string, string>;
+}
+
+export interface AppUpdateCheckResult {
+  available: boolean;
+  currentVersion?: string;
+  update?: AppUpdateInfo;
+  checkedAt: number;
+}
+
+export type AppUpdateDownloadOptions = DownloadFileOptions;
+
+export interface AppUpdateCapability {
+  checkForUpdate(options?: AppUpdateCheckOptions): Promise<AppUpdateCheckResult>;
+  downloadUpdate(update?: AppUpdateInfo, options?: AppUpdateDownloadOptions): Promise<DownloadFileResult>;
+  installUpdate(update?: AppUpdateInfo): Promise<void>;
+  openUpdatePage(update?: AppUpdateInfo): Promise<void>;
+  getState(): AppUpdateState;
+}
+
+export interface AppUpdateConfig {
+  currentVersion?: string;
+  manifestUrl?: string;
+  channel?: string;
+  headers?: Record<string, string>;
+  assertManifestUrl?: (url: string) => void;
+}
+
 export interface FileCapability {
   openFileDialog(options?: OpenFileDialogOptions): Promise<FileDialogResult>;
   saveFileDialog(options?: SaveFileDialogOptions): Promise<SaveFileDialogResult>;
@@ -174,6 +232,9 @@ export interface DesktopClientConfig {
   secureStorage?: AsyncKeyValueStore;
   desktop?: DesktopCapability;
   files?: FileCapability;
+  updates?: AppUpdateCapability;
+  updateConfig?: AppUpdateConfig;
+  version?: string;
   requestObserver?: RequestObserver;
   onUnauthorized?: (entry: RequestLogEntry) => void;
   security?: DesktopSecurityPolicy;
@@ -194,5 +255,6 @@ export interface DesktopClient {
   secureStorage: AsyncKeyValueStore;
   desktop: DesktopCapability;
   files: FileCapability;
+  updates: AppUpdateCapability;
   diagnostics: DesktopDiagnostics;
 }

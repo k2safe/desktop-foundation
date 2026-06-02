@@ -2,6 +2,7 @@ import { createWebSessionStore, createWebStorage } from "./storage";
 import { createWebDesktopCapability } from "./desktop";
 import { createWebFileCapability } from "./files";
 import { createWebSecureStorage } from "./secureStorage";
+import { createManifestUpdateCapability } from "./updates";
 import type { DesktopCapability, DesktopClient, DesktopClientConfig, FileCapability, HttpMethod, HttpRequestOptions, RequestLogEntry, SessionStore } from "./types";
 import { createWebTransport } from "./webTransport";
 import { DesktopError, UnauthorizedError } from "./errors";
@@ -125,6 +126,12 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
   const transport = config.transport ?? createWebTransport();
   const desktop = wrapDesktopCapability(config.desktop ?? createWebDesktopCapability(), config);
   const files = wrapFileCapability(config.files ?? createWebFileCapability(), config, session);
+  const updateConfig = {
+    ...config.updateConfig,
+    currentVersion: config.updateConfig?.currentVersion ?? config.version,
+    assertManifestUrl: (url: string) => assertRequestAllowed(config, url)
+  };
+  const updates = config.updates ?? createManifestUpdateCapability(updateConfig, desktop, files);
   const recentRequests: RequestLogEntry[] = [];
   const maxRequestLogEntries = config.maxRequestLogEntries ?? 50;
 
@@ -228,6 +235,7 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
     secureStorage,
     desktop,
     files,
+    updates,
     diagnostics: {
       getRecentRequests: () => recentRequests.slice(),
       clearRecentRequests: () => {

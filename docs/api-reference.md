@@ -26,6 +26,9 @@ Optional config:
 - `secureStorage`
 - `desktop`
 - `files`
+- `updates`
+- `updateConfig`
+- `version`
 - `security`
 - `requestObserver`
 - `onUnauthorized`
@@ -74,6 +77,19 @@ await client.desktop.copyText("value");
 await client.desktop.notify({ title: "Export complete" });
 await client.desktop.setWindowTitle("Orders");
 ```
+
+## Updates
+
+`client.updates` is the shared app-update surface. By default it is inert unless the product provides `updateConfig`, a custom `updates` capability, or a Tauri updater adapter.
+
+```ts
+const check = await client.updates.checkForUpdate();
+if (check.available) {
+  await client.updates.openUpdatePage(check.update);
+}
+```
+
+Products can keep release publishing in CI/CD while rendering update status in the desktop client.
 
 ## Files
 
