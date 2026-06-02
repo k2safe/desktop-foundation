@@ -212,6 +212,7 @@ export function createManifestUpdateCapability(
     try {
       const result = await files.downloadFile(update.downloadUrl, {
         ...options,
+        auth: options.auth ?? false,
         fileName: options.fileName,
         requestId: options.requestId ?? "app-update-download",
         namespace: options.namespace ?? "app-update"
