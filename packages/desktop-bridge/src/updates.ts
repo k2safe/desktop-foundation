@@ -99,6 +99,19 @@ function toUpdateInfo(manifest: AppUpdateManifest, currentVersion?: string): App
   };
 }
 
+function resolveUpdateUrl(value: string | undefined, baseUrl: string) {
+  if (!value) return undefined;
+  return new URL(value, baseUrl).toString();
+}
+
+function resolveManifestUrls(manifest: AppUpdateManifest, baseUrl: string): AppUpdateManifest {
+  return {
+    ...manifest,
+    releasePageUrl: resolveUpdateUrl(manifest.releasePageUrl, baseUrl),
+    downloadUrl: resolveUpdateUrl(manifest.downloadUrl, baseUrl)
+  };
+}
+
 function setError(state: AppUpdateState, error: unknown) {
   state.status = "error";
   state.error = error instanceof Error ? error.message : String(error);
@@ -161,6 +174,7 @@ export function createManifestUpdateCapability(
       }
 
       const manifest = normalizeManifest(await response.json());
+      const manifestBaseUrl = response.url || url.toString();
       if (!manifest) {
         throw new DesktopError({ code: "UPDATE_MANIFEST_INVALID", message: "Update manifest is invalid" });
       }
@@ -171,7 +185,7 @@ export function createManifestUpdateCapability(
         return { available: false, currentVersion, checkedAt: state.checkedAt };
       }
 
-      const update = toUpdateInfo(manifest, currentVersion);
+      const update = toUpdateInfo(resolveManifestUrls(manifest, manifestBaseUrl), currentVersion);
       const available = currentVersion ? compareVersions(update.version, currentVersion) > 0 : true;
       state.status = available ? "available" : "not-available";
       state.update = available ? update : undefined;
