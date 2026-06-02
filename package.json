@@ -1,6 +1,6 @@
 {
   "name": "desktop-foundation",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.15.4",
@@ -10,9 +10,12 @@
     "lint": "pnpm -r lint",
     "visual:regression": "node scripts/visual-regression.mjs",
     "visual:regression:update": "node scripts/visual-regression.mjs --update",
+    "visual:regression:expanded": "node scripts/visual-regression.mjs --expanded",
+    "visual:regression:expanded:update": "node scripts/visual-regression.mjs --expanded --update",
     "pack:packages": "node scripts/pack-foundation-packages.mjs"
   },
   "devDependencies": {
+    "playwright": "^1.60.0",
     "typescript": "~5.8.2"
   }
 }

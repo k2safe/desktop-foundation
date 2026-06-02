@@ -1,12 +1,8 @@
 [package]
-name = "{{RUST_PACKAGE_NAME}}"
+name = "__RUST_PACKAGE_NAME__"
 version = "0.1.0"
 description = "{{APP_NAME}}"
 edition = "2021"
-
-[lib]
-name = "{{RUST_PACKAGE_NAME}}_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -16,3 +12,5 @@ desktop-core-rs = { git = "ssh://git@github.com/k2safe/desktop-foundation.git", 
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+[workspace]

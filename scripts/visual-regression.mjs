@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const update = process.argv.includes("--update");
+const expanded = process.argv.includes("--expanded") || process.env.DESKTOP_FOUNDATION_VISUAL_EXPANDED === "1";
 const strict = process.argv.includes("--strict") || process.env.DESKTOP_FOUNDATION_VISUAL_STRICT === "1";
 const root = resolve(import.meta.dirname, "..");
 const fixture = resolve(root, "examples/component-docs/index.html");
@@ -128,6 +129,19 @@ const viewports = [
   { id: "mobile", width: 390, height: 1200 }
 ];
 
+const baseCaptureTargets = [
+  { id: "page", label: "full page" }
+];
+
+const expandedCaptureTargets = [
+  { id: "shells", label: "desktop shells", selector: '[data-visual-target="shells"]' },
+  { id: "data", label: "table and bulk actions", selector: '[data-visual-target="data"]' },
+  { id: "login-forms", label: "login and forms", selector: '[data-visual-target="login-forms"]' },
+  { id: "modal", label: "modal", selector: '[data-visual-target="modal"]' }
+];
+
+const captureTargets = expanded ? [...baseCaptureTargets, ...expandedCaptureTargets] : baseCaptureTargets;
+
 async function loadPlaywright() {
   try {
     return await import("playwright");
@@ -187,7 +201,8 @@ function compareScreenshot(actualPath, baselinePath, name) {
   }
 
   if (!existsSync(baselinePath)) {
-    failures.push(`${name}: missing baseline, run node scripts/visual-regression.mjs --update`);
+    const updateCommand = expanded ? "node scripts/visual-regression.mjs --expanded --update" : "node scripts/visual-regression.mjs --update";
+    failures.push(`${name}: missing baseline, run ${updateCommand}`);
     return;
   }
 
@@ -220,17 +235,28 @@ try {
 
       await page.goto(pathToFileURL(fixture).toString());
       await page.evaluate(() => window.__dfApplyVisualScenario?.());
-      const actualPath = join(actualDir, `${scenario.id}-${viewport.id}.png`);
-      const baselinePath = join(outputDir, `${scenario.id}-${viewport.id}.png`);
-      await page.screenshot({
-        path: actualPath,
-        fullPage: true,
-        animations: "disabled"
-      });
+      for (const target of captureTargets) {
+        const suffix = target.id === "page" ? "" : `-${target.id}`;
+        const actualPath = join(actualDir, `${scenario.id}-${viewport.id}${suffix}.png`);
+        const baselinePath = join(outputDir, `${scenario.id}-${viewport.id}${suffix}.png`);
+        if (target.selector) {
+          const locator = page.locator(target.selector);
+          await locator.scrollIntoViewIfNeeded();
+          await locator.screenshot({
+            path: actualPath,
+            animations: "disabled"
+          });
+        } else {
+          await page.screenshot({
+            path: actualPath,
+            fullPage: true,
+            animations: "disabled"
+          });
+        }
+        compareScreenshot(actualPath, baselinePath, `${scenario.id}/${viewport.id}/${target.label}`);
+        captured += 1;
+      }
       await page.close();
-
-      compareScreenshot(actualPath, baselinePath, `${scenario.id}/${viewport.id}`);
-      captured += 1;
     }
   }
 } finally {

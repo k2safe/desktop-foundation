@@ -1,6 +1,6 @@
 {
   "name": "@desktop-foundation/create-desktop-app",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "module",
   "bin": {
     "create-desktop-app": "./bin/create-desktop-app.mjs",

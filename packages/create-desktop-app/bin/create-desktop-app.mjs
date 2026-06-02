@@ -126,7 +126,9 @@ function isTextFile(filePath) {
 }
 
 function renderTemplate(value, replacements) {
-  return value.replace(/\{\{([A-Z0-9_]+)\}\}/g, (_, key) => replacements[key] ?? "");
+  return value
+    .replace(/\{\{([A-Z0-9_]+)\}\}/g, (_, key) => replacements[key] ?? "")
+    .replace(/__RUST_PACKAGE_NAME__/g, replacements.RUST_PACKAGE_NAME ?? "");
 }
 
 function assertCanWrite(targetDir, force) {
