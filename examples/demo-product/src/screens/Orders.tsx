@@ -12,7 +12,7 @@ export function Orders({ client }: OrdersProps) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [selectedRow, setSelectedRow] = useState<OrderRow | null>(null);
   const { visibleColumns, sort, density, setSort, setDensity } = useTablePreferences({
-    key: "commerce-ops:orders-table",
+    key: "product-demo:orders-table",
     columns: orderColumns,
     defaultSort: { key: "createdAt", direction: "desc" }
   });
@@ -20,8 +20,8 @@ export function Orders({ client }: OrdersProps) {
   return (
     <>
       <DataTable
-        title="商城订单"
-        description="商城项目只负责订单字段和交互，表格能力来自底座组件。"
+        title="订单中心"
+        description="产品项目只负责订单字段和交互，表格能力来自底座组件。"
         columns={visibleColumns}
         rows={orders}
         rowKey="id"
@@ -35,8 +35,8 @@ export function Orders({ client }: OrdersProps) {
         onRowClick={(row) => setSelectedRow(row)}
         filters={
           <>
-            <SearchInput placeholder="搜索订单号 / 店铺" />
-            <Input placeholder="店铺名称" />
+            <SearchInput placeholder="搜索订单号 / 客户" />
+            <Input placeholder="客户名称" />
             <Select
               placeholder="状态"
               options={[

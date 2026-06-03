@@ -10,6 +10,79 @@ export interface DesktopLoginFieldContext<TPayload extends DesktopLoginPayload =
   error: Error | null;
 }
 
+export type DesktopLoginTemplateId = "split" | "brand-panel" | "center-card" | "workbench";
+
+export interface DesktopLoginTemplate {
+  id?: string;
+  variant?: LoginShellVariant;
+  className?: string;
+  title?: ReactNode;
+  subtitle?: ReactNode;
+  badge?: ReactNode;
+  visualTitle?: ReactNode;
+  visualDescription?: ReactNode;
+  visual?: ReactNode;
+  footer?: ReactNode;
+  accountLabel?: ReactNode;
+  accountPlaceholder?: string;
+  passwordLabel?: ReactNode;
+  passwordPlaceholder?: string;
+  rememberLabel?: ReactNode;
+  submitLabel?: ReactNode;
+}
+
+export type DesktopLoginTemplateSource = DesktopLoginTemplateId | LoginShellVariant | DesktopLoginTemplate;
+
+export const desktopLoginTemplates: Record<DesktopLoginTemplateId, DesktopLoginTemplate> = {
+  split: {
+    id: "split",
+    variant: "split",
+    title: "Sign in",
+    subtitle: "Access the desktop workspace.",
+    visualTitle: "Desktop-ready operations.",
+    visualDescription: "A reusable shell for secure product workflows, local capabilities, and release updates."
+  },
+  "brand-panel": {
+    id: "brand-panel",
+    variant: "brand-split",
+    title: "Sign in",
+    subtitle: "Use your product account to continue.",
+    badge: "Desktop",
+    visualTitle: "One foundation, product-owned business.",
+    visualDescription: "Keep brand, login copy, business fields, and authentication inside the product adapter."
+  },
+  "center-card": {
+    id: "center-card",
+    variant: "centered",
+    title: "Welcome back",
+    subtitle: "Sign in to continue.",
+    submitLabel: "Continue"
+  },
+  workbench: {
+    id: "workbench",
+    variant: "workbench",
+    title: "Operator sign in",
+    subtitle: "Open the desktop command workspace.",
+    badge: "Secure desktop",
+    visualTitle: "Built for repeated operational work.",
+    visualDescription: "Dense layouts, local bridge capabilities, update checks, and product-owned authentication."
+  }
+};
+
+const loginShellVariants = new Set<LoginShellVariant>(["split", "centered", "workbench", "brand-split"]);
+
+export function resolveDesktopLoginTemplate(template?: DesktopLoginTemplateSource): DesktopLoginTemplate {
+  if (!template) return desktopLoginTemplates.split;
+  if (typeof template !== "string") return template;
+  if (template in desktopLoginTemplates) return desktopLoginTemplates[template as DesktopLoginTemplateId];
+  if (loginShellVariants.has(template as LoginShellVariant)) return { id: template, variant: template as LoginShellVariant };
+  return desktopLoginTemplates.split;
+}
+
+function mergeClassName(...values: Array<string | undefined>) {
+  return values.filter(Boolean).join(" ") || undefined;
+}
+
 export interface DesktopLoginPageProps<
   TUser extends DesktopSessionUser = DesktopSessionUser,
   TPayload extends DesktopLoginPayload = DesktopLoginPayload
@@ -22,6 +95,7 @@ export interface DesktopLoginPageProps<
   title?: ReactNode;
   subtitle?: ReactNode;
   badge?: ReactNode;
+  template?: DesktopLoginTemplateSource;
   variant?: LoginShellVariant;
   className?: string;
   visualTitle?: ReactNode;
@@ -43,24 +117,41 @@ export function DesktopLoginPage<
   TPayload extends DesktopLoginPayload = DesktopLoginPayload
 >({
   brand,
-  title = "Sign in",
+  title,
   subtitle,
   badge,
+  template,
   variant,
   className,
   visualTitle,
   visualDescription,
   visual,
   footer,
-  accountLabel = "Account",
-  accountPlaceholder = "Account or email",
-  passwordLabel = "Password",
-  passwordPlaceholder = "Password",
-  rememberLabel = "Remember me",
-  submitLabel = "Sign in",
+  accountLabel,
+  accountPlaceholder,
+  passwordLabel,
+  passwordPlaceholder,
+  rememberLabel,
+  submitLabel,
   extraFields,
   login
 }: DesktopLoginPageProps<TUser, TPayload>) {
+  const resolvedTemplate = resolveDesktopLoginTemplate(template ?? variant);
+  const resolvedVariant = variant ?? resolvedTemplate.variant;
+  const resolvedTitle = title ?? resolvedTemplate.title ?? "Sign in";
+  const resolvedSubtitle = subtitle ?? resolvedTemplate.subtitle;
+  const resolvedBadge = badge ?? resolvedTemplate.badge;
+  const resolvedVisualTitle = visualTitle ?? resolvedTemplate.visualTitle;
+  const resolvedVisualDescription = visualDescription ?? resolvedTemplate.visualDescription;
+  const resolvedVisual = visual ?? resolvedTemplate.visual;
+  const resolvedFooter = footer ?? resolvedTemplate.footer;
+  const resolvedAccountLabel = accountLabel ?? resolvedTemplate.accountLabel ?? "Account";
+  const resolvedAccountPlaceholder = accountPlaceholder ?? resolvedTemplate.accountPlaceholder ?? "Account or email";
+  const resolvedPasswordLabel = passwordLabel ?? resolvedTemplate.passwordLabel ?? "Password";
+  const resolvedPasswordPlaceholder = passwordPlaceholder ?? resolvedTemplate.passwordPlaceholder ?? "Password";
+  const resolvedRememberLabel = rememberLabel ?? resolvedTemplate.rememberLabel ?? "Remember me";
+  const resolvedSubmitLabel = submitLabel ?? resolvedTemplate.submitLabel ?? "Sign in";
+  const resolvedClassName = mergeClassName(resolvedTemplate.className, className);
   const { payload, setField, submit, loading, error } = useLogin(login);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -74,42 +165,42 @@ export function DesktopLoginPage<
   return (
     <LoginShell
       brand={brand}
-      title={title}
-      variant={variant}
-      subtitle={subtitle}
-      badge={badge}
-      className={className}
-      visualTitle={visualTitle}
-      visualDescription={visualDescription}
-      visual={visual}
-      footer={footer}
+      title={resolvedTitle}
+      variant={resolvedVariant}
+      subtitle={resolvedSubtitle}
+      badge={resolvedBadge}
+      className={resolvedClassName}
+      visualTitle={resolvedVisualTitle}
+      visualDescription={resolvedVisualDescription}
+      visual={resolvedVisual}
+      footer={resolvedFooter}
       onSubmit={handleSubmit}
     >
       <div className="df-login-form">
         {error ? <div className="df-login-form__error">{error.message}</div> : null}
         <Input
           autoFocus
-          label={accountLabel}
-          placeholder={accountPlaceholder}
+          label={resolvedAccountLabel}
+          placeholder={resolvedAccountPlaceholder}
           value={payload.account}
           onChange={(event) => setField("account", event.target.value as TPayload["account"])}
           required
         />
         <PasswordInput
-          label={passwordLabel}
-          placeholder={passwordPlaceholder}
+          label={resolvedPasswordLabel}
+          placeholder={resolvedPasswordPlaceholder}
           value={payload.password}
           onChange={(event) => setField("password", event.target.value as TPayload["password"])}
           required
         />
         {renderedExtraFields}
         <Checkbox
-          label={rememberLabel}
+          label={resolvedRememberLabel}
           checked={Boolean(payload.remember)}
           onChange={(event) => setField("remember", event.target.checked as TPayload["remember"])}
         />
         <Button type="submit" loading={loading}>
-          {submitLabel}
+          {resolvedSubmitLabel}
         </Button>
       </div>
     </LoginShell>

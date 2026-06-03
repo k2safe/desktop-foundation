@@ -37,7 +37,7 @@ Use a template first, then override product-specific brand and tokens.
 import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
 
 export const productTemplate = createThemeTemplateRuntime("admin", {
-  brand: { name: "Commerce Ops" },
+  brand: { name: "Product Desktop" },
   colors: {
     primary: "#3b00f5",
     primaryHover: "#2700c7"
@@ -45,7 +45,7 @@ export const productTemplate = createThemeTemplateRuntime("admin", {
 });
 ```
 
-Use `productTemplate.theme` for `DesktopAppShell`, `productTemplate.layout.appShell` for `DesktopLayout`, and `productTemplate.layout.login` for `DesktopLoginPage`.
+Use `productTemplate.theme` for `DesktopAppShell`, `productTemplate.layout.appShell` for `DesktopLayout`, and `productTemplate.layout.login` or another login template id for `DesktopLoginPage`.
 
 ## 3. Wrap The App
 
@@ -59,13 +59,13 @@ export function App() {
     <DesktopAppShell
       theme={productTemplate.theme}
       client={{
-        product: "commerce-ops",
+        product: "product-desktop",
         apiBaseURL: "https://api.example.com"
       }}
     >
       <DesktopLayout
         variant={productTemplate.layout.appShell}
-        brand={{ name: "Commerce Ops", logo: <Logo /> }}
+        brand={{ name: "Product Desktop", logo: <Logo /> }}
         menus={menus}
         user={session.user}
       >
@@ -93,22 +93,22 @@ interface LoginPayload {
 }
 
 <DesktopLoginPage
-  brand={{ name: "Commerce Ops", logo: <Logo /> }}
-  title="商城运营登录"
-  subtitle="订单、库存、履约和运营配置统一在桌面端处理。"
-  variant={productTemplate.layout.login}
-  accountLabel="管理员账号"
-  passwordLabel="登录密码"
+  brand={{ name: "Product Desktop", logo: <Logo /> }}
+  title="产品工作台登录"
+  subtitle="使用产品账号进入桌面工作台。"
+  template={productTemplate.layout.login}
+  accountLabel="账号"
+  passwordLabel="密码"
   extraFields={({ payload, setField }) => (
     <Input
-      label="Google 验证码"
+      label="验证码"
       placeholder="未开启时可留空"
       value={payload.otp ?? ""}
       onChange={(event) => setField("otp", event.target.value)}
     />
   )}
   login={{
-    defaultPayload: { account: "store-admin", password: "", remember: true },
+    defaultPayload: { account: "operator", password: "", remember: true },
     login: async (client, payload: LoginPayload) => {
       return client.request("/admin/login", {
         method: "POST",

@@ -17,6 +17,9 @@
 ## Docs
 
 - [Product AI Handoff](docs/product-ai-handoff.md)
+- [Login Templates](docs/login-templates.md)
+- [Tauri Updater Adapter](docs/tauri-updater-adapter.md)
+- [Existing Project Migration Case](docs/existing-project-migration-case.md)
 - [Product Adapter](docs/product-adapter.md)
 - [Product Onboarding Checklist](docs/product-onboarding-checklist.md)
 - [Product Integration Kit](integration-kit/README.md)
@@ -46,7 +49,7 @@
 - 零依赖组件文档页和可选 Playwright 截图入口
 - 通用 `desktop-foundation doctor` 接入检查命令
 - Tauri native plugin 可选适配层，可用官方插件替换部分 Rust command 能力
-- 标准产品接入 DEMO：`examples/demo-product`
+- 通用产品接入 DEMO：`examples/demo-product`
 
 ## Validation
 

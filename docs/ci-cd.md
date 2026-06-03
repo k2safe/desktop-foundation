@@ -159,7 +159,7 @@ jobs:
       - run: pnpm exec desktop-foundation-ci --no-type-check --no-build --visual --strict
 ```
 
-Projects that do not use Playwright can omit the visual job. Projects that opt in should own the Playwright devDependency, browser install step, and committed screenshot baselines.
+Projects that do not use Playwright can omit the visual job. Generated projects already include optional `visual:regression` scripts that skip until `VISUAL_REGRESSION_URL` is set. Projects that opt in should own the Playwright devDependency, browser install step, and committed screenshot baselines.
 
 ## Update Capability
 
@@ -207,4 +207,4 @@ createDesktopClient({
 
 `downloadUpdate` defaults to `auth: false`, so public GitHub Releases or static manifest hosts do not receive product session tokens. If a private update server requires auth, pass `client.updates.downloadUpdate(update, { auth: true })` from product UI.
 
-`installUpdate` is intentionally an adapter boundary. Without `updateConfig.installUpdate`, the manifest updater moves a verified package to `installable` and returns a message telling the product to provide an installer. Products can keep it lightweight by opening release notes, opening the downloaded package, or handing the path to a native installer. Products that use Tauri updater can pass adapters through `nativePlugins`; the UI still calls `client.updates`.
+`installUpdate` is intentionally an adapter boundary. Without `updateConfig.installUpdate`, the manifest updater moves a verified package to `installable` and returns a message telling the product to provide an installer. Products can keep it lightweight by opening release notes, opening the downloaded package, or handing the path to a native installer. Products that use Tauri updater can pass adapters through `nativePlugins`; the UI still calls `client.updates`. See [Tauri Updater Adapter](tauri-updater-adapter.md) for the concrete adapter shape.

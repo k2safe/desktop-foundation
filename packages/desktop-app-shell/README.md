@@ -53,22 +53,22 @@ export function App() {
 
 `DesktopLoginPage` pairs `LoginShell` with `useLogin` and `SessionProvider`.
 
-The foundation owns the login layout template, control spacing, submit state, and session handoff. Product apps own brand content, copy, business fields, and the login API.
+The foundation owns the login template, control spacing, submit state, and session handoff. Product apps own brand content, copy, business fields, and the login API.
 
 ```tsx
 import { DesktopLoginPage } from "@desktop-foundation/app-shell";
 import { Input } from "@desktop-foundation/ui-react";
 
 <DesktopLoginPage
-  brand={{ name: "Commerce Ops", logo: <Logo /> }}
-  title="商城运营登录"
-  subtitle="订单、库存、履约和运营配置统一在桌面端处理。"
-  variant="brand-split"
-  accountLabel="管理员账号"
-  passwordLabel="登录密码"
+  template="brand-panel"
+  brand={{ name: "Product Desktop", logo: <Logo /> }}
+  title="管理端登录"
+  subtitle="使用产品账号进入桌面工作台。"
+  accountLabel="账号"
+  passwordLabel="密码"
   extraFields={({ payload, setField }) => (
     <Input
-      label="Google 验证码"
+      label="验证码"
       placeholder="未开启时可留空"
       value={payload.otp ?? ""}
       onChange={(event) => setField("otp", event.target.value)}
@@ -78,7 +78,7 @@ import { Input } from "@desktop-foundation/ui-react";
 />
 ```
 
-Use `extraFields` for product-specific fields such as OTP, tenant code, region, or invite token. Keep those fields in the product payload type; the shell only provides the slot and state helpers.
+Use `template` for built-in login layouts such as `split`, `brand-panel`, `center-card`, and `workbench`. A product can also pass a light template object for one-off copy and layout defaults. Use `extraFields` for product-specific fields such as OTP, tenant code, region, or invite token. Keep those fields in the product payload type; the shell only provides the slot and state helpers.
 
 ## Guards
 

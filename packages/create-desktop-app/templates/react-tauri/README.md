@@ -15,7 +15,7 @@ pnpm package:desktop
 
 This generated app is intentionally generic. Replace only product-owned files first:
 
-1. Update `src/product-adapter.tsx` with product brand, layout template, user menu, client defaults, and update configuration.
+1. Update `src/product-adapter.tsx` with product brand, layout/login template, user menu, client defaults, and update configuration.
 2. Update `src/menus.tsx` with product routes and menu groups.
 3. Update `src/theme.ts` only through theme presets, tokens, or template selection.
 4. Replace `src/pages/*` with product pages. Keep table and overlay overflow local to the component.
@@ -25,7 +25,7 @@ Do not copy or edit `@desktop-foundation/*` source code. If a product needs a re
 
 ## Product Files
 
-- `src/product-adapter.tsx`: product-owned adapter for brand, menus, shell layout, user menu, theme, and client defaults.
+- `src/product-adapter.tsx`: product-owned adapter for brand, menus, shell layout, login template, user menu, theme, and client defaults.
 - `src/theme.ts`: product theme preset.
 - `src/menus.tsx`: product menu config.
 - `src/api/client.ts`: Web/Tauri desktop client bootstrap.
@@ -85,6 +85,32 @@ pnpm exec desktop-foundation-ci --no-type-check --no-build --package-desktop --m
 ```
 
 Upload the files from `artifacts/desktop/release-plan.json` however the product team prefers. The included `.github/workflows/desktop-release.yml` is artifact-only by default; it does not force automatic release publishing.
+
+## Visual Regression
+
+Generated projects include optional screenshot scripts:
+
+```bash
+pnpm visual:regression
+pnpm visual:regression:update
+```
+
+The script skips safely until the product provides a running URL:
+
+```bash
+pnpm dev:web
+VISUAL_REGRESSION_URL=http://127.0.0.1:5173 pnpm visual:regression:update
+VISUAL_REGRESSION_URL=http://127.0.0.1:5173 pnpm visual:regression
+```
+
+If the product has not added Playwright yet, add it and install the browser once:
+
+```bash
+pnpm add -D playwright
+pnpm exec playwright install chromium
+```
+
+Baselines are stored under `artifacts/visual/baseline`. Commit product-owned baselines only after reviewing the screenshots.
 
 ## CI Gate
 

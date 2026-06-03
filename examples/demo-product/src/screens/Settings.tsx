@@ -34,7 +34,7 @@ export interface SettingsProps {
 export function Settings({ client, logs }: SettingsProps) {
   const [activeSectionId, setActiveSectionId] = useState("runtime");
   const [flags, setFlags] = useState<RuntimeFlag[]>([
-    { id: "api", name: "apiBaseURL", value: "https://api.commerce-demo.local", scope: "app" },
+    { id: "api", name: "apiBaseURL", value: "https://api.product-demo.local", scope: "app" },
     { id: "token", name: "refreshToken", value: "secure-storage", scope: "secure" },
     { id: "density", name: "tableDensity", value: "default", scope: "user" }
   ]);

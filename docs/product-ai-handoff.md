@@ -42,7 +42,7 @@ import { DesktopLayout } from "@desktop-foundation/ui-react";
 import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
 
 const template = createThemeTemplateRuntime("admin", {
-  brand: { name: "Product Admin" },
+  brand: { name: "Product Desktop" },
   colors: { primary: "#3b00f5" }
 });
 
@@ -51,7 +51,7 @@ export function App() {
     <DesktopAppShell theme={template.theme} client={clientConfig}>
       <DesktopLayout
         variant={template.layout.appShell}
-        brand={{ name: "Product Admin" }}
+        brand={{ name: "Product Desktop" }}
         menus={menus}
         user={session.user}
         onLogout={session.clearSession}
@@ -67,8 +67,8 @@ export function App() {
 
 ```tsx
 <DesktopLoginPage
-  variant={template.layout.login}
-  brand={{ name: "Product Admin" }}
+  template={template.layout.login}
+  brand={{ name: "Product Desktop" }}
   title="管理端登录"
   subtitle="业务文案由产品项目自己维护。"
   extraFields={({ payload, setField }) => <OtpField value={payload.otp} onChange={(value) => setField("otp", value)} />}
@@ -84,7 +84,7 @@ GitHub Releases 方式最轻：
 import { createDesktopClient, createGitHubReleasesUpdateConfig } from "@desktop-foundation/bridge";
 
 export const clientConfig = {
-  product: "product-admin",
+  product: "product-desktop",
   version: import.meta.env.VITE_APP_VERSION || "0.1.0",
   apiBaseURL: import.meta.env.VITE_API_BASE_URL,
   updateConfig: createGitHubReleasesUpdateConfig({

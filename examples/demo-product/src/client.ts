@@ -102,15 +102,15 @@ function demoFileCapability(pushLog: (value: string) => void): FileCapability {
   return {
     async openFileDialog() {
       pushLog("openFileDialog");
-      return { paths: ["/tmp/commerce-orders.csv"], canceled: false };
+      return { paths: ["/tmp/product-records.csv"], canceled: false };
     },
     async saveFileDialog() {
       pushLog("saveFileDialog");
-      return { path: "/tmp/commerce-export.json", canceled: false };
+      return { path: "/tmp/product-export.json", canceled: false };
     },
     async readTextFile(path) {
       pushLog(`readTextFile ${path}`);
-      return "id,store,amount";
+      return "id,customer,amount";
     },
     async writeTextFile(path) {
       pushLog(`writeTextFile ${path}`);
@@ -122,7 +122,7 @@ function demoFileCapability(pushLog: (value: string) => void): FileCapability {
     },
     async downloadFile(url) {
       pushLog(`downloadFile ${url}`);
-      return { path: "/tmp/commerce-report.csv", bytes: 2048, status: 200 };
+      return { path: "/tmp/product-report.csv", bytes: 2048, status: 200 };
     }
   };
 }
@@ -144,9 +144,9 @@ function demoUpdateConfig(): AppUpdateConfig {
 
 export function createDemoProductClient(pushLog: (value: string) => void): DesktopClient {
   return createDesktopClient({
-    product: "commerce-ops",
+    product: "product-demo",
     version: demoVersion,
-    apiBaseURL: "https://api.commerce-demo.local",
+    apiBaseURL: "https://api.product-demo.local",
     session: demoSessionStore(),
     storage: memoryStore({ "orders.density": "default" }),
     secureStorage: memorySecureStore(),
@@ -155,7 +155,7 @@ export function createDemoProductClient(pushLog: (value: string) => void): Deskt
     files: demoFileCapability(pushLog),
     updateConfig: demoUpdateConfig(),
     security: {
-      allowedRequestOrigins: ["api.commerce-demo.local", "github.com", "raw.githubusercontent.com", "objects.githubusercontent.com", "github-releases.githubusercontent.com"],
+      allowedRequestOrigins: ["api.product-demo.local", "github.com", "raw.githubusercontent.com", "objects.githubusercontent.com", "github-releases.githubusercontent.com"],
       allowedExternalOrigins: ["github.com", "docs.example.com"],
       allowedExternalSchemes: ["https"],
       allowedDownloadDirectories: ["/tmp"]

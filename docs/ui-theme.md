@@ -54,7 +54,7 @@ Current built-in template ids:
 | Id | Shell | Login | Surface | Best for |
 | --- | --- | --- | --- | --- |
 | `default` | sidebar | split | crisp | neutral internal desktop apps |
-| `admin` | sidebar | brand-split | dense | admin consoles and commerce operations |
+| `admin` | sidebar | brand-split | dense | admin and operations consoles |
 | `command` | topnav | workbench | dense | operations and monitoring tools |
 | `merchant` | topnav | centered | glass | merchant-facing SaaS surfaces |
 | `ledger` | topnav | centered | crisp | finance, reconciliation, ledger tables |
@@ -70,7 +70,7 @@ Login variants stay intentionally small:
 - `centered`: simple centered login card.
 - `workbench`: operational login surface for command-center products.
 
-Business-only fields such as tenant code, Google OTP, or invite token should be added through `DesktopLoginPage.extraFields`; they should not be baked into the foundation template.
+Business-only fields such as tenant code, OTP, region, or invite token should be added through `DesktopLoginPage.extraFields`; they should not be baked into the foundation template.
 
 Recommended starting points:
 

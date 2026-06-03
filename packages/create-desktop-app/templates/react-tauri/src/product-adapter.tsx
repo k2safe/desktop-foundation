@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { DesktopLoginTemplateSource } from "@desktop-foundation/app-shell";
 import type { DesktopClientConfig } from "@desktop-foundation/bridge";
 import {
   Button,
@@ -18,6 +19,7 @@ export interface ProductAdapter {
   theme: DesktopTheme;
   className: string;
   layout: DesktopLayoutVariant;
+  loginTemplate: DesktopLoginTemplateSource;
   brand: DesktopLayoutBrand;
   user: DesktopUser;
   menus: DesktopMenuItem[];
@@ -32,6 +34,7 @@ export const productAdapter: ProductAdapter = {
   theme: productTheme,
   className: productTemplate.className,
   layout: productTemplate.layout.appShell,
+  loginTemplate: productTemplate.layout.login,
   brand: { name: "{{APP_NAME}}" },
   user: { name: "Admin", role: "Owner" },
   menus,

@@ -22,10 +22,10 @@ export interface OrderRow {
 }
 
 export const demoUser: DemoUser = {
-  id: "u_commerce_admin",
-  name: "Store Admin",
-  account: "store-admin",
-  role: "Commerce Ops",
+  id: "u_demo_operator",
+  name: "Demo Operator",
+  account: "operator",
+  role: "Operations",
   permissions: ["orders:read", "orders:export", "catalog:read", "settings:read"]
 };
 
@@ -42,7 +42,7 @@ export function createMenus(active: DemoScreen): DesktopMenuItem[] {
     {
       id: "business",
       label: "业务",
-      children: [{ id: "orders", label: "商城订单", href: "#orders", active: active === "orders" }]
+      children: [{ id: "orders", label: "订单中心", href: "#orders", active: active === "orders" }]
     },
     {
       id: "system",
@@ -54,7 +54,7 @@ export function createMenus(active: DemoScreen): DesktopMenuItem[] {
 
 export const orderColumns: TableColumn<OrderRow>[] = [
   { key: "id", header: "订单号", accessor: "id", sortable: true, sticky: "left", minWidth: 170 },
-  { key: "merchant", header: "店铺", accessor: "merchant", sortable: true, minWidth: 140 },
+  { key: "merchant", header: "客户", accessor: "merchant", sortable: true, minWidth: 140 },
   { key: "channel", header: "来源", accessor: "channel", minWidth: 100 },
   { key: "status", header: "状态", render: (row) => <StatusTag status={row.status} />, minWidth: 100 },
   {

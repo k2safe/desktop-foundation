@@ -32,7 +32,7 @@ Collect these before editing:
 - current theme/CSS entry
 - current Tauri `Cargo.toml`, `tauri.conf.json`, and capability files
 - desired template id: `admin`, `command`, `ledger`, `merchant`, `studio`, `dark`, or `default`
-- GitHub release repository for desktop updates, for example `k2safe/commerce-ops-admin`
+- GitHub release repository for desktop updates, for example `owner/repository`
 
 ## Package Install
 
@@ -66,7 +66,7 @@ export const defaultTemplateId: ThemeTemplateId = "admin";
 
 export function createProductTemplate(templateId: ThemeTemplateId = defaultTemplateId) {
   return createThemeTemplateRuntime(templateId, {
-    brand: { name: "Product Admin" },
+    brand: { name: "Product Desktop" },
     colors: {
       primary: "#3b00f5",
       primaryHover: "#2700c7"
@@ -100,7 +100,7 @@ export function App() {
     <DesktopAppShell theme={template.theme} className={template.className} client={client}>
       <DesktopLayout
         variant={template.layout.appShell}
-        brand={{ name: "Product Admin" }}
+        brand={{ name: "Product Desktop" }}
         menus={menus}
         user={session.user}
       >
@@ -120,14 +120,14 @@ import { DesktopLoginPage } from "@desktop-foundation/app-shell";
 import { Input } from "@desktop-foundation/ui-react";
 
 <DesktopLoginPage
-  brand={{ name: "Product Admin" }}
+  brand={{ name: "Product Desktop" }}
   title="管理端登录"
-  variant={template.layout.login}
-  accountLabel="管理员账号"
-  passwordLabel="登录密码"
+  template={template.layout.login}
+  accountLabel="账号"
+  passwordLabel="密码"
   extraFields={({ payload, setField }) => (
     <Input
-      label="Google 验证码"
+      label="验证码"
       placeholder="未开启时可留空"
       value={payload.otp ?? ""}
       onChange={(event) => setField("otp", event.target.value)}
@@ -157,16 +157,16 @@ import {
 
 export async function createProductClient() {
   return createDesktopClient({
-    product: "product-admin",
+    product: "product-desktop",
     apiBaseURL: "https://api.example.com",
-    session: await createTauriSessionStore(invoke, "product-admin"),
-    storage: createTauriKeyValueStore(invoke, "product-admin", "user"),
-    secureStorage: createTauriSecureStorage(invoke, "product-admin"),
+    session: await createTauriSessionStore(invoke, "product-desktop"),
+    storage: createTauriKeyValueStore(invoke, "product-desktop", "user"),
+    secureStorage: createTauriSecureStorage(invoke, "product-desktop"),
     desktop: createTauriDesktopCapability(invoke),
-    files: createTauriFileCapability(invoke, "product-admin"),
+    files: createTauriFileCapability(invoke, "product-desktop"),
     updateConfig: createGitHubReleasesUpdateConfig({
       currentVersion: import.meta.env.VITE_APP_VERSION,
-      repository: "k2safe/product-admin",
+      repository: "owner/repository",
       channel: "stable",
       requireChecksumVerification: true
     })
@@ -203,9 +203,9 @@ pnpm exec desktop-foundation-ci \
   --package-desktop \
   --manifest \
   --release-plan \
-  --github-repo k2safe/product-admin \
-  --preview-bundle-id com.k2safe.product.admin.preview \
-  --preview-name "Product Admin Preview"
+  --github-repo owner/repository \
+  --preview-bundle-id com.example.product.preview \
+  --preview-name "Product Desktop Preview"
 ```
 
 The product can upload `artifacts/desktop/*` manually, through GitHub Actions, or through its own release pipeline. The client only needs the manifest URL to be reachable.

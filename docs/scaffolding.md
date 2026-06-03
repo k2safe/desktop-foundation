@@ -16,9 +16,9 @@ create-desktop-app apps/product-desktop \
 
 - `src/theme.ts`: product theme preset.
 - `src/menus.tsx`: product menu config.
-- `src/product-adapter.tsx`: product-owned adapter for brand, menu, layout, user menu, theme, and client defaults.
+- `src/product-adapter.tsx`: product-owned adapter for brand, menu, layout, login template, user menu, theme, and client defaults.
 - `src/api/client.ts`: Web/Tauri desktop client bootstrap.
-- `src/pages/DashboardPage.tsx`: placeholder page using foundation components.
+- `src/pages/DashboardPage.tsx`: placeholder page using foundation components. The generated `src/App.tsx` also wires `DesktopLoginPage` through `AuthGuard`, so products can replace authentication without forking the foundation login shell.
 - `src-tauri`: Tauri shell wired to `desktop-core-rs` platform capabilities.
 
 The generated Tauri entry uses `DesktopCore::persistent_platform_with_http_adapter`, so product apps get the shared HTTP transport, session persistence, secure storage, file commands, window commands, clipboard, notification, and open-external contract on day one.
@@ -52,6 +52,18 @@ pnpm doctor
 ```
 
 The script runs `desktop-foundation doctor --report artifacts/foundation-doctor.json` and checks package versions, stylesheet import, app shell usage, theme template runtime, Tauri core wiring, update surface, and expected package scripts. It does not validate product business APIs or permissions.
+
+## Optional Visual Regression
+
+Generated projects include `visual:regression` and `visual:regression:update`. The script is intentionally lightweight: it skips until `VISUAL_REGRESSION_URL` is set and Playwright is available in the product repo. Products that opt in should add `playwright` as a dev dependency and install Chromium once.
+
+```bash
+pnpm dev:web
+VISUAL_REGRESSION_URL=http://127.0.0.1:5173 pnpm visual:regression:update
+VISUAL_REGRESSION_URL=http://127.0.0.1:5173 pnpm visual:regression
+```
+
+This keeps early product integration fast while still giving each product a standard place for UI baselines.
 
 ## Boundary
 

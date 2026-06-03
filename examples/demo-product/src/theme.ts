@@ -2,8 +2,8 @@ import type { DesktopTheme } from "@desktop-foundation/ui-react";
 import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
 
 export const demoProductTemplate = createThemeTemplateRuntime("admin", {
-  id: "commerce-ops",
-  brand: { name: "Commerce Ops" },
+  id: "product-demo",
+  brand: { name: "Product Demo" },
   colors: {
     primary: "#0f766e",
     primaryHover: "#115e59",
