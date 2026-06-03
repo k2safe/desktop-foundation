@@ -1,9 +1,10 @@
 #!/usr/bin/env node
+import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -13,7 +14,8 @@ function parseArgs(argv) {
   const options = {
     keep: false,
     manifestPath: defaultManifestPath,
-    dir: null
+    dir: null,
+    localArtifacts: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -29,6 +31,8 @@ function parseArgs(argv) {
       options.dir = resolve(argv[index + 1] || "");
       options.keep = true;
       index += 1;
+    } else if (arg === "--local-artifacts") {
+      options.localArtifacts = true;
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }
@@ -93,6 +97,64 @@ async function readManifest(manifestPath) {
     throw new Error(`Manifest is missing consumer dependencies/devDependencies/pnpm: ${manifestPath}`);
   }
   return manifest;
+}
+
+function rewriteManifestUrls(manifest, baseUrl) {
+  const nextManifest = JSON.parse(JSON.stringify(manifest));
+  nextManifest.baseUrl = baseUrl;
+
+  const packageUrls = new Map();
+  for (const item of nextManifest.packages || []) {
+    item.url = `${baseUrl}/${item.file}`;
+    packageUrls.set(item.name, item.url);
+  }
+
+  for (const section of ["dependencies", "devDependencies"]) {
+    for (const name of Object.keys(nextManifest.consumer?.[section] || {})) {
+      const nextUrl = packageUrls.get(name);
+      if (nextUrl) nextManifest.consumer[section][name] = nextUrl;
+    }
+  }
+
+  for (const name of Object.keys(nextManifest.consumer?.pnpm?.overrides || {})) {
+    const nextUrl = packageUrls.get(name);
+    if (nextUrl) nextManifest.consumer.pnpm.overrides[name] = nextUrl;
+  }
+
+  return nextManifest;
+}
+
+async function startArtifactServer(artifactDir) {
+  const server = createServer(async (request, response) => {
+    try {
+      const requestUrl = new URL(request.url || "/", "http://127.0.0.1");
+      const fileName = decodeURIComponent(requestUrl.pathname.replace(/^\/+/, ""));
+      if (!fileName || fileName.includes("/") || fileName.includes("\\") || fileName.includes("..")) {
+        response.writeHead(404);
+        response.end("not found");
+        return;
+      }
+
+      const body = await readFile(join(artifactDir, fileName));
+      response.writeHead(200, {
+        "Content-Type": fileName.endsWith(".tgz") ? "application/gzip" : "application/octet-stream",
+        "Content-Length": String(body.byteLength)
+      });
+      response.end(body);
+    } catch {
+      response.writeHead(404);
+      response.end("not found");
+    }
+  });
+
+  await new Promise((resolvePromise) => server.listen(0, "127.0.0.1", resolvePromise));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("Failed to bind local artifact server");
+
+  return {
+    baseUrl: `http://127.0.0.1:${address.port}`,
+    close: () => new Promise((resolvePromise) => server.close(resolvePromise))
+  };
 }
 
 function getManifestVersion(manifest) {
@@ -626,7 +688,9 @@ ${cargoDependency}
 async function main() {
   const startedAt = Date.now();
   const options = parseArgs(process.argv.slice(2));
-  const manifest = await readManifest(options.manifestPath);
+  let manifest = await readManifest(options.manifestPath);
+  const artifactServer = options.localArtifacts ? await startArtifactServer(dirname(options.manifestPath)) : null;
+  if (artifactServer) manifest = rewriteManifestUrls(manifest, artifactServer.baseUrl);
   const demoDir = options.dir || (await mkdtemp(resolve(tmpdir(), "df-external-ai-demo-")));
   let succeeded = false;
 
@@ -638,6 +702,7 @@ async function main() {
   }
 
   console.log(`external-ai-demo: manifest ${options.manifestPath}`);
+  if (artifactServer) console.log(`external-ai-demo: local artifact server ${artifactServer.baseUrl}`);
   console.log(`external-ai-demo: workspace ${demoDir}`);
   console.log(`external-ai-demo: foundation ${getManifestVersion(manifest)}`);
 
@@ -659,6 +724,7 @@ async function main() {
     } else {
       console.log(`external-ai-demo: kept ${demoDir}`);
     }
+    await artifactServer?.close();
   }
 }
 

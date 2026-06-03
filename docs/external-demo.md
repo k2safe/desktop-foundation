@@ -71,6 +71,14 @@ The script creates a temporary product project, installs the GitHub tarball depe
 pnpm smoke:external-ai-demo -- --keep
 ```
 
+Before pushing a new version's tarballs to GitHub raw, use local artifact mode:
+
+```bash
+pnpm smoke:external-ai-demo -- --local-artifacts
+```
+
+`pnpm release:local-check` uses local artifact mode so the release gate can pass before the new tarballs exist on `main`.
+
 The manual equivalent is:
 
 ```bash

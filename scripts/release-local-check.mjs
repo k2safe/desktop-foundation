@@ -15,7 +15,7 @@ const checks = [
   {
     name: "clean external AI demo smoke",
     command: "pnpm",
-    args: ["smoke:external-ai-demo"]
+    args: ["smoke:external-ai-demo", "--", "--local-artifacts"]
   },
   {
     name: "TypeScript package build and type-check",
