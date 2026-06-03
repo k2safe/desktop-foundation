@@ -25,7 +25,8 @@ function parseArgs(argv) {
     } else if (arg === "--keep") {
       options.keep = true;
     } else if (arg === "--manifest") {
-      options.manifestPath = resolve(argv[index + 1] || "");
+      const nextManifest = argv[index + 1] || "";
+      options.manifestPath = /^https?:\/\//.test(nextManifest) ? nextManifest : resolve(nextManifest);
       index += 1;
     } else if (arg === "--dir") {
       options.dir = resolve(argv[index + 1] || "");
@@ -91,7 +92,13 @@ async function writeText(baseDir, relativePath, content) {
 }
 
 async function readManifest(manifestPath) {
-  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  const source = /^https?:\/\//.test(manifestPath)
+    ? await fetch(manifestPath).then((response) => {
+        if (!response.ok) throw new Error(`Failed to fetch manifest: ${response.status} ${response.statusText}`);
+        return response.text();
+      })
+    : await readFile(manifestPath, "utf8");
+  const manifest = JSON.parse(source);
   const consumer = manifest.consumer || {};
   if (!consumer.dependencies || !consumer.devDependencies || !consumer.pnpm) {
     throw new Error(`Manifest is missing consumer dependencies/devDependencies/pnpm: ${manifestPath}`);
@@ -689,6 +696,9 @@ async function main() {
   const startedAt = Date.now();
   const options = parseArgs(process.argv.slice(2));
   let manifest = await readManifest(options.manifestPath);
+  if (options.localArtifacts && /^https?:\/\//.test(options.manifestPath)) {
+    throw new Error("--local-artifacts requires a local manifest path");
+  }
   const artifactServer = options.localArtifacts ? await startArtifactServer(dirname(options.manifestPath)) : null;
   if (artifactServer) manifest = rewriteManifestUrls(manifest, artifactServer.baseUrl);
   const demoDir = options.dir || (await mkdtemp(resolve(tmpdir(), "df-external-ai-demo-")));
@@ -709,7 +719,7 @@ async function main() {
   try {
     await writeProject(demoDir, manifest);
     await assertFileDoesNotContain(resolve(demoDir, "package.json"), ["workspace:", "link:", "file:"]);
-    await run("pnpm", ["install"], demoDir);
+    await run("pnpm", ["install", "--fetch-timeout=120000", "--fetch-retries=5"], demoDir);
     await assertFileDoesNotContain(resolve(demoDir, "pnpm-lock.yaml"), ["workspace:", "link:", repoRoot]);
     await run("pnpm", ["integration-check"], demoDir);
     await run("pnpm", ["build"], demoDir);

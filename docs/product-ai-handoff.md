@@ -7,6 +7,12 @@
 先读取 foundation package manifest：
 
 ```text
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.21/foundation-packages.json
+```
+
+如果明确要追 `main` 上的最新底座，再读取 development manifest：
+
+```text
 https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json
 ```
 
@@ -18,7 +24,7 @@ pnpm exec desktop-foundation-ci --integration-check --integration-report artifac
 pnpm build
 ```
 
-不要把某个旧版本号写进接入提示词或产品代码。当前推荐版本、tarball URL、pnpm overrides 和 Cargo dependency 都以 manifest 为准。
+不要把某个旧版本号写进接入提示词或产品代码。稳定接入优先使用 release manifest；当前推荐版本、tarball URL、pnpm overrides 和 Cargo dependency 都以选定 manifest 为准。
 
 产品入口必须只 import 一次共享样式：
 

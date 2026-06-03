@@ -71,6 +71,12 @@ The script creates a temporary product project, installs the GitHub tarball depe
 pnpm smoke:external-ai-demo -- --keep
 ```
 
+To verify an immutable release manifest directly:
+
+```bash
+pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.21/foundation-packages.json
+```
+
 Before pushing a new version's tarballs to GitHub raw, use local artifact mode:
 
 ```bash

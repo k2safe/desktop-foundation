@@ -4,7 +4,10 @@
 
 ```text
 请把当前产品项目接入 desktop-foundation。
-不要写死旧版本号；先读取 foundation package manifest，并以 manifest 里的 consumer 依赖块为准：
+不要写死旧版本号；稳定接入优先读取 release package manifest，并以 manifest 里的 consumer 依赖块为准：
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.21/foundation-packages.json
+
+如果明确要追 main 上的最新底座，才使用 development manifest：
 https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json
 
 先读这些文件：
