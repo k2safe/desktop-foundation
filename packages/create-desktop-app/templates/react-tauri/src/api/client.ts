@@ -2,9 +2,12 @@ import {
   createDesktopClient,
   createGitHubReleasesUpdateConfig,
   createTauriDesktopClient,
+  createTauriUpdaterPluginAdapters,
   type AppUpdateConfig,
   type DesktopClient,
-  type DesktopClientConfig
+  type DesktopClientConfig,
+  type TauriNativePluginAdapters,
+  type TauriUpdaterPluginModule
 } from "@desktop-foundation/bridge";
 import { invoke } from "@tauri-apps/api/core";
 import { productAdapter } from "../product-adapter";
@@ -18,6 +21,20 @@ function envValue(name: string) {
 function envList(name: string) {
   const value = envValue(name);
   return value ? value.split(",").map((item) => item.trim()).filter(Boolean) : undefined;
+}
+
+const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<unknown>;
+
+async function createProductNativePlugins(): Promise<TauriNativePluginAdapters | undefined> {
+  if (envValue("VITE_TAURI_UPDATER") !== "1") return undefined;
+
+  try {
+    const updater = await dynamicImport("@tauri-apps/plugin-updater") as TauriUpdaterPluginModule;
+    return createTauriUpdaterPluginAdapters(updater);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error("Tauri updater is enabled but @tauri-apps/plugin-updater could not be loaded: " + message);
+  }
 }
 
 function createProductUpdateConfig(currentVersion: string): AppUpdateConfig {
@@ -70,7 +87,10 @@ export const clientConfig: DesktopClientConfig = {
 
 export async function createProductClient(): Promise<DesktopClient> {
   if ("__TAURI_INTERNALS__" in window) {
-    return createTauriDesktopClient(invoke, clientConfig);
+    return createTauriDesktopClient(invoke, {
+      ...clientConfig,
+      nativePlugins: await createProductNativePlugins()
+    });
   }
   return createDesktopClient(clientConfig);
 }

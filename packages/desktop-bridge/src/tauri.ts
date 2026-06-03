@@ -1,6 +1,6 @@
 import { createDesktopClient } from "./client";
 import { DesktopError, UnauthorizedError } from "./errors";
-import { createNoopUpdateCapability } from "./updates";
+import { createManifestUpdateCapability } from "./updates";
 import {
   createTauriNativeDesktopCapability,
   createTauriNativeFileCapability,
@@ -243,17 +243,25 @@ export async function createTauriDesktopClient(
   const commandFiles = createTauriFileCapability(invoke, namespace);
   const desktop = config.nativePlugins ? createTauriNativeDesktopCapability(config.nativePlugins, commandDesktop) : commandDesktop;
   const files = config.nativePlugins ? createTauriNativeFileCapability(config.nativePlugins, commandFiles) : commandFiles;
-  const hasNativeUpdates = Boolean(config.nativePlugins?.checkUpdate || config.nativePlugins?.installUpdate);
-  const updates = hasNativeUpdates && config.nativePlugins
-    ? createTauriNativeUpdateCapability(config.nativePlugins, config.updates ?? createNoopUpdateCapability(config.updateConfig?.currentVersion ?? config.version))
-    : config.updates;
+  const transport = createTauriHttpTransport(invoke);
+  const hasNativeUpdates = Boolean(config.nativePlugins?.checkUpdate || config.nativePlugins?.downloadUpdate || config.nativePlugins?.installUpdate);
+  const fallbackUpdates = config.updates ?? createManifestUpdateCapability(
+    {
+      ...config.updateConfig,
+      currentVersion: config.updateConfig?.currentVersion ?? config.version,
+      transport: config.updateConfig?.transport ?? transport
+    },
+    desktop,
+    files
+  );
+  const updates = hasNativeUpdates && config.nativePlugins ? createTauriNativeUpdateCapability(config.nativePlugins, fallbackUpdates) : config.updates;
 
   return createDesktopClient({
     ...config,
     session,
     storage: createTauriKeyValueStore(invoke, namespace, config.storageScope, config.initialStorageValues),
     secureStorage: createTauriSecureStorage(invoke, namespace),
-    transport: createTauriHttpTransport(invoke),
+    transport,
     desktop,
     files,
     updates

@@ -76,6 +76,9 @@ Useful optional variables:
 - `VITE_UPDATE_TAG`: checks a fixed GitHub release tag instead of latest.
 - `VITE_UPDATE_MANIFEST_FILE`: defaults to `latest.json`.
 - `VITE_UPDATE_REQUIRE_CHECKSUM=1`: fails downloads when the active file adapter cannot verify sha256.
+- `VITE_TAURI_UPDATER=1`: enables the optional Tauri updater plugin adapter. Install and register `@tauri-apps/plugin-updater` before turning this on.
+
+Without `VITE_TAURI_UPDATER=1`, product UI should stop at check, release notes, download, and checksum status. Do not replace `.app` files or relaunch the app from business pages. With the Tauri updater adapter enabled and verified, UI can call `client.updates.installUpdate()` and still keep install behavior at the native adapter boundary.
 
 Release files can be produced locally or in GitHub Actions:
 

@@ -87,7 +87,7 @@ function UpdateCenter({ client }: { client: DesktopClient }) {
           下载
         </Button>
         <Button size="sm" variant="outline" onClick={() => void run("安装", () => client.updates.installUpdate())}>
-          安装
+          安装 adapter
         </Button>
         <Button size="sm" variant="ghost" onClick={() => void run("打开发布页", () => client.updates.openUpdatePage())}>
           发布页
@@ -132,7 +132,7 @@ export function Settings({ client, logs }: SettingsProps) {
         {
           id: "updates",
           title: "更新中心",
-          description: "读取 public/update/latest.json，走 bridge manifest 更新状态流转。",
+          description: "读取 public/update/latest.json，默认停在下载和校验；安装需 native adapter。",
           content: <UpdateCenter client={client} />
         },
         {

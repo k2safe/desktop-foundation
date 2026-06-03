@@ -10,7 +10,7 @@ export {
   createManifestUpdateCapability,
   createNoopUpdateCapability
 } from "./updates";
-export { createTauriNativeDesktopCapability, createTauriNativeFileCapability, createTauriNativeUpdateCapability } from "./tauriPlugins";
+export { createTauriNativeDesktopCapability, createTauriNativeFileCapability, createTauriNativeUpdateCapability, createTauriUpdaterPluginAdapters } from "./tauriPlugins";
 export { DesktopError, UnauthorizedError } from "./errors";
 export { createWebSessionStore, createWebStorage } from "./storage";
 export {
@@ -24,7 +24,15 @@ export {
 } from "./tauri";
 export { createWebTransport } from "./webTransport";
 export type { TauriInvoke } from "./tauri";
-export type { TauriNativePluginAdapters, TauriNativeUpdate } from "./tauriPlugins";
+export type {
+  TauriNativePluginAdapters,
+  TauriNativeUpdate,
+  TauriUpdaterPluginAdapterOptions,
+  TauriUpdaterPluginModule,
+  TauriUpdaterPluginUpdate,
+  TauriUpdaterProgressEvent,
+  TauriUpdaterProgressHandler
+} from "./tauriPlugins";
 export type {
   AppUpdateCapability,
   AppUpdateCheckOptions,

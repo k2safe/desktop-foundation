@@ -1,6 +1,11 @@
 import type {
   AppUpdateCapability,
+  AppUpdateCheckOptions,
+  AppUpdateDownloadOptions,
+  AppUpdateInstallContext,
+  AppUpdateInstallResult,
   AppUpdateInfo,
+  AppUpdateState,
   DesktopCapability,
   DownloadFileOptions,
   DownloadFileResult,
@@ -12,11 +17,27 @@ import type {
   SaveFileDialogResult
 } from "./types";
 
+export interface TauriUpdaterProgressEvent {
+  event?: string;
+  data?: {
+    contentLength?: number;
+    chunkLength?: number;
+  };
+}
+
+export type TauriUpdaterProgressHandler = (event: TauriUpdaterProgressEvent) => void;
+
 export interface TauriNativeUpdate {
   version: string;
+  currentVersion?: string;
   date?: string;
   body?: string;
-  downloadAndInstall?: () => Promise<void>;
+  releasePageUrl?: string;
+  downloadUrl?: string;
+  metadata?: Record<string, unknown>;
+  download?: (onEvent?: TauriUpdaterProgressHandler) => Promise<void>;
+  install?: () => Promise<void>;
+  downloadAndInstall?: (onEvent?: TauriUpdaterProgressHandler) => Promise<void>;
 }
 
 export interface TauriNativePluginAdapters {
@@ -25,8 +46,33 @@ export interface TauriNativePluginAdapters {
   notify?: (options: NotifyOptions) => Promise<void>;
   openFileDialog?: (options?: OpenFileDialogOptions) => Promise<string | string[] | null>;
   saveFileDialog?: (options?: SaveFileDialogOptions) => Promise<string | null>;
-  checkUpdate?: () => Promise<TauriNativeUpdate | null>;
-  installUpdate?: (update?: TauriNativeUpdate | null) => Promise<void>;
+  checkUpdate?: (options?: AppUpdateCheckOptions) => Promise<TauriNativeUpdate | null>;
+  downloadUpdate?: (
+    update?: TauriNativeUpdate | null,
+    options?: AppUpdateDownloadOptions,
+    onEvent?: TauriUpdaterProgressHandler
+  ) => Promise<DownloadFileResult | void>;
+  installUpdate?: (update?: TauriNativeUpdate | null, context?: AppUpdateInstallContext) => Promise<AppUpdateInstallResult | void>;
+}
+
+export interface TauriUpdaterPluginUpdate {
+  version: string;
+  currentVersion?: string;
+  date?: string;
+  body?: string;
+  download?: (onEvent?: TauriUpdaterProgressHandler) => Promise<void>;
+  install?: () => Promise<void>;
+  downloadAndInstall?: (onEvent?: TauriUpdaterProgressHandler) => Promise<void>;
+}
+
+export interface TauriUpdaterPluginModule {
+  check(options?: unknown): Promise<TauriUpdaterPluginUpdate | null>;
+}
+
+export interface TauriUpdaterPluginAdapterOptions {
+  checkOptions?: unknown;
+  mapUpdate?: (update: TauriUpdaterPluginUpdate) => TauriNativeUpdate;
+  onEvent?: TauriUpdaterProgressHandler;
 }
 
 function normalizeOpenResult(value: string | string[] | null): FileDialogResult {
@@ -61,50 +107,216 @@ export function createTauriNativeFileCapability(adapters: TauriNativePluginAdapt
   };
 }
 
-
 function normalizeNativeUpdate(update: TauriNativeUpdate | null, currentVersion?: string): AppUpdateInfo | undefined {
   if (!update) return undefined;
   return {
     version: update.version,
-    currentVersion,
+    currentVersion: currentVersion ?? update.currentVersion,
     notes: update.body,
-    pubDate: update.date
+    pubDate: update.date,
+    releasePageUrl: update.releasePageUrl,
+    downloadUrl: update.downloadUrl,
+    metadata: { native: true, ...update.metadata }
+  };
+}
+
+function createUpdatePackageResult(update: AppUpdateInfo | undefined, options: AppUpdateDownloadOptions = {}, bytes = 0): DownloadFileResult {
+  return {
+    path: options.path ?? options.fileName ?? (update ? `tauri-updater://${update.version}` : "tauri-updater://update"),
+    bytes,
+    requestId: options.requestId
+  };
+}
+
+function stateWithError(state: AppUpdateState, error: unknown): AppUpdateState {
+  return {
+    ...state,
+    status: "error",
+    error: error instanceof Error ? error.message : String(error)
+  };
+}
+
+function applyProgress(state: AppUpdateState, event: TauriUpdaterProgressEvent) {
+  const data = event.data;
+  if (!data) return;
+  if (typeof data.contentLength === "number" && state.downloadedBytes === undefined) {
+    state.downloadedBytes = 0;
+  }
+  if (typeof data.chunkLength === "number") {
+    state.downloadedBytes = (state.downloadedBytes ?? 0) + data.chunkLength;
+  }
+}
+
+export function createTauriUpdaterPluginAdapters(
+  updater: TauriUpdaterPluginModule,
+  options: TauriUpdaterPluginAdapterOptions = {}
+): TauriNativePluginAdapters {
+  let currentUpdate: TauriUpdaterPluginUpdate | null = null;
+
+  return {
+    async checkUpdate() {
+      currentUpdate = await updater.check(options.checkOptions);
+      if (!currentUpdate) return null;
+      return options.mapUpdate ? options.mapUpdate(currentUpdate) : currentUpdate;
+    },
+    async downloadUpdate(_update, _downloadOptions, onEvent) {
+      if (!currentUpdate?.download) return;
+      await currentUpdate.download((event) => {
+        options.onEvent?.(event);
+        onEvent?.(event);
+      });
+    },
+    async installUpdate(update) {
+      const candidate = currentUpdate ?? update;
+      if (candidate?.install) {
+        await candidate.install();
+        return { status: "installed", message: "Update installed. Restart the app.", relaunchRequired: true };
+      }
+      if (candidate?.downloadAndInstall) {
+        await candidate.downloadAndInstall(options.onEvent);
+        return { status: "installed", message: "Update downloaded and installed. Restart the app.", relaunchRequired: true };
+      }
+      return { status: "installable", message: "Tauri updater returned an update without install support.", relaunchRequired: true };
+    }
   };
 }
 
 export function createTauriNativeUpdateCapability(adapters: TauriNativePluginAdapters, fallback: AppUpdateCapability): AppUpdateCapability {
   let nativeUpdate: TauriNativeUpdate | null = null;
   let lastUpdate: AppUpdateInfo | undefined;
+  let state: AppUpdateState = fallback.getState();
+
+  function syncFromFallback() {
+    state = fallback.getState();
+    return state;
+  }
+
+  function setState(next: Partial<AppUpdateState>) {
+    state = { ...state, ...next };
+  }
+
+  function progressHandler(event: TauriUpdaterProgressEvent) {
+    applyProgress(state, event);
+  }
 
   return {
     async checkForUpdate(options) {
-      if (!adapters.checkUpdate) return fallback.checkForUpdate(options);
-      nativeUpdate = await adapters.checkUpdate();
-      lastUpdate = normalizeNativeUpdate(nativeUpdate, options?.currentVersion);
-      return {
-        available: Boolean(lastUpdate),
-        currentVersion: options?.currentVersion,
-        update: lastUpdate,
-        checkedAt: Date.now()
+      if (!adapters.checkUpdate) {
+        const result = await fallback.checkForUpdate(options);
+        syncFromFallback();
+        return result;
+      }
+
+      setState({
+        status: "checking",
+        currentVersion: options?.currentVersion ?? state.currentVersion,
+        error: undefined,
+        update: undefined,
+        downloadedPath: undefined,
+        downloadedBytes: undefined,
+        downloadedSha256: undefined,
+        installMessage: undefined,
+        installedAt: undefined
+      });
+
+      try {
+        nativeUpdate = await adapters.checkUpdate(options);
+        lastUpdate = normalizeNativeUpdate(nativeUpdate, options?.currentVersion ?? state.currentVersion);
+        setState({
+          status: lastUpdate ? "available" : "not-available",
+          checkedAt: Date.now(),
+          update: lastUpdate
+        });
+        return {
+          available: Boolean(lastUpdate),
+          currentVersion: state.currentVersion,
+          update: lastUpdate,
+          checkedAt: state.checkedAt ?? Date.now()
+        };
+      } catch (error) {
+        state = stateWithError(state, error);
+        throw error;
+      }
+    },
+    async downloadUpdate(update = lastUpdate, options) {
+      if (!nativeUpdate && !adapters.downloadUpdate) {
+        const result = await fallback.downloadUpdate(update, options);
+        syncFromFallback();
+        return result;
+      }
+
+      const hasNativeDownload = Boolean(adapters.downloadUpdate || nativeUpdate?.download);
+      if (!hasNativeDownload) {
+        const result = await fallback.downloadUpdate(update ?? lastUpdate, options);
+        syncFromFallback();
+        return result;
+      }
+
+      setState({ status: "downloading", update: update ?? lastUpdate, error: undefined, installMessage: undefined });
+      try {
+        let adapterResult = await adapters.downloadUpdate?.(nativeUpdate, options, progressHandler);
+        if (!adapterResult && nativeUpdate?.download) {
+          await nativeUpdate.download(progressHandler);
+        }
+        const result = adapterResult ?? createUpdatePackageResult(update ?? lastUpdate, options, state.downloadedBytes ?? 0);
+        setState({
+          status: "downloaded",
+          downloadedPath: result.path,
+          downloadedBytes: result.bytes,
+          downloadedSha256: result.sha256,
+          installMessage: "Update package is ready for the native updater."
+        });
+        return result;
+      } catch (error) {
+        state = stateWithError(state, error);
+        throw error;
+      }
+    },
+    async installUpdate(update = lastUpdate) {
+      if (!nativeUpdate && !adapters.installUpdate) {
+        const result = await fallback.installUpdate(update);
+        syncFromFallback();
+        return result;
+      }
+
+      const context: AppUpdateInstallContext = {
+        update: update ?? lastUpdate ?? normalizeNativeUpdate(nativeUpdate) ?? { version: "unknown" },
+        downloadedPath: state.downloadedPath,
+        downloadedBytes: state.downloadedBytes,
+        downloadedSha256: state.downloadedSha256
       };
-    },
-    downloadUpdate: (update, options) => fallback.downloadUpdate(update ?? lastUpdate, options),
-    async installUpdate(update) {
-      if (adapters.installUpdate) {
-        await adapters.installUpdate(nativeUpdate);
-        return;
+
+      setState({ status: "installing", error: undefined, installMessage: undefined });
+      try {
+        let result = await adapters.installUpdate?.(nativeUpdate, context);
+        if (!result && nativeUpdate?.install) {
+          await nativeUpdate.install();
+          result = { status: "installed", message: "Update installed. Restart the app.", relaunchRequired: true };
+        }
+        if (!result && nativeUpdate?.downloadAndInstall) {
+          await nativeUpdate.downloadAndInstall(progressHandler);
+          result = { status: "installed", message: "Update downloaded and installed. Restart the app.", relaunchRequired: true };
+        }
+        if (!result) {
+          result = await fallback.installUpdate(update ?? lastUpdate);
+          syncFromFallback();
+          return result;
+        }
+        setState({
+          status: result.status ?? "installed",
+          installMessage: result.message,
+          installedAt: (result.status ?? "installed") === "installed" ? Date.now() : state.installedAt
+        });
+        return result;
+      } catch (error) {
+        state = stateWithError(state, error);
+        throw error;
       }
-      if (nativeUpdate?.downloadAndInstall) {
-        await nativeUpdate.downloadAndInstall();
-        return;
-      }
-      await fallback.installUpdate(update ?? lastUpdate);
     },
-    openUpdatePage: (update) => fallback.openUpdatePage(update ?? lastUpdate),
-    getState: () => ({
-      ...fallback.getState(),
-      status: lastUpdate ? "available" : fallback.getState().status,
-      update: lastUpdate ?? fallback.getState().update
-    })
+    async openUpdatePage(update = lastUpdate) {
+      await fallback.openUpdatePage(update ?? lastUpdate);
+      syncFromFallback();
+    },
+    getState: () => ({ ...state, update: state.update ?? lastUpdate ?? fallback.getState().update })
   };
 }

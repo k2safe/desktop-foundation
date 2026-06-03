@@ -95,7 +95,7 @@ export const clientConfig = {
 };
 ```
 
-当前接入阶段只做发现新版本、下载更新包、校验 size/sha256。不要在业务页面里写替换 `.app`、安装后重启、relaunch 等逻辑；真正安装动作等底座/Tauri updater adapter 稳定后，在 client/native adapter 边界接入。
+默认接入阶段只做发现新版本、下载更新包、校验 size/sha256。不要在业务页面里写替换 `.app`、安装后重启、relaunch 等逻辑；需要真实安装时，产品安装并注册 Tauri updater 插件，打开 `VITE_TAURI_UPDATER=1`，在 client/native adapter 边界接入。
 
 UI 当前只调用：
 
@@ -153,7 +153,7 @@ pnpm exec desktop-foundation-ci \
 可后补：
 
 - `pnpm visual:regression`
-- Tauri updater 安装器
+- Tauri updater 插件配置、签名和公证
 - macOS 签名和公证
 - GitHub Actions 自动 release upload
 

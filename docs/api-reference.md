@@ -192,18 +192,31 @@ import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { sendNotification } from "@tauri-apps/plugin-notification";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { createTauriDesktopClient } from "@desktop-foundation/bridge";
+import { createTauriDesktopClient, createTauriUpdaterPluginAdapters, type TauriNativePluginAdapters, type TauriUpdaterPluginModule } from "@desktop-foundation/bridge";
+
+const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<unknown>;
+
+async function createNativePlugins(): Promise<TauriNativePluginAdapters> {
+  const plugins: TauriNativePluginAdapters = {
+    openExternal: openUrl,
+    copyText: writeText,
+    notify: sendNotification,
+    openFileDialog: open,
+    saveFileDialog: save
+  };
+
+  if (import.meta.env.VITE_TAURI_UPDATER === "1") {
+    const updater = await dynamicImport("@tauri-apps/plugin-updater") as TauriUpdaterPluginModule;
+    Object.assign(plugins, createTauriUpdaterPluginAdapters(updater));
+  }
+
+  return plugins;
+}
 
 export async function createProductClient() {
   return createTauriDesktopClient(invoke, {
     ...clientConfig,
-    nativePlugins: {
-      openExternal: openUrl,
-      copyText: writeText,
-      notify: sendNotification,
-      openFileDialog: open,
-      saveFileDialog: save
-    }
+    nativePlugins: await createNativePlugins()
   });
 }
 ```
@@ -214,8 +227,9 @@ The optional adapter currently covers:
 - clipboard manager: `desktop.copyText`
 - notification: `desktop.notify`
 - dialog: `files.openFileDialog`, `files.saveFileDialog`
+- updater: `updates.checkForUpdate`, `updates.downloadUpdate`, `updates.installUpdate` through `createTauriUpdaterPluginAdapters` when the product enables and configures `@tauri-apps/plugin-updater`
 
-HTTP, session, storage, secure storage, text file read/write, JSON export, file download, and window state continue to use the foundation Rust command contract.
+HTTP, session, storage, secure storage, text file read/write, JSON export, file download, and window state continue to use the foundation Rust command contract. Without the updater plugin, manifest updates still support check, release notes, download, and checksum verification; product pages must not replace `.app` files or relaunch directly.
 
 ## Rust Core
 

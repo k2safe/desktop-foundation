@@ -157,13 +157,7 @@ function demoUpdateConfig(): AppUpdateConfig {
     manifestUrl: demoUpdateManifestUrl,
     currentVersion: demoVersion,
     channel: "stable",
-    requireChecksumVerification: true,
-    installUpdate: async ({ update, downloadedPath, downloadedSha256 }) => ({
-      status: "installable",
-      message: `更新包 ${update.version} 已通过 manifest、size 和 sha256 校验；真实产品可在这里接 Tauri updater。sha256: ${downloadedSha256 ?? "unavailable"}`,
-      path: downloadedPath,
-      relaunchRequired: true
-    })
+    requireChecksumVerification: true
   };
 }
 
