@@ -3,13 +3,13 @@
 Use two GitHub repositories:
 
 - `desktop-foundation`: the reusable foundation monorepo.
-- `desktop-foundation-demo`: a standalone product-style demo that depends on released foundation packages.
+- `product-desktop-demo`: a standalone product-style demo that depends on released foundation packages.
 
 ## Why Two Demos
 
 The monorepo keeps `examples/demo-product` as an internal regression demo. It uses `workspace:*` dependencies so foundation changes can be validated immediately.
 
-The standalone `desktop-foundation-demo` should look like a real product project. It should not use `workspace:*`; it should consume released packages by version.
+The standalone `product-desktop-demo` should look like a real product project. It should not use `workspace:*`; it should consume released packages by version.
 
 ## Standalone Dependency Shape
 

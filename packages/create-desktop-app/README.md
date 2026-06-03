@@ -43,7 +43,7 @@ Use `desktop-foundation-ci` from a product app to keep the foundation contract v
 ```bash
 pnpm exec desktop-foundation-ci --integration-check --integration-report artifacts/foundation-integration.json
 pnpm exec desktop-foundation-ci --type-check --build
-pnpm exec desktop-foundation-ci --package-desktop --manifest --release-plan --github-repo acme/admin
+pnpm exec desktop-foundation-ci --package-desktop --manifest --release-plan --github-repo owner/repository
 ```
 
-`--integration-check` validates the required foundation packages, shared stylesheet, app shell, theme template runtime, Tauri core dependency, default capability, update surface, and expected product scripts. `--release-plan --github-repo` writes release metadata with GitHub Release URLs, checksum assets, manifest URL, and `gh release` command arguments without forcing a specific GitHub Actions workflow.
+`--integration-check` validates the required foundation packages, shared stylesheet, app shell, theme template runtime, product adapter, copied-source risk, table/overlay overflow risk, Tauri core dependency, default capability, update surface, and expected product scripts. `--release-plan --github-repo` writes release metadata with GitHub Release URLs, checksum assets, manifest URL, and `gh release` command arguments without forcing a specific GitHub Actions workflow.

@@ -129,7 +129,7 @@ function demoFileCapability(pushLog: (value: string) => void): FileCapability {
 
 function demoUpdateConfig(): AppUpdateConfig {
   return createGitHubReleasesUpdateConfig({
-    repository: "k2safe/desktop-foundation-demo",
+    repository: "owner/repository",
     currentVersion: demoVersion,
     channel: "stable",
     requireChecksumVerification: true,

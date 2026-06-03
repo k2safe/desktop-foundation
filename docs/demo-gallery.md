@@ -40,4 +40,4 @@ It intentionally avoids product-specific models and focuses on reusable UI surfa
 - command palette and debug panel
 - file, notification, clipboard, storage, and diagnostics capability calls
 
-Use this as the source shape for the standalone `desktop-foundation-demo` GitHub repository.
+Use this as the source shape for the standalone product demo repository.

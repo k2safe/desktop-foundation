@@ -410,6 +410,53 @@ function hasAnyText(files, patterns) {
   return false;
 }
 
+function relativeProjectPath(cwd, file) {
+  const root = resolve(cwd);
+  const target = resolve(file);
+  return target.startsWith(root + "/") ? target.slice(root.length + 1) : target;
+}
+
+function hasProjectFile(files, cwd, patterns) {
+  return files.some((file) => {
+    const relativePath = relativeProjectPath(cwd, file);
+    return patterns.some((pattern) => pattern.test(relativePath));
+  });
+}
+
+function findProjectFiles(files, cwd, patterns, limit = 8) {
+  const matches = [];
+  for (const file of files) {
+    const relativePath = relativeProjectPath(cwd, file);
+    if (patterns.some((pattern) => pattern.test(relativePath))) {
+      matches.push(relativePath);
+      if (matches.length >= limit) break;
+    }
+  }
+  return matches;
+}
+
+function matchingSourceFiles(files, cwd, patterns, limit = 8) {
+  const matches = [];
+  for (const file of files) {
+    const content = readTextIfExists(file);
+    if (patterns.some((pattern) => pattern.test(content))) {
+      matches.push(relativeProjectPath(cwd, file));
+      if (matches.length >= limit) break;
+    }
+  }
+  return matches;
+}
+
+function reportNextActions(findings) {
+  return findings
+    .filter((finding) => finding.status !== "pass")
+    .map((finding) => ({
+      id: finding.id,
+      status: finding.status,
+      action: finding.message
+    }));
+}
+
 function runIntegrationCheck(options, packageJson) {
   const cwd = process.cwd();
   const findings = [];
@@ -490,6 +537,117 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "warn", "login-shell", "DesktopLoginPage was not detected; product may own a custom login flow.");
   }
 
+  if (hasProjectFile(files, cwd, [/^src\/product-adapter\.(ts|tsx)$/])) {
+    pushFinding(findings, "pass", "product-adapter:file", "Product adapter entry exists at src/product-adapter.");
+  } else {
+    pushFinding(findings, "warn", "product-adapter:file", "src/product-adapter.tsx was not found; keep brand, menus, theme, user menu, client defaults, and update config in a thin product adapter.");
+  }
+
+  const productAdapterReferences = matchingSourceFiles(sourceFiles, cwd, [
+    /\bproductAdapter\b/,
+    /from\s+["'][^"']*product-adapter["']/,
+    /import\s*\([^)]*["'][^"']*product-adapter["'][^)]*\)/
+  ]);
+  if (productAdapterReferences.length) {
+    pushFinding(findings, "pass", "product-adapter:usage", "Product adapter usage detected.", { files: productAdapterReferences });
+  } else {
+    pushFinding(findings, "warn", "product-adapter:usage", "No productAdapter usage was detected; avoid scattering foundation configuration across business pages.");
+  }
+
+  const copiedFoundationSources = findProjectFiles(files, cwd, [
+    /^packages\/desktop-ui-react\/src\//,
+    /^packages\/desktop-bridge\/src\//,
+    /^packages\/desktop-app-shell\/src\//,
+    /^packages\/theme-presets\/src\//,
+    /^crates\/desktop-core-rs\/src\//,
+    /^desktop-core-rs\/src\//,
+    /^src\/@desktop-foundation\//,
+    /^src\/desktop-foundation\//
+  ]);
+  if (copiedFoundationSources.length) {
+    pushFinding(findings, "warn", "foundation-source-copy", "Foundation package source appears inside the product project; consume packages and adapt through product-adapter instead of copying internals.", {
+      files: copiedFoundationSources
+    });
+  } else {
+    pushFinding(findings, "pass", "foundation-source-copy", "No copied foundation source tree was detected.");
+  }
+
+  const internalFoundationImports = matchingSourceFiles(sourceFiles, cwd, [
+    /from\s+["'][^"']*@desktop-foundation\/[^"']*\/src\//,
+    /import\s*\([^)]*["'][^"']*@desktop-foundation\/[^"']*\/src\//,
+    /from\s+["'][^"']*(packages|crates)\/(desktop-ui-react|desktop-bridge|desktop-app-shell|theme-presets|desktop-core-rs)\/src\//
+  ]);
+  if (internalFoundationImports.length) {
+    pushFinding(findings, "warn", "foundation-internal-import", "Imports point at foundation internals; import public package exports only.", { files: internalFoundationImports });
+  } else {
+    pushFinding(findings, "pass", "foundation-internal-import", "No direct foundation internal imports were detected.");
+  }
+
+  const tableUsageFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\bDataTable\b/,
+    /\bEditableTable\b/,
+    /<Table\b/,
+    /<table\b/,
+    /\bdf-table\b/
+  ]);
+  if (tableUsageFiles.length) {
+    const tableGuardFiles = matchingSourceFiles(sourceFiles, cwd, [
+      /\bDataTable\b/,
+      /\bEditableTable\b/,
+      /\bdf-table-wrap\b/,
+      /overflowX\s*:/,
+      /overflow-x/,
+      /minWidth\s*:/,
+      /\btableContainer\b/
+    ]);
+    const rawTableFiles = matchingSourceFiles(sourceFiles, cwd, [/<table\b/, /\bdf-table\b/]);
+    if (tableGuardFiles.length) {
+      pushFinding(findings, "pass", "overflow:table", "Table usage has a likely local overflow guard.", {
+        files: tableGuardFiles,
+        tableFiles: tableUsageFiles
+      });
+    } else {
+      pushFinding(findings, "warn", "overflow:table", "Table usage was detected without an obvious local overflow guard; use DataTable/Table/EditableTable or wrap wide tables in a horizontal scroll container.", {
+        files: rawTableFiles.length ? rawTableFiles : tableUsageFiles
+      });
+    }
+  } else {
+    pushFinding(findings, "warn", "overflow:table", "No table usage was detected; skip table overflow verification until the product adds list pages.");
+  }
+
+  const overlayUsageFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\bModal\b/,
+    /\bDrawer\b/,
+    /\bDetailDrawer\b/,
+    /\bdf-modal\b/,
+    /\bdf-drawer\b/
+  ]);
+  if (overlayUsageFiles.length) {
+    const overlayGuardFiles = matchingSourceFiles(sourceFiles, cwd, [
+      /\bDataTable\b/,
+      /\bEditableTable\b/,
+      /\bdf-table-wrap\b/,
+      /maxHeight\s*:/,
+      /overflow(Y|X)?\s*:/,
+      /overflow-y/,
+      /overflow-x/,
+      /\bdf-modal__body\b/,
+      /\bdf-drawer__body\b/
+    ]);
+    if (overlayGuardFiles.length) {
+      pushFinding(findings, "pass", "overflow:overlay", "Modal/drawer usage has a likely internal scroll or table overflow guard.", {
+        files: overlayGuardFiles,
+        overlayFiles: overlayUsageFiles
+      });
+    } else {
+      pushFinding(findings, "warn", "overflow:overlay", "Modal/drawer usage was detected; verify long content and wide tables scroll inside the overlay instead of stretching the page.", {
+        files: overlayUsageFiles
+      });
+    }
+  } else {
+    pushFinding(findings, "pass", "overflow:overlay", "No modal or drawer usage was detected.");
+  }
+
   const tauriDir = resolve(cwd, "src-tauri");
   const cargoTomlPath = join(tauriDir, "Cargo.toml");
   const capabilitiesPath = join(tauriDir, "capabilities", "default.json");
@@ -547,7 +705,12 @@ function runIntegrationCheck(options, packageJson) {
     generatedAt: new Date().toISOString(),
     cwd,
     packageName: packageJson.name,
+    stats: {
+      filesScanned: files.length,
+      sourceFilesScanned: sourceFiles.length
+    },
     summary,
+    nextActions: reportNextActions(findings),
     findings
   };
 

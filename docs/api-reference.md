@@ -119,7 +119,7 @@ createDesktopClient({
   version: "1.0.0",
   apiBaseURL: "https://api.example.com",
   updateConfig: createGitHubReleasesUpdateConfig({
-    repository: "acme/admin",
+    repository: "owner/repository",
     channel: "stable",
     requireChecksumVerification: true
   })
