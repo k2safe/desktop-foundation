@@ -85,7 +85,7 @@ pnpm visual:regression:update
 pnpm visual:regression
 ```
 
-The visual workflow covers the built-in `default`, `admin`, `command`, `merchant`, `ledger`, `studio`, and `dark` templates at desktop and mobile widths. Update mode writes baselines into `examples/component-docs/__screenshots__`; compare mode writes current captures into `examples/component-docs/__screenshots__/.actual` and fails when a baseline is missing or different. Without Playwright, the script exits successfully and reports that screenshot capture was skipped.
+The visual workflow covers the built-in `default`, `admin`, `command`, `topnav-ops`, `merchant`, `ledger`, `studio`, and `dark` templates at desktop and mobile widths. Update mode writes baselines into `examples/component-docs/__screenshots__`; compare mode writes current captures into `examples/component-docs/__screenshots__/.actual` and fails when a baseline is missing or different. Without Playwright, the script exits successfully and reports that screenshot capture was skipped.
 
 ## App Shell
 

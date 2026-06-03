@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { CodeBlock, EditableTable, SettingsPage, type EditableTableColumn } from "@desktop-foundation/ui-react";
-import type { DesktopClient } from "@desktop-foundation/bridge";
+import { Button, CodeBlock, EditableTable, SettingsPage, type EditableTableColumn } from "@desktop-foundation/ui-react";
+import type { AppUpdateState, DesktopClient } from "@desktop-foundation/bridge";
 
 interface RuntimeFlag {
   id: string;
@@ -31,10 +31,51 @@ export interface SettingsProps {
   logs: string[];
 }
 
+function UpdateCenter({ client }: { client: DesktopClient }) {
+  const [state, setState] = useState<AppUpdateState>(() => client.updates.getState());
+  const [message, setMessage] = useState("等待检查更新。");
+
+  async function run(label: string, task: () => Promise<unknown>) {
+    setMessage(`${label}...`);
+    try {
+      const result = await task();
+      setMessage(`${label}完成`);
+      return result;
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+      return null;
+    } finally {
+      setState(client.updates.getState());
+    }
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+        <Button size="sm" onClick={() => void run("检查", () => client.updates.checkForUpdate())}>
+          检查更新
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => void run("下载", () => client.updates.downloadUpdate())}>
+          下载
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => void run("安装", () => client.updates.installUpdate())}>
+          安装
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => void run("打开发布页", () => client.updates.openUpdatePage())}>
+          发布页
+        </Button>
+      </div>
+      <CodeBlock>{message}</CodeBlock>
+      <CodeBlock>{JSON.stringify(state, null, 2)}</CodeBlock>
+    </div>
+  );
+}
+
 export function Settings({ client, logs }: SettingsProps) {
   const [activeSectionId, setActiveSectionId] = useState("runtime");
   const [flags, setFlags] = useState<RuntimeFlag[]>([
     { id: "api", name: "apiBaseURL", value: "https://api.product-demo.local", scope: "app" },
+    { id: "manifest", name: "updateManifest", value: "/update/latest.json", scope: "app" },
     { id: "token", name: "refreshToken", value: "secure-storage", scope: "secure" },
     { id: "density", name: "tableDensity", value: "default", scope: "user" }
   ]);
@@ -59,6 +100,12 @@ export function Settings({ client, logs }: SettingsProps) {
               }}
             />
           )
+        },
+        {
+          id: "updates",
+          title: "更新中心",
+          description: "读取 public/update/latest.json，走 bridge manifest 更新状态流转。",
+          content: <UpdateCenter client={client} />
         },
         {
           id: "diagnostics",

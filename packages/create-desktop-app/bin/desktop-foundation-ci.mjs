@@ -13,6 +13,7 @@ const foundationRuntimePackages = [
   "@desktop-foundation/theme-presets"
 ];
 const foundationDevPackages = ["@desktop-foundation/create-desktop-app"];
+const knownThemeTemplateIds = new Set(["default", "admin", "command", "topnav-ops", "merchant", "ledger", "studio", "dark"]);
 
 function printHelp() {
   console.log([
@@ -453,6 +454,35 @@ function matchingSourceFiles(files, cwd, patterns, limit = 8) {
   return matches;
 }
 
+function collectUnknownThemeTemplateIds(files, cwd, limit = 8) {
+  const matches = [];
+  const pattern = /\b(?:createThemeTemplateRuntime|getThemeTemplate|getThemeTemplateLayout|getThemeTemplateClassName)\(\s*["']([^"']+)["']/g;
+  for (const file of files) {
+    const content = readTextIfExists(file);
+    for (const match of content.matchAll(pattern)) {
+      const templateId = match[1];
+      if (!knownThemeTemplateIds.has(templateId)) {
+        matches.push(relativeProjectPath(cwd, file) + ":" + templateId);
+        if (matches.length >= limit) return matches;
+      }
+    }
+  }
+  return matches;
+}
+
+function collectFoundationCssOverrides(files, cwd, limit = 8) {
+  const matches = [];
+  for (const file of files) {
+    const content = readTextIfExists(file);
+    const selectors = new Set(Array.from(content.matchAll(/\.df-[a-z0-9_-]+/gi)).map((match) => match[0]));
+    if (selectors.size) {
+      matches.push(relativeProjectPath(cwd, file) + " (" + selectors.size + " df selectors)");
+      if (matches.length >= limit) break;
+    }
+  }
+  return matches;
+}
+
 function reportNextActions(findings) {
   return findings
     .filter((finding) => finding.status !== "pass")
@@ -488,6 +518,7 @@ function runIntegrationCheck(options, packageJson) {
   const findings = [];
   const files = walkProjectFiles(cwd);
   const sourceFiles = files.filter((file) => /\.(cjs|mjs|js|jsx|ts|tsx)$/.test(file));
+  const cssFiles = files.filter((file) => /\.css$/.test(file));
   const packageManager = packageJson.packageManager || process.env.npm_config_user_agent || "";
 
   pushFinding(findings, "pass", "package-json", "package.json is present.");
@@ -557,8 +588,23 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "fail", "theme-template", "Theme template runtime usage was not detected.");
   }
 
+  const unknownThemeTemplates = collectUnknownThemeTemplateIds(sourceFiles, cwd);
+  if (unknownThemeTemplates.length) {
+    pushFinding(findings, "warn", "theme-template:id", "Unknown theme template id detected; use a built-in template or pass a full custom template object intentionally.", {
+      files: unknownThemeTemplates
+    });
+  } else {
+    pushFinding(findings, "pass", "theme-template:id", "No unknown literal theme template ids were detected.");
+  }
+
   if (hasAnyText(sourceFiles, [/DesktopLoginPage/])) {
     pushFinding(findings, "pass", "login-shell", "DesktopLoginPage usage detected.");
+    const loginTemplateFiles = matchingSourceFiles(sourceFiles, cwd, [/<DesktopLoginPage[\s\S]*\btemplate\s*=/]);
+    if (loginTemplateFiles.length) {
+      pushFinding(findings, "pass", "login-template", "DesktopLoginPage template usage detected.", { files: loginTemplateFiles });
+    } else {
+      pushFinding(findings, "warn", "login-template", "DesktopLoginPage is used without the template prop; prefer template ids or template.layout.login for reusable login layouts.");
+    }
   } else {
     pushFinding(findings, "warn", "login-shell", "DesktopLoginPage was not detected; product may own a custom login flow.");
   }
@@ -607,6 +653,15 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "warn", "foundation-internal-import", "Imports point at foundation internals; import public package exports only.", { files: internalFoundationImports });
   } else {
     pushFinding(findings, "pass", "foundation-internal-import", "No direct foundation internal imports were detected.");
+  }
+
+  const foundationCssOverrides = collectFoundationCssOverrides(cssFiles, cwd);
+  if (foundationCssOverrides.length) {
+    pushFinding(findings, "warn", "foundation-css-overrides", "Product CSS overrides df-* foundation selectors; prefer theme tokens, templates, or product-owned wrapper classes.", {
+      files: foundationCssOverrides
+    });
+  } else {
+    pushFinding(findings, "pass", "foundation-css-overrides", "No product CSS overriding df-* selectors was detected.");
   }
 
   const tableUsageFiles = matchingSourceFiles(sourceFiles, cwd, [
@@ -699,6 +754,13 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "pass", "updates", "Client update configuration surface detected.");
   } else {
     pushFinding(findings, "warn", "updates", "No updateConfig or GitHub Releases updater usage detected.");
+  }
+
+  const placeholderUpdateFiles = matchingSourceFiles(sourceFiles, cwd, [/owner\/(repo|repository)/, /example\.com\/owner\/repo/]);
+  if (placeholderUpdateFiles.length) {
+    pushFinding(findings, "warn", "updates:placeholder", "Placeholder update repository or URL detected; replace it with product-owned VITE_UPDATE_* configuration before release.", { files: placeholderUpdateFiles });
+  } else {
+    pushFinding(findings, "pass", "updates:placeholder", "No placeholder update repository or URL was detected.");
   }
 
   for (const script of ["type-check", "build"]) {

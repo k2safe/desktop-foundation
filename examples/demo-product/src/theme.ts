@@ -1,7 +1,7 @@
 import type { DesktopTheme } from "@desktop-foundation/ui-react";
 import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
 
-export const demoProductTemplate = createThemeTemplateRuntime("admin", {
+export const demoProductTemplate = createThemeTemplateRuntime("topnav-ops", {
   id: "product-demo",
   brand: { name: "Product Demo" },
   colors: {

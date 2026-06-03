@@ -19,7 +19,7 @@ pnpm exec desktop-foundation ci --integration-check --integration-summary
 
 ```json
 {
-  "summary": { "status": "warn", "pass": 24, "warn": 2, "fail": 0 },
+  "summary": { "status": "warn", "pass": 30, "warn": 2, "fail": 0 },
   "stats": { "filesScanned": 16, "sourceFilesScanned": 9 },
   "nextActions": [{ "id": "script:visual:regression", "status": "warn", "action": "..." }],
   "findings": []
@@ -42,16 +42,20 @@ pnpm exec desktop-foundation ci --integration-check --integration-summary
 | `ui-styles` | fail | 没有引入底座共享 CSS。 | 在前端入口加 `import "@desktop-foundation/ui-react/styles.css";`。 |
 | `app-shell` | fail | 没检测到 `DesktopAppShell`。 | 根组件用 `DesktopAppShell` 包住产品页面。 |
 | `theme-template` | fail | 没检测到主题模板 runtime。 | 在 `src/product-adapter.tsx` 或 `src/theme.ts` 使用 `createThemeTemplateRuntime`。 |
+| `theme-template:id` | warn | 检测到未知模板 id。 | 使用内置模板 id，或明确传入完整自定义模板对象。 |
 | `login-shell` | warn | 未使用底座登录页。 | 可接受：产品完全自定义登录页；否则用 `DesktopLoginPage`。 |
+| `login-template` | warn | 使用了 `DesktopLoginPage`，但没有传 `template`。 | 用 `template.layout.login` 或内置登录模板 id，避免业务项目改底层登录结构。 |
 | `product-adapter:file` | warn | 缺 `src/product-adapter.tsx`。 | 建一个薄 adapter，集中品牌、菜单、模板、用户菜单、client 默认值和更新配置。 |
 | `product-adapter:usage` | warn | adapter 没被使用。 | 根组件、client 或 theme 从 `product-adapter` 读取配置，避免散落在业务页面。 |
 | `foundation-source-copy` | warn | 产品仓库疑似复制了底座源码。 | 删除复制目录，改为消费 `@desktop-foundation/*` 包。 |
 | `foundation-internal-import` | warn | 产品代码从底座内部路径导入。 | 改为从公开包入口导入，例如 `@desktop-foundation/ui-react`。 |
+| `foundation-css-overrides` | warn | 产品 CSS 直接覆盖 `df-*` 底座内部选择器。 | 优先使用模板、theme token 或产品自有 wrapper class，不要大面积覆盖底座 class。 |
 | `overflow:table` | warn | 表格没有明显局部滚动保护，或还没出现表格页面。 | 用 `DataTable`/`Table`/`EditableTable`，宽列设置 `minWidth`；原生表格必须包横向滚动容器。 |
 | `overflow:overlay` | warn | 弹窗/抽屉没有明显滚动保护。 | 长内容放在 overlay body 内滚动，宽表格在内部横向滚动。 |
 | `tauri-core` | fail/warn | Tauri 项目缺 `desktop-core-rs`，或不是 Tauri 项目。 | Tauri 项目在 `src-tauri/Cargo.toml` 引入 `desktop-core-rs`。 |
 | `tauri-capability` | warn | Tauri ACL 缺 `desktop-core:default`。 | 在 `src-tauri/capabilities/default.json` 加 `desktop-core:default`。 |
 | `updates` | warn | 没有更新配置入口。 | 在 client 里配置 `VITE_UPDATE_MANIFEST_URL` 或 `createGitHubReleasesUpdateConfig`。 |
+| `updates:placeholder` | warn | 更新仓库或 URL 还在用占位值。 | 发布前替换成产品自己的 `VITE_UPDATE_*` 配置。 |
 | `script:type-check` | fail | 缺类型检查脚本。 | package scripts 加 `type-check`。 |
 | `script:build` | fail | 缺构建脚本。 | package scripts 加 `build`。 |
 | `script:visual:regression` | warn | 缺视觉回归。 | 有 UI 基线的产品再加；早期接入可接受。 |

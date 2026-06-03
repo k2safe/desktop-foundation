@@ -1,6 +1,5 @@
 import {
   createDesktopClient,
-  createGitHubReleasesUpdateConfig,
   type AppUpdateConfig,
   type AsyncKeyValueStore,
   type DesktopCapability,
@@ -14,6 +13,17 @@ import {
 import { demoUser, orders, type DemoUser } from "./data";
 
 const demoVersion = "0.1.0";
+const demoUpdateManifestUrl = "/update/latest.json";
+
+async function hashArrayBufferSha256(buffer: ArrayBuffer) {
+  if (!globalThis.crypto?.subtle) return undefined;
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function inferDownloadFileName(url: string) {
+  return new URL(url, globalThis.location?.href ?? "http://localhost").pathname.split("/").filter(Boolean).pop() || "download.bin";
+}
 
 function memoryStore(initialValues: Record<string, unknown> = {}): KeyValueStore {
   const values = new Map<string, unknown>(Object.entries(initialValues));
@@ -120,26 +130,37 @@ function demoFileCapability(pushLog: (value: string) => void): FileCapability {
       pushLog(`exportJson ${fileName}`);
       return `/tmp/${fileName}`;
     },
-    async downloadFile(url) {
+    async downloadFile(url, options = {}) {
       pushLog(`downloadFile ${url}`);
-      return { path: "/tmp/product-report.csv", bytes: 2048, status: 200 };
+      if (options.namespace === "app-update" || url.includes("/update/")) {
+        const response = await fetch(url, { headers: options.headers });
+        const buffer = await response.arrayBuffer();
+        return {
+          path: options.fileName ?? inferDownloadFileName(url),
+          bytes: buffer.byteLength,
+          sha256: await hashArrayBufferSha256(buffer),
+          status: response.status,
+          requestId: options.requestId
+        };
+      }
+      return { path: "/tmp/product-report.csv", bytes: 2048, status: 200, requestId: options.requestId };
     }
   };
 }
 
 function demoUpdateConfig(): AppUpdateConfig {
-  return createGitHubReleasesUpdateConfig({
-    repository: "owner/repository",
+  return {
+    manifestUrl: demoUpdateManifestUrl,
     currentVersion: demoVersion,
     channel: "stable",
     requireChecksumVerification: true,
-    installUpdate: async ({ update, downloadedPath }) => ({
+    installUpdate: async ({ update, downloadedPath, downloadedSha256 }) => ({
       status: "installable",
-      message: `更新包 ${update.version} 已下载并校验完成；产品项目接入 Tauri updater 或安装器后即可执行替换。`,
+      message: `更新包 ${update.version} 已通过 manifest、size 和 sha256 校验；真实产品可在这里接 Tauri updater。sha256: ${downloadedSha256 ?? "unavailable"}`,
       path: downloadedPath,
       relaunchRequired: true
     })
-  });
+  };
 }
 
 export function createDemoProductClient(pushLog: (value: string) => void): DesktopClient {
@@ -155,7 +176,7 @@ export function createDemoProductClient(pushLog: (value: string) => void): Deskt
     files: demoFileCapability(pushLog),
     updateConfig: demoUpdateConfig(),
     security: {
-      allowedRequestOrigins: ["api.product-demo.local", "github.com", "raw.githubusercontent.com", "objects.githubusercontent.com", "github-releases.githubusercontent.com"],
+      allowedRequestOrigins: ["localhost", "127.0.0.1", "::1", "[::1]", "api.product-demo.local", "github.com", "raw.githubusercontent.com", "objects.githubusercontent.com", "github-releases.githubusercontent.com"],
       allowedExternalOrigins: ["github.com", "docs.example.com"],
       allowedExternalSchemes: ["https"],
       allowedDownloadDirectories: ["/tmp"]

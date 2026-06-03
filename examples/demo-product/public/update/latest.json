@@ -1,0 +1,15 @@
+{
+  "version": "0.1.1",
+  "channel": "stable",
+  "notes": "Demo manifest update served from the product public directory.",
+  "pubDate": "2026-06-03T00:00:00.000Z",
+  "releasePageUrl": "https://github.com/k2safe/desktop-foundation/releases/tag/v0.1.1",
+  "downloadUrl": "./product-demo-0.1.1-macos.zip",
+  "sha256": "cb3e1a939aa1a70479c74317cdffd7705818f131b4d3703892f7e9ee467c7170",
+  "size": 45,
+  "mandatory": false,
+  "metadata": {
+    "source": "demo-local-manifest",
+    "platform": "macos"
+  }
+}

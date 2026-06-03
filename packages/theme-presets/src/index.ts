@@ -286,6 +286,35 @@ export const commandThemePreset: DesktopTheme = {
   density: "compact"
 };
 
+export const topnavOpsThemePreset: DesktopTheme = {
+  ...defaultThemePreset,
+  id: "topnav-ops",
+  brand: { name: "Operations" },
+  colors: {
+    ...defaultThemePreset.colors,
+    primary: "#0e8f88",
+    primaryHover: "#0b6f69",
+    primarySoft: "#dff7f3",
+    dark: "#111827",
+    background: "#eef4f2",
+    surface: "#ffffff",
+    elevated: "#f8fbfa",
+    border: "#d8e4df",
+    strongBorder: "#b8c9c2",
+    text: "#111827",
+    mutedText: "#5f6f68",
+    success: "#0f9f6e",
+    warning: "#b7791f",
+    info: "#0e7490"
+  },
+  density: "compact",
+  shadow: {
+    sm: "0 1px 2px rgba(17, 24, 39, 0.06)",
+    md: "0 12px 32px rgba(17, 24, 39, 0.10)",
+    lg: "0 28px 72px rgba(17, 24, 39, 0.18)"
+  }
+};
+
 export const ledgerThemePreset: DesktopTheme = {
   ...defaultThemePreset,
   id: "ledger",
@@ -433,6 +462,26 @@ export const commandThemeTemplate: ThemeTemplate = {
   theme: commandThemePreset
 };
 
+export const topnavOpsThemeTemplate: ThemeTemplate = {
+  id: "topnav-ops",
+  name: "Topnav Operations",
+  description: "Top navigation, workbench login, compact controls, and calm technical surfaces for operations products.",
+  category: "ops",
+  preview: {
+    primary: topnavOpsThemePreset.colors.primary,
+    chrome: topnavOpsThemePreset.colors.dark,
+    background: topnavOpsThemePreset.colors.background,
+    surface: topnavOpsThemePreset.colors.surface
+  },
+  layout: {
+    appShell: "topnav",
+    login: "workbench",
+    surface: "dense"
+  },
+  className: "df-template-topnav-ops df-surface-dense",
+  theme: topnavOpsThemePreset
+};
+
 export const ledgerThemeTemplate: ThemeTemplate = {
   id: "ledger",
   name: "Ledger Console",
@@ -477,6 +526,7 @@ export const themeTemplateMap = {
   default: defaultThemeTemplate,
   admin: adminThemeTemplate,
   command: commandThemeTemplate,
+  "topnav-ops": topnavOpsThemeTemplate,
   merchant: merchantThemeTemplate,
   ledger: ledgerThemeTemplate,
   studio: studioThemeTemplate,
@@ -489,6 +539,7 @@ export const themeTemplates: ThemeTemplate[] = [
   defaultThemeTemplate,
   adminThemeTemplate,
   commandThemeTemplate,
+  topnavOpsThemeTemplate,
   merchantThemeTemplate,
   ledgerThemeTemplate,
   studioThemeTemplate,
@@ -499,6 +550,7 @@ export const themePresets = {
   default: defaultThemePreset,
   admin: adminThemePreset,
   command: commandThemePreset,
+  "topnav-ops": topnavOpsThemePreset,
   merchant: merchantThemePreset,
   ledger: ledgerThemePreset,
   studio: studioThemePreset,

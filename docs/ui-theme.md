@@ -56,6 +56,7 @@ Current built-in template ids:
 | `default` | sidebar | split | crisp | neutral internal desktop apps |
 | `admin` | sidebar | brand-split | dense | admin and operations consoles |
 | `command` | topnav | workbench | dense | operations and monitoring tools |
+| `topnav-ops` | topnav | workbench | dense | operations products that need a lighter technical palette |
 | `merchant` | topnav | centered | glass | merchant-facing SaaS surfaces |
 | `ledger` | topnav | centered | crisp | finance, reconciliation, ledger tables |
 | `studio` | topnav | split | glass | lighter product and settings workspaces |
@@ -76,6 +77,7 @@ Recommended starting points:
 
 - `admin`: left navigation, brand-split login, dense admin tables and admin-console spacing.
 - `command`: top navigation, workbench login, compact telemetry panels, and stronger dark chrome.
+- `topnav-ops`: top navigation, workbench login, compact controls, and a calmer technical palette.
 - `ledger`: top navigation, centered login, financial table emphasis, and tabular numeric rhythm.
 
 ## Rules

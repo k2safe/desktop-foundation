@@ -31,7 +31,7 @@ Collect these before editing:
 - current login page component
 - current theme/CSS entry
 - current Tauri `Cargo.toml`, `tauri.conf.json`, and capability files
-- desired template id: `admin`, `command`, `ledger`, `merchant`, `studio`, `dark`, or `default`
+- desired template id: `admin`, `command`, `topnav-ops`, `ledger`, `merchant`, `studio`, `dark`, or `default`
 - GitHub release repository for desktop updates, for example `owner/repository`
 
 ## Package Install

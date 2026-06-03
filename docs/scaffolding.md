@@ -27,7 +27,7 @@ The Tauri template also emits `src-tauri/capabilities/default.json` with `core:d
 
 ## Template Selection
 
-Generated apps accept a foundation template id through `--template`. Current ids are `default`, `admin`, `command`, `merchant`, `ledger`, `studio`, and `dark`. Templates control the shell layout, login layout, surface density, and theme tokens while keeping product code outside component internals.
+Generated apps accept a foundation template id through `--template`. Current ids are `default`, `admin`, `command`, `topnav-ops`, `merchant`, `ledger`, `studio`, and `dark`. Templates control the shell layout, login layout, surface density, and theme tokens while keeping product code outside component internals.
 
 ## Window Chrome
 

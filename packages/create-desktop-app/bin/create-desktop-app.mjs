@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const templateRoot = join(packageRoot, "templates", "react-tauri");
-const themeTemplateIds = new Set(["default", "admin", "command", "merchant", "ledger", "studio", "dark"]);
+const themeTemplateIds = new Set(["default", "admin", "command", "topnav-ops", "merchant", "ledger", "studio", "dark"]);
 
 const textExtensions = new Set([
   ".css",
@@ -30,7 +30,7 @@ Options:
   --product <id>       Product id, used for package names and token keys.
   --app-name <name>    Human readable app name.
   --api-base <url>     Default API base URL.
-  --template <id>      Theme template: default, admin, command, merchant, ledger, studio, dark.
+  --template <id>      Theme template: default, admin, command, topnav-ops, merchant, ledger, studio, dark.
   --force              Allow generating into a non-empty directory.
   --help               Show this help.
 
