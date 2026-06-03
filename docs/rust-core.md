@@ -110,9 +110,10 @@ HTTP supports:
 - query values as strings, numbers, and booleans
 - JSON, text, and base64 response modes
 - base64 request bodies for binary upload style calls
+- multipart form upload through `FormData` in the bridge or `HttpRequest.multipart` in Rust
 - request id propagation
 
-The scaffold uses `CurlHttpAdapter` by default because it gives HTTPS/TLS support without forcing every generated product to pull a Rust TLS stack. Teams that want an embedded Rust HTTP client can enable `http-reqwest` and inject `ReqwestHttpAdapter`.
+The scaffold uses `CurlHttpAdapter` by default because it gives HTTPS/TLS support without forcing every generated product to pull a Rust TLS stack. It also supports multipart upload by handing fields/files to `curl --form`. Teams that want an embedded Rust HTTP client can enable `http-reqwest` and inject `ReqwestHttpAdapter` for JSON/raw-body calls; multipart should stay on the default Curl adapter unless the reqwest multipart feature and lockfile are added deliberately.
 
 ## Security Policy
 

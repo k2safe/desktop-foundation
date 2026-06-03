@@ -13,20 +13,22 @@ The standalone `product-desktop-demo` should look like a real product project. I
 
 ## Standalone Dependency Shape
 
-After the foundation packages are released, the standalone demo should depend on versions:
+After the foundation packages are released, the standalone demo should depend on the published package version:
 
 ```json
 {
   "dependencies": {
-    "@desktop-foundation/app-shell": "^0.1.0",
-    "@desktop-foundation/bridge": "^0.1.0",
-    "@desktop-foundation/theme-presets": "^0.1.0",
-    "@desktop-foundation/ui-react": "^0.1.0",
+    "@desktop-foundation/app-shell": "^<published-version>",
+    "@desktop-foundation/bridge": "^<published-version>",
+    "@desktop-foundation/theme-presets": "^<published-version>",
+    "@desktop-foundation/ui-react": "^<published-version>",
     "react": "^19.0.1",
     "react-dom": "^19.0.1"
   }
 }
 ```
+
+Before a registry publish is available, copy `consumer.dependencies`, `consumer.devDependencies`, and `consumer.pnpm.overrides` from `artifacts/npm/foundation-packages.json` instead of using semver ranges.
 
 If using GitHub Packages, the package scope must match the GitHub owner or organization. For the current package names, the cleanest GitHub Packages owner is `desktop-foundation`. If the repository lives under another owner, either publish to npm with the `@desktop-foundation` scope or rename the package scope to that owner.
 
@@ -38,7 +40,7 @@ Before the standalone demo can consume remote packages, the foundation packages 
 - export built `dist` files instead of `src`
 - include CSS files in package `files`
 - replace internal `workspace:*` dependency ranges with package versions during publish
-- tag releases, for example `v0.1.0`
+- tag releases, for example `v<published-version>`
 - publish to npm or GitHub Packages
 
 ## Demo Project Shape

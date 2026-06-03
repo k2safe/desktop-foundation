@@ -12,29 +12,12 @@ Manifest:
 https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json
 ```
 
-Use these dependencies in product `package.json`:
+Use the manifest as the source of truth. Copy these blocks from the current manifest into the product `package.json`:
 
-```json
-{
-  "dependencies": {
-    "@desktop-foundation/app-shell": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-0.1.18.tgz",
-    "@desktop-foundation/bridge": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-0.1.18.tgz",
-    "@desktop-foundation/theme-presets": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-0.1.18.tgz",
-    "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.18.tgz"
-  },
-  "devDependencies": {
-    "@desktop-foundation/create-desktop-app": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-0.1.18.tgz"
-  },
-  "pnpm": {
-    "overrides": {
-      "@desktop-foundation/app-shell": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-0.1.18.tgz",
-      "@desktop-foundation/bridge": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-0.1.18.tgz",
-      "@desktop-foundation/theme-presets": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-0.1.18.tgz",
-      "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.18.tgz",
-      "@desktop-foundation/create-desktop-app": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-0.1.18.tgz"
-    }
-  }
-}
+```text
+manifest.consumer.dependencies -> package.json dependencies
+manifest.consumer.devDependencies -> package.json devDependencies
+manifest.consumer.pnpm -> package.json pnpm
 ```
 
 Use this Rust dependency in product `src-tauri/Cargo.toml`:
@@ -48,6 +31,7 @@ desktop-core-rs = { git = "ssh://git@github.com/k2safe/desktop-foundation.git", 
 From the foundation repo:
 
 ```bash
+pnpm release:check-package-drift
 pnpm build
 pnpm pack:packages
 ```
@@ -59,6 +43,6 @@ pnpm pack:packages
 
 ## Later: Registry Publish
 
-The package manifests are publish-ready. When a registry is available, publish the same packages to npm or GitHub Packages and replace the tarball URLs with normal semver ranges such as `0.1.18`.
+The package manifests are publish-ready. When a registry is available, publish the current manifest package version to npm or GitHub Packages and replace the tarball URLs with normal semver ranges such as `<published-version>`.
 
 The product integration shape stays the same.

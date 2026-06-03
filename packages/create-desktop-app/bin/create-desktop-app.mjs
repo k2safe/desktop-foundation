@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const templateRoot = join(packageRoot, "templates", "react-tauri");
+const foundationPackageVersion =
+  JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8")).version || "0.0.0";
 const themeTemplateIds = new Set(["default", "admin", "command", "topnav-ops", "merchant", "ledger", "studio", "dark"]);
 
 const textExtensions = new Set([
@@ -173,7 +175,8 @@ function main() {
       RUST_PACKAGE_NAME: `${options.product.replace(/-/g, "_")}_desktop`,
       PASCAL_NAME: toPascal(options.product),
       API_BASE_URL: options.apiBase,
-      THEME_TEMPLATE_ID: options.template
+      THEME_TEMPLATE_ID: options.template,
+      FOUNDATION_VERSION: foundationPackageVersion
     };
 
     assertCanWrite(targetDir, options.force);

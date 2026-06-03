@@ -61,7 +61,12 @@ impl HttpAdapter for ReqwestHttpAdapter {
         if let Some(timeout_ms) = request.timeout_ms {
             builder = builder.timeout(Duration::from_millis(timeout_ms));
         }
-        if let Some(body_base64) = request.body_base64 {
+        if request.multipart.as_ref().is_some_and(|multipart| !multipart.is_empty()) {
+            return Err(DesktopError::new(
+                "HTTP_MULTIPART_UNSUPPORTED",
+                "Multipart upload is not supported by ReqwestHttpAdapter without the reqwest multipart feature",
+            ));
+        } else if let Some(body_base64) = request.body_base64 {
             let bytes = general_purpose::STANDARD
                 .decode(body_base64)
                 .map_err(|error| DesktopError::new("HTTP_BODY_BASE64_DECODE_FAILED", "Failed to decode HTTP request body").with_details(Value::String(error.to_string())))?;

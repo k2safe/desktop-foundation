@@ -55,12 +55,25 @@ Options:
 - `body`
 - `bodyBase64`
 - `bodyContentType`
+- `multipart`
 - `responseType`: `json`, `text`, or `base64`
 - `timeoutMs`
 - `signal`
 - `auth`
 - `requestId`
 - `namespace`
+
+Desktop HTTP supports browser `FormData` for multipart upload. In a Tauri client, the bridge serializes `FormData` into the Rust command contract and the default `CurlHttpAdapter` generates the multipart boundary:
+
+```ts
+const form = new FormData();
+form.append("release", "0.1.20");
+form.append("package", zipFile);
+
+await client.http.post("/releases", form);
+```
+
+Do not set `Content-Type: multipart/form-data` manually for `FormData` uploads; the transport owns the boundary. For non-browser callers, use `multipart.fields` and `multipart.files` with file `bodyBase64`.
 
 ## Link Proxy
 

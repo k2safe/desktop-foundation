@@ -3,12 +3,30 @@ export type QueryParams = Record<string, QueryValue>;
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type HttpResponseType = "json" | "text" | "base64";
 
+export interface HttpMultipartField {
+  name: string;
+  value: string;
+}
+
+export interface HttpMultipartFile {
+  name: string;
+  fileName: string;
+  contentType?: string;
+  bodyBase64: string;
+}
+
+export interface HttpMultipartForm {
+  fields?: HttpMultipartField[];
+  files?: HttpMultipartFile[];
+}
+
 export interface HttpRequestOptions {
   headers?: Record<string, string>;
   query?: QueryParams;
   body?: unknown;
   bodyBase64?: string;
   bodyContentType?: string;
+  multipart?: HttpMultipartForm;
   responseType?: HttpResponseType;
   timeoutMs?: number;
   signal?: AbortSignal;

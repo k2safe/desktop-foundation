@@ -15,6 +15,7 @@ import type {
   DownloadFileOptions,
   DownloadFileResult,
   FileCapability,
+  HttpMultipartForm,
   HttpTransport,
   HttpTransportRequest,
   KeyValueStore,
@@ -91,11 +92,61 @@ function unwrapCoreHttpResponse<T>(response: CoreHttpResponse<unknown>, response
   return payload as T;
 }
 
+function isFormData(value: unknown): value is FormData {
+  return typeof FormData !== "undefined" && value instanceof FormData;
+}
+
+function base64FromArrayBuffer(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+async function serializeFormData(formData: FormData): Promise<HttpMultipartForm> {
+  const multipart: HttpMultipartForm = {
+    fields: [],
+    files: []
+  };
+
+  for (const [name, value] of formData.entries()) {
+    if (typeof value === "string") {
+      multipart.fields?.push({ name, value });
+      continue;
+    }
+
+    multipart.files?.push({
+      name,
+      fileName: value.name || "blob",
+      contentType: value.type || undefined,
+      bodyBase64: base64FromArrayBuffer(await value.arrayBuffer())
+    });
+  }
+
+  return multipart;
+}
+
+async function serializeTauriRequest(request: HttpTransportRequest): Promise<HttpTransportRequest> {
+  if (!isFormData(request.body)) {
+    return request;
+  }
+
+  return {
+    ...request,
+    body: undefined,
+    bodyBase64: undefined,
+    bodyContentType: undefined,
+    multipart: await serializeFormData(request.body)
+  };
+}
+
 export function createTauriHttpTransport(invoke: TauriInvoke, command = "plugin:desktop-core|df_http_request"): HttpTransport {
   return {
     async request<T>(request: HttpTransportRequest) {
       try {
-        const response = await invoke<CoreHttpResponse<T>>(command, { request });
+        const response = await invoke<CoreHttpResponse<T>>(command, { request: await serializeTauriRequest(request) });
         return unwrapCoreHttpResponse<T>(response, request.responseType);
       } catch (error) {
         throw normalizeCoreError(error);

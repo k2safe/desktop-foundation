@@ -310,6 +310,7 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
               body: options.body,
               bodyBase64: options.bodyBase64,
               bodyContentType: options.bodyContentType,
+              multipart: options.multipart,
               responseType: options.responseType
             },
             responseType: options.responseType,
@@ -327,6 +328,7 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
             body: options.body,
             bodyBase64: options.bodyBase64,
             bodyContentType: options.bodyContentType,
+            multipart: options.multipart,
             responseType: options.responseType,
             timeoutMs: options.timeoutMs,
             signal: options.signal,

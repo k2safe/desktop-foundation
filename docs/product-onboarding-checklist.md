@@ -6,7 +6,7 @@
 
 从 `artifacts/npm/foundation-packages.json` 复制 `consumer.dependencies`、`consumer.devDependencies` 和 `consumer.pnpm.overrides` 到接入项目。
 
-当前推荐版本是 `0.1.18`。如果仓库里已有更新版本，以 `artifacts/npm/foundation-packages.json` 为准。
+当前推荐版本以 `artifacts/npm/foundation-packages.json` 为准，消费端直接复制其中的 `consumer` 依赖块。
 
 ## 2. 样式入口
 

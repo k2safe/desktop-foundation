@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use crate::adapters::HttpAdapter;
 use crate::error::{DesktopError, DesktopResult};
-use crate::http::{HttpMethod, HttpRequest, HttpResponse, HttpResponseType};
+use crate::http::{HttpMethod, HttpMultipartForm, HttpRequest, HttpResponse, HttpResponseType};
 use crate::session::SessionState;
 
 #[derive(Clone, Default)]
@@ -30,8 +30,12 @@ impl HttpAdapter for CurlHttpAdapter {
             command.args(["--max-time", &format!("{:.3}", timeout_ms as f64 / 1000.0)]);
         }
 
+        let is_multipart = request.multipart.as_ref().is_some_and(|multipart| !multipart.is_empty());
         let mut has_authorization = request.headers.keys().any(|key| key.eq_ignore_ascii_case("authorization"));
         for (key, value) in &request.headers {
+            if is_multipart && key.eq_ignore_ascii_case("content-type") {
+                continue;
+            }
             command.args(["-H", &format!("{key}: {value}")]);
         }
 
@@ -43,7 +47,11 @@ impl HttpAdapter for CurlHttpAdapter {
         }
         let _ = has_authorization;
 
-        if let Some(body_base64) = request.body_base64 {
+        if let Some(multipart) = request.multipart.filter(|multipart| !multipart.is_empty()) {
+            for arg in multipart_args(multipart, &temp)? {
+                command.arg(arg);
+            }
+        } else if let Some(body_base64) = request.body_base64 {
             let bytes = general_purpose::STANDARD
                 .decode(body_base64)
                 .map_err(|error| DesktopError::new("HTTP_BODY_BASE64_DECODE_FAILED", "Failed to decode HTTP request body").with_details(Value::String(error.to_string())))?;
@@ -122,6 +130,7 @@ struct CurlTempFiles {
     headers: PathBuf,
     body: PathBuf,
     request_body: PathBuf,
+    base: PathBuf,
 }
 
 impl CurlTempFiles {
@@ -135,7 +144,12 @@ impl CurlTempFiles {
             headers: base.with_extension("headers"),
             body: base.with_extension("body"),
             request_body: base.with_extension("request"),
+            base,
         }
+    }
+
+    fn multipart_file(&self, index: usize) -> PathBuf {
+        self.base.with_extension(format!("multipart-{index}"))
     }
 }
 
@@ -144,6 +158,13 @@ impl Drop for CurlTempFiles {
         let _ = fs::remove_file(&self.headers);
         let _ = fs::remove_file(&self.body);
         let _ = fs::remove_file(&self.request_body);
+        for index in 0..256 {
+            let path = self.multipart_file(index);
+            if !path.exists() {
+                break;
+            }
+            let _ = fs::remove_file(path);
+        }
     }
 }
 
@@ -232,4 +253,92 @@ fn percent_encode(value: &str) -> String {
             _ => format!("%{byte:02X}"),
         })
         .collect::<String>()
+}
+
+fn validate_multipart_name(value: &str) -> DesktopResult<&str> {
+    if value.is_empty() || value.contains(['=', '\r', '\n']) {
+        return Err(DesktopError::new("HTTP_MULTIPART_NAME_INVALID", "Invalid multipart field name").with_details(Value::String(value.to_string())));
+    }
+    Ok(value)
+}
+
+fn multipart_args(multipart: HttpMultipartForm, temp: &CurlTempFiles) -> DesktopResult<Vec<String>> {
+    let mut args = Vec::new();
+    for field in multipart.fields {
+        let name = validate_multipart_name(&field.name)?;
+        args.push("--form-string".to_string());
+        args.push(format!("{name}={}", field.value));
+    }
+    for (index, file) in multipart.files.into_iter().enumerate() {
+        let name = validate_multipart_name(&file.name)?;
+        let bytes = general_purpose::STANDARD.decode(&file.body_base64).map_err(|error| {
+            DesktopError::new("HTTP_MULTIPART_FILE_BASE64_DECODE_FAILED", "Failed to decode multipart file body")
+                .with_details(Value::String(error.to_string()))
+        })?;
+        let file_path = temp.multipart_file(index);
+        fs::write(&file_path, bytes).map_err(|error| {
+            DesktopError::new("HTTP_MULTIPART_FILE_WRITE_FAILED", "Failed to write temporary multipart file").with_details(Value::String(error.to_string()))
+        })?;
+        args.push("--form".to_string());
+        let mut form = format!(
+            "{name}=@{};filename={}",
+            file_path.to_string_lossy(),
+            sanitize_curl_form_attribute(&file.file_name)
+        );
+        if let Some(content_type) = file.content_type.as_deref().filter(|value| !value.trim().is_empty()) {
+            form.push_str(";type=");
+            form.push_str(&sanitize_curl_form_attribute(content_type));
+        }
+        args.push(form);
+    }
+    Ok(args)
+}
+
+fn sanitize_curl_form_attribute(value: &str) -> String {
+    value
+        .chars()
+        .map(|ch| match ch {
+            ';' | '\r' | '\n' => '_',
+            ch => ch,
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use base64::engine::general_purpose;
+    use base64::Engine as _;
+
+    use crate::http::{HttpMultipartField, HttpMultipartFile, HttpMultipartForm};
+
+    use super::{multipart_args, CurlTempFiles};
+
+    #[test]
+    fn multipart_args_write_file_parts_for_curl_form_upload() {
+        let temp = CurlTempFiles::new();
+        let args = multipart_args(
+            HttpMultipartForm {
+                fields: vec![HttpMultipartField {
+                    name: "release".to_string(),
+                    value: "0.1.20".to_string(),
+                }],
+                files: vec![HttpMultipartFile {
+                    name: "package".to_string(),
+                    file_name: "desktop.zip".to_string(),
+                    content_type: Some("application/zip".to_string()),
+                    body_base64: general_purpose::STANDARD.encode("zip bytes"),
+                }],
+            },
+            &temp,
+        )
+        .unwrap();
+
+        assert_eq!(args[0], "--form-string");
+        assert_eq!(args[1], "release=0.1.20");
+        assert_eq!(args[2], "--form");
+        assert!(args[3].contains("package=@"));
+        assert!(args[3].contains(";filename=desktop.zip"));
+        assert!(args[3].contains(";type=application/zip"));
+        assert_eq!(std::fs::read(temp.multipart_file(0)).unwrap(), b"zip bytes");
+    }
 }

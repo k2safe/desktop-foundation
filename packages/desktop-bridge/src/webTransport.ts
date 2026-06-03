@@ -1,5 +1,5 @@
 import { DesktopError, UnauthorizedError } from "./errors";
-import type { HttpTransport, HttpTransportRequest, QueryParams } from "./types";
+import type { HttpMultipartForm, HttpTransport, HttpTransportRequest, QueryParams } from "./types";
 
 function withQuery(url: string, query?: QueryParams) {
   const target = new URL(url);
@@ -39,16 +39,35 @@ function bytesFromBase64(value: string) {
   return bytes;
 }
 
+function isFormData(value: unknown): value is FormData {
+  return typeof FormData !== "undefined" && value instanceof FormData;
+}
+
+function multipartToFormData(multipart?: HttpMultipartForm) {
+  if (!multipart || (!multipart.fields?.length && !multipart.files?.length)) return undefined;
+  const formData = new FormData();
+  multipart.fields?.forEach((field) => {
+    formData.append(field.name, field.value);
+  });
+  multipart.files?.forEach((file) => {
+    const blob = new Blob([bytesFromBase64(file.bodyBase64)], { type: file.contentType });
+    formData.append(file.name, blob, file.fileName);
+  });
+  return formData;
+}
+
 export function createWebTransport(): HttpTransport {
   return {
-    async request<T>({ method, url, headers, query, body, bodyBase64, bodyContentType, responseType = "json", timeoutMs, token, signal }: HttpTransportRequest) {
+    async request<T>({ method, url, headers, query, body, bodyBase64, bodyContentType, multipart, responseType = "json", timeoutMs, token, signal }: HttpTransportRequest) {
       const requestHeaders = new Headers(headers);
+      const multipartBody = multipartToFormData(multipart);
+      const formBody = multipartBody ?? (isFormData(body) ? body : undefined);
       if (token && !requestHeaders.has("Authorization")) {
         requestHeaders.set("Authorization", `Bearer ${token}`);
       }
       if (bodyBase64 && bodyContentType && !requestHeaders.has("Content-Type")) {
         requestHeaders.set("Content-Type", bodyContentType);
-      } else if (body !== undefined && !(body instanceof FormData) && !requestHeaders.has("Content-Type")) {
+      } else if (body !== undefined && !formBody && !requestHeaders.has("Content-Type")) {
         requestHeaders.set("Content-Type", "application/json");
       }
 
@@ -62,7 +81,7 @@ export function createWebTransport(): HttpTransport {
         response = await fetch(withQuery(url, query), {
           method,
           headers: requestHeaders,
-          body: bodyBase64 ? bytesFromBase64(bodyBase64) : body === undefined || body instanceof FormData ? body : JSON.stringify(body),
+          body: bodyBase64 ? bytesFromBase64(bodyBase64) : formBody ?? (body === undefined ? body : JSON.stringify(body)),
           signal: controller?.signal ?? signal
         });
       } catch (error) {

@@ -18,7 +18,7 @@ Included:
 - file-backed persistence for session/storage fallback
 - platform adapters for clipboard, notification, open external, dialogs, exports, downloads, macOS Keychain, Linux Secret Service, and Windows DPAPI
 - optional security allowlists for HTTP hosts, external hosts/schemes, and file roots
-- `CurlHttpAdapter` for HTTPS/TLS transport without extra Rust TLS dependencies
+- `CurlHttpAdapter` for HTTPS/TLS transport and multipart upload without extra Rust TLS dependencies
 - optional `http-reqwest` adapter
 
 Not included:
