@@ -54,3 +54,17 @@ The standalone demo should copy the shape from `examples/demo-product`:
 - `src/App.tsx`: app shell, auth guard, login, navigation, command palette, debug panel
 
 The standalone version can add Vite, Tauri, and CI without bringing those dependencies into the foundation monorepo.
+
+## Clean External Smoke
+
+Before handing the foundation to an outside AI, validate it in a fresh directory outside this monorepo. The demo must consume only the GitHub manifest tarballs and the Git Cargo dependency from `artifacts/npm/foundation-packages.json`.
+
+Minimum smoke:
+
+```bash
+pnpm install
+pnpm exec desktop-foundation-ci --integration-check --integration-report artifacts/foundation-integration.json
+pnpm build
+```
+
+If the product exposes file upload, add a local mock upload smoke that posts browser `FormData` through `client.http.post`. The mock server should assert that it receives `multipart/form-data` with a generated boundary and the expected fields/files. For Node/headless smoke, pass memory/noop adapters into `createDesktopClient`; do not rely on browser defaults such as `window.localStorage`.

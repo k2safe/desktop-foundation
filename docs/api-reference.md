@@ -75,6 +75,20 @@ await client.http.post("/releases", form);
 
 Do not set `Content-Type: multipart/form-data` manually for `FormData` uploads; the transport owns the boundary. For non-browser callers, use `multipart.fields` and `multipart.files` with file `bodyBase64`.
 
+When a Node or headless smoke test calls `createDesktopClient` directly, provide explicit adapters for browser-backed capabilities. The default web client uses `window.localStorage` for storage, so a plain Node process should pass memory/noop implementations for `session`, `storage`, `secureStorage`, `desktop`, and `files`:
+
+```ts
+const client = createDesktopClient({
+  product: "upload-smoke",
+  apiBaseURL: server.baseURL,
+  session,
+  storage,
+  secureStorage,
+  desktop,
+  files
+});
+```
+
 The foundation repo includes a local demo smoke for this path:
 
 ```bash

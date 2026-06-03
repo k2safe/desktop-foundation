@@ -111,6 +111,17 @@ The visual workflow covers the built-in `default`, `admin`, `command`, `topnav-o
 - `OfflineBanner`
 - `ProgressBar`
 
+Feedback usage:
+
+```tsx
+const toast = useToast();
+toast.notify({ title: "保存成功", tone: "success" });
+
+<OfflineBanner visible={!online} message="当前网络不可用" />
+```
+
+`useToast()` exposes `notify` and `dismiss`. `OfflineBanner` uses `visible` to control rendering.
+
 ## Rules
 
 - Components must use `--df-*` CSS variables for visual decisions.

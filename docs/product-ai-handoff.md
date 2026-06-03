@@ -15,7 +15,10 @@ https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/f
 ```bash
 pnpm install
 pnpm exec desktop-foundation-ci --integration-check --integration-report artifacts/foundation-integration.json
+pnpm build
 ```
+
+不要把某个旧版本号写进接入提示词或产品代码。当前推荐版本、tarball URL、pnpm overrides 和 Cargo dependency 都以 manifest 为准。
 
 产品入口必须只 import 一次共享样式：
 
@@ -107,7 +110,32 @@ await client.updates.openUpdatePage(result.update);
 
 adapter 接好后，页面仍然只调用 `client.updates.installUpdate(result.update)`，不要在页面里直接操作安装文件。
 
-## 4. 发布链路
+## 4. 上传能力
+
+浏览器或 Tauri UI 里，产品可以直接把 `FormData` 传给底座 HTTP client：
+
+```ts
+const form = new FormData();
+form.append("release", version);
+form.append("package", file);
+
+await client.http.post("/releases", form, { auth: false });
+```
+
+不要手动设置 `Content-Type: multipart/form-data`，boundary 由底座 transport 生成。非浏览器调用者可以使用 `multipart.fields` 和 `multipart.files`，文件内容使用 `bodyBase64`。
+
+如果在 Node/headless smoke 里直接创建 client，需要显式传入 `session`、`storage`、`secureStorage`、`desktop`、`files` adapter 或 noop adapter；默认 web adapter 会访问 `window.localStorage`，不适合 Node 进程。
+
+反馈 UI 使用现有受控 API：
+
+```tsx
+toast.notify({ title: "上传完成", tone: "success" });
+<OfflineBanner visible={!online} />
+```
+
+`useToast()` 暴露的是 `notify` 和 `dismiss`，不是 `toast.success()` 这类快捷方法。`OfflineBanner` 控制显隐的 prop 是 `visible`。
+
+## 5. 发布链路
 
 Actions 没额度时，本地 macOS 也可以完整产出 release 文件：
 
@@ -135,12 +163,13 @@ pnpm exec desktop-foundation-ci \
 
 签名和公证仍归产品项目管理。底座只记录 `--signature-path`、`--signing-identity`、`--notarization-note` 的预留信息，不强制证书和 Apple 账号。
 
-## 5. 验收清单
+## 6. 验收清单
 
 必须通过：
 
 - `pnpm exec desktop-foundation-ci --integration-check` 没有 fail。
 - `pnpm build` 通过。
+- 如果产品有上传链路，增加一个本地 mock server smoke，至少验证 `FormData -> multipart/form-data; boundary=... -> 服务端收到字段和文件`。
 - 桌面包能打开，不白屏，不崩溃。
 - 左侧、顶部、内容区没有异常白边。
 - 登录页使用底座壳，产品字段通过 slot 传入。
@@ -157,7 +186,7 @@ pnpm exec desktop-foundation-ci \
 - macOS 签名和公证
 - GitHub Actions 自动 release upload
 
-## 6. 反哺规则
+## 7. 反哺规则
 
 接入时遇到这些情况，先记入接入报告，再决定是否回到底座：
 
