@@ -163,7 +163,7 @@ Projects that do not use Playwright can omit the visual job. Generated projects 
 
 ## Update Capability
 
-CI/CD or a local build can publish `latest.json`, but the desktop client owns how update information is shown to users. The bridge exposes `client.updates` so product UI can check, show, download, verify checksum/size, open release notes, or install through a native plugin adapter.
+CI/CD or a local build can publish `latest.json`, but the desktop client owns how update information is shown to users. The bridge exposes `client.updates` so product UI can check, show, download, verify checksum/size, open release notes, or install through a native plugin adapter. Manifest checks use the active bridge HTTP transport when available; Tauri products therefore go through `desktop-core` HTTP instead of relying on WebView CORS.
 
 ```ts
 const result = await client.updates.checkForUpdate();

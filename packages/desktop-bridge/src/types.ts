@@ -197,6 +197,7 @@ export interface AppUpdateConfig {
   manifestUrl?: string;
   channel?: string;
   headers?: Record<string, string>;
+  transport?: HttpTransport;
   assertManifestUrl?: (url: string) => void;
   requireChecksumVerification?: boolean;
   installUpdate?: AppUpdateInstallAdapter;

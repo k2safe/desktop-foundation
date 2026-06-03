@@ -3,7 +3,7 @@
 把下面这段直接发给产品项目的 AI：
 
 ```text
-请把当前产品项目接入 desktop-foundation 0.1.14。
+请把当前产品项目接入 desktop-foundation 0.1.15。
 
 先读这些文件：
 - integration-kit/ai-task.md

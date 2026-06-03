@@ -126,10 +126,15 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
   const transport = config.transport ?? createWebTransport();
   const desktop = wrapDesktopCapability(config.desktop ?? createWebDesktopCapability(), config);
   const files = wrapFileCapability(config.files ?? createWebFileCapability(), config, session);
+  const assertUpdateManifestUrl = config.updateConfig?.assertManifestUrl;
   const updateConfig = {
     ...config.updateConfig,
     currentVersion: config.updateConfig?.currentVersion ?? config.version,
-    assertManifestUrl: (url: string) => assertRequestAllowed(config, url)
+    transport: config.updateConfig?.transport ?? transport,
+    assertManifestUrl: (url: string) => {
+      assertUpdateManifestUrl?.(url);
+      assertRequestAllowed(config, url);
+    }
   };
   const updates = config.updates ?? createManifestUpdateCapability(updateConfig, desktop, files);
   const recentRequests: RequestLogEntry[] = [];

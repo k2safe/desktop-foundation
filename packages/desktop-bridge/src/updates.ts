@@ -12,7 +12,8 @@ import type {
   AppUpdateState,
   DesktopCapability,
   FileCapability,
-  GitHubReleasesUpdateConfig
+  GitHubReleasesUpdateConfig,
+  HttpTransport
 } from "./types";
 
 function compareVersions(next: string, current: string) {
@@ -113,6 +114,37 @@ function resolveManifestUrls(manifest: AppUpdateManifest, baseUrl: string): AppU
     releasePageUrl: resolveUpdateUrl(manifest.releasePageUrl, baseUrl),
     downloadUrl: resolveUpdateUrl(manifest.downloadUrl, baseUrl)
   };
+}
+
+async function loadManifestPayload(
+  url: URL,
+  headers: Record<string, string>,
+  transport?: HttpTransport
+): Promise<{ payload: unknown; responseUrl: string }> {
+  if (transport) {
+    const payload = await transport.request<unknown>({
+      method: "GET",
+      url: url.toString(),
+      headers,
+      auth: false,
+      namespace: "app-update"
+    });
+    return { payload, responseUrl: url.toString() };
+  }
+
+  if (typeof fetch !== "function") {
+    throw new DesktopError({
+      code: "UPDATE_MANIFEST_TRANSPORT_MISSING",
+      message: "Update manifest transport is not configured"
+    });
+  }
+
+  const response = await fetch(url.toString(), { headers });
+  if (!response.ok) {
+    throw new DesktopError({ code: "UPDATE_MANIFEST_FAILED", message: "Failed to load update manifest", status: response.status });
+  }
+
+  return { payload: await response.json(), responseUrl: response.url || url.toString() };
 }
 
 function setError(state: AppUpdateState, error: unknown) {
@@ -223,15 +255,9 @@ export function createManifestUpdateCapability(
       const url = new URL(manifestUrl, typeof window === "undefined" ? "http://localhost" : window.location.href);
       if (channel) url.searchParams.set("channel", channel);
 
-      const response = await fetch(url.toString(), {
-        headers: { ...config.headers, ...options.headers }
-      });
-      if (!response.ok) {
-        throw new DesktopError({ code: "UPDATE_MANIFEST_FAILED", message: "Failed to load update manifest", status: response.status });
-      }
-
-      const manifest = normalizeManifest(await response.json());
-      const manifestBaseUrl = response.url || url.toString();
+      const { payload, responseUrl } = await loadManifestPayload(url, { ...config.headers, ...options.headers }, config.transport);
+      const manifest = normalizeManifest(payload);
+      const manifestBaseUrl = responseUrl;
       if (!manifest) {
         throw new DesktopError({ code: "UPDATE_MANIFEST_INVALID", message: "Update manifest is invalid" });
       }

@@ -70,4 +70,4 @@ createTauriDesktopClient(invoke, {
 });
 ```
 
-This keeps update check, release notes, download state, checksum, and error UI available while the product team finishes native install behavior.
+This keeps update check, release notes, download state, checksum, and error UI available while the product team finishes native install behavior. In Tauri, manifest checks use the `desktop-core` HTTP transport that `createTauriDesktopClient` wires into the shared update capability.
