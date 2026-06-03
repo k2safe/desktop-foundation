@@ -763,6 +763,88 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "pass", "updates:placeholder", "No placeholder update repository or URL was detected.");
   }
 
+  const updateInstallAdapterFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /installUpdate\s*:/,
+    /nativePlugins\s*:/,
+    /@tauri-apps\/plugin-updater/,
+    /\bdownloadAndInstall\s*\(/
+  ]);
+  if (updateInstallAdapterFiles.length) {
+    pushFinding(findings, "pass", "updates:install-boundary", "Update installer adapter wiring detected; keep install/restart behavior at the client or native adapter boundary.", {
+      files: updateInstallAdapterFiles
+    });
+  } else {
+    pushFinding(findings, "pass", "updates:install-boundary", "No installer adapter wiring was detected; product UI should stay at discover, download, and checksum status until the adapter is ready.");
+  }
+
+  const updateInstallBypassFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\b(?:relaunch|restart)\s*\(/,
+    /@tauri-apps\/(?:api|plugin)-(?:process|shell)/,
+    /\bCommand\.create\s*\([\s\S]*?(?:open|cp|mv|ditto|osascript)/,
+    /\b(?:copyFile|rename|removeFile|removeDir|writeFile|writeTextFile)\s*\([\s\S]*?(?:\.app|\/Applications)/,
+    /\/Applications\/[\s\S]*?\.app/,
+    /\.app[\s\S]*?(?:replace|relaunch|restart|Applications)/
+  ]);
+  if (updateInstallBypassFiles.length) {
+    pushFinding(findings, "warn", "updates:install-bypass", "Potential direct app replacement or relaunch logic was detected; route real install/restart behavior through the foundation/Tauri updater adapter instead of business pages.", {
+      files: updateInstallBypassFiles
+    });
+  } else {
+    pushFinding(findings, "pass", "updates:install-bypass", "No direct app replacement or relaunch bypass was detected.");
+  }
+
+  const linkProxySurfaceFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\bclient\.linkProxy\b/,
+    /\blinkProxy\s*:/,
+    /VITE_LINK_PROXY_URL/,
+    /allowedLinkProxyOrigins/,
+    /allowedLinkTargetOrigins/
+  ]);
+  if (linkProxySurfaceFiles.length) {
+    pushFinding(findings, "pass", "link-proxy", "Link proxy configuration or usage detected.", { files: linkProxySurfaceFiles });
+  } else {
+    pushFinding(findings, "pass", "link-proxy", "No arbitrary link proxy usage was detected.");
+  }
+
+  const linkProxyGatewayFiles = matchingSourceFiles(sourceFiles, cwd, [/VITE_LINK_PROXY_URL/, /proxyBaseURL\s*:/, /mode\s*:\s*["']gateway["']/]);
+  const linkProxyGatewayPolicyFiles = matchingSourceFiles(sourceFiles, cwd, [/allowedLinkProxyOrigins/, /VITE_LINK_PROXY_ORIGINS/]);
+  if (linkProxyGatewayFiles.length && !linkProxyGatewayPolicyFiles.length) {
+    pushFinding(findings, "warn", "link-proxy:gateway-policy", "Link proxy gateway is configured without allowedLinkProxyOrigins or VITE_LINK_PROXY_ORIGINS; local, VPN, and intranet proxy hosts should be explicitly allowed.", {
+      files: linkProxyGatewayFiles
+    });
+  } else {
+    pushFinding(findings, "pass", "link-proxy:gateway-policy", linkProxyGatewayFiles.length ? "Link proxy gateway origin policy detected." : "No link proxy gateway config was detected.", {
+      files: linkProxyGatewayPolicyFiles.length ? linkProxyGatewayPolicyFiles : undefined
+    });
+  }
+
+  const linkProxyDirectFiles = matchingSourceFiles(sourceFiles, cwd, [/mode\s*:\s*["']direct["']/]);
+  const linkProxyTargetPolicyFiles = matchingSourceFiles(sourceFiles, cwd, [/allowedLinkTargetOrigins/, /VITE_LINK_TARGET_ORIGINS/]);
+  if (linkProxyDirectFiles.length && !linkProxyTargetPolicyFiles.length) {
+    pushFinding(findings, "warn", "link-proxy:direct-policy", "Direct link proxy mode requires allowedLinkTargetOrigins or VITE_LINK_TARGET_ORIGINS so the bridge does not become an unbounded request surface.", {
+      files: linkProxyDirectFiles
+    });
+  } else {
+    pushFinding(findings, "pass", "link-proxy:direct-policy", linkProxyDirectFiles.length ? "Direct link proxy target policy detected." : "No direct link proxy mode was detected.", {
+      files: linkProxyTargetPolicyFiles.length ? linkProxyTargetPolicyFiles : undefined
+    });
+  }
+
+  const linkProxyBypassFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\bfetch\s*\(\s*["']https?:\/\//,
+    /\baxios\.\w+\s*\(\s*["']https?:\/\//,
+    /\baxios\s*\(\s*\{[\s\S]*?\burl\s*:\s*["']https?:\/\//,
+    /\bnew\s+EventSource\s*\(\s*["']https?:\/\//,
+    /\bnew\s+WebSocket\s*\(\s*["']wss?:\/\//
+  ]);
+  if (linkProxyBypassFiles.length) {
+    pushFinding(findings, "warn", "link-proxy:bypass", "External absolute URL requests were detected outside client.linkProxy; route arbitrary third-party links through the foundation link proxy unless this is a deliberate product-owned API boundary.", {
+      files: linkProxyBypassFiles
+    });
+  } else {
+    pushFinding(findings, "pass", "link-proxy:bypass", "No obvious external absolute URL request bypass was detected.");
+  }
+
   for (const script of ["type-check", "build"]) {
     if (packageJson.scripts?.[script]) {
       pushFinding(findings, "pass", "script:" + script, "package script \"" + script + "\" is present.");

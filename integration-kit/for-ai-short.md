@@ -3,7 +3,7 @@
 把下面这段直接发给产品项目的 AI：
 
 ```text
-请把当前产品项目接入 desktop-foundation 0.1.16。
+请把当前产品项目接入 desktop-foundation 0.1.17。
 
 先读这些文件：
 - integration-kit/ai-task.md
@@ -22,6 +22,10 @@
 表格优先用 DataTable/Table/EditableTable；宽表格只在自己的容器横向滚动。
 弹窗和抽屉里的长内容只在弹窗/抽屉 body 内滚动。
 Tauri 项目必须接 desktop-core-rs 和 desktop-core:default capability。
+
+如果产品需要请求任意第三方链接，必须走 client.linkProxy；本地/VPN/内网代理网关可以配 VITE_LINK_PROXY_URL，并用 VITE_LINK_PROXY_ORIGINS 显式允许代理网关。不要在业务页面直接 fetch/axios 请求第三方绝对 URL。
+
+自动更新当前只接发现新版本、下载更新包、校验 size/sha256。不要在业务项目里自己写替换 .app、安装后重启等逻辑；真正安装动作等底座/Tauri updater adapter 稳定后再接 UI 按钮。
 
 完成后运行：
 pnpm exec desktop-foundation doctor --report artifacts/foundation-doctor.json

@@ -90,24 +90,22 @@ export const clientConfig = {
   updateConfig: createGitHubReleasesUpdateConfig({
     repository: import.meta.env.VITE_UPDATE_GITHUB_REPO || "owner/repo",
     channel: import.meta.env.VITE_UPDATE_CHANNEL || "stable",
-    requireChecksumVerification: true,
-    installUpdate: async ({ update, downloadedPath }) => ({
-      status: "installable",
-      message: `Update ${update.version} is downloaded and verified.`,
-      path: downloadedPath,
-      relaunchRequired: true
-    })
+    requireChecksumVerification: true
   })
 };
 ```
 
-真实产品可以把 `installUpdate` 换成 Tauri updater、产品安装器，或只打开 release page。UI 只调用：
+当前接入阶段只做发现新版本、下载更新包、校验 size/sha256。不要在业务页面里写替换 `.app`、安装后重启、relaunch 等逻辑；真正安装动作等底座/Tauri updater adapter 稳定后，在 client/native adapter 边界接入。
+
+UI 当前只调用：
 
 ```ts
 const result = await client.updates.checkForUpdate();
 await client.updates.downloadUpdate(result.update);
-await client.updates.installUpdate(result.update);
+await client.updates.openUpdatePage(result.update);
 ```
+
+adapter 接好后，页面仍然只调用 `client.updates.installUpdate(result.update)`，不要在页面里直接操作安装文件。
 
 ## 4. 发布链路
 

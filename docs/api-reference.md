@@ -119,7 +119,9 @@ if (check.available) {
 
 Products can keep release publishing in CI/CD or a local release script while rendering update status in the desktop client. Manifest checks use the active bridge HTTP transport when available, so Tauri clients can use the native command transport instead of WebView CORS-bound fetch. Manifest updates support `downloadUrl`, `sha256`, and `size`; when the active file capability returns a checksum, the bridge verifies it before marking the update as downloaded. Update downloads default to `auth: false`, which keeps product session tokens out of public release hosts.
 
-`client.updates.installUpdate(update)` is adapter-backed. Manifest updates expose `installable`, `installing`, and `installed` states, but the product decides how to apply the package:
+`client.updates.installUpdate(update)` is adapter-backed. Manifest updates expose `installable`, `installing`, and `installed` states, but the real installer must be provided through a product-owned adapter. Product UI can safely show check, release notes, download, and checksum status before an installer exists; do not implement direct `.app` replacement or relaunch behavior in business pages.
+
+When an installer adapter is ready, wire it at the client boundary, not inside a page component:
 
 ```ts
 createDesktopClient({

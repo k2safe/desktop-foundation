@@ -44,7 +44,7 @@ export async function createProductClient() {
 }
 ```
 
-When `nativePlugins.checkUpdate` or `nativePlugins.installUpdate` is present, `createTauriDesktopClient` routes `client.updates.checkForUpdate` and `client.updates.installUpdate` through the native adapter. Product UI still calls the same foundation update surface.
+When `nativePlugins.checkUpdate` or `nativePlugins.installUpdate` is present, `createTauriDesktopClient` routes `client.updates.checkForUpdate` and `client.updates.installUpdate` through the native adapter. Product UI still calls the same foundation update surface. Until this adapter is wired and verified, product UI should stop at discovering updates, downloading packages, and showing checksum status; do not implement direct `.app` replacement or relaunch behavior in business pages.
 
 ## Product Responsibilities
 
