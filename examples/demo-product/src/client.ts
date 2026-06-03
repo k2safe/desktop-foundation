@@ -80,6 +80,10 @@ function demoTransport(): HttpTransport {
       if (request.url.endsWith("/orders")) {
         return { rows: orders, total: orders.length } as T;
       }
+      if (request.url.includes("/link-proxy")) {
+        const payload = request.body as { url?: string; method?: string; query?: unknown };
+        return { ok: true, via: "local-vpn-proxy", target: payload.url, method: payload.method, query: payload.query, requestId: request.requestId } as T;
+      }
       return { ok: true, method: request.method, url: request.url, requestId: request.requestId } as T;
     }
   };
@@ -175,8 +179,14 @@ export function createDemoProductClient(pushLog: (value: string) => void): Deskt
     desktop: demoDesktopCapability(pushLog),
     files: demoFileCapability(pushLog),
     updateConfig: demoUpdateConfig(),
+    linkProxy: {
+      mode: "gateway",
+      proxyBaseURL: "http://127.0.0.1:17890/link-proxy",
+      headers: { "x-demo-proxy": "local-vpn" }
+    },
     security: {
       allowedRequestOrigins: ["localhost", "127.0.0.1", "::1", "[::1]", "api.product-demo.local", "github.com", "raw.githubusercontent.com", "objects.githubusercontent.com", "github-releases.githubusercontent.com"],
+      allowedLinkProxyOrigins: ["localhost", "127.0.0.1", "::1", "[::1]", "*.corp.local"],
       allowedExternalOrigins: ["github.com", "docs.example.com"],
       allowedExternalSchemes: ["https"],
       allowedDownloadDirectories: ["/tmp"]

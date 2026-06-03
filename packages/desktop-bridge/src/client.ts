@@ -3,7 +3,7 @@ import { createWebDesktopCapability } from "./desktop";
 import { createWebFileCapability } from "./files";
 import { createWebSecureStorage } from "./secureStorage";
 import { createManifestUpdateCapability } from "./updates";
-import type { DesktopCapability, DesktopClient, DesktopClientConfig, FileCapability, HttpMethod, HttpRequestOptions, RequestLogEntry, SessionStore } from "./types";
+import type { DesktopCapability, DesktopClient, DesktopClientConfig, FileCapability, HttpMethod, HttpRequestOptions, LinkProxyMode, LinkProxyRequestOptions, RequestLogEntry, SessionStore } from "./types";
 import { createWebTransport } from "./webTransport";
 import { DesktopError, UnauthorizedError } from "./errors";
 
@@ -13,9 +13,17 @@ function joinURL(baseURL: string, path: string) {
   return `${base}${suffix}`;
 }
 
+function baseLocationHref() {
+  return typeof window === "undefined" ? "http://localhost" : window.location.href;
+}
+
+function normalizeURL(url: string) {
+  return new URL(url, baseLocationHref()).toString();
+}
+
 function originAllowed(url: string, patterns: string[] | undefined) {
   if (!patterns?.length) return true;
-  const parsed = new URL(url, window.location.href);
+  const parsed = new URL(url, baseLocationHref());
   const origin = parsed.origin.toLowerCase();
   const host = parsed.hostname.toLowerCase();
   return patterns.some((pattern) => {
@@ -50,14 +58,14 @@ function pathAllowed(path: string | undefined, roots: string[] | undefined) {
   });
 }
 
-function assertRequestAllowed(config: DesktopClientConfig, url: string) {
-  if (!originAllowed(url, config.security?.allowedRequestOrigins)) {
-    throw new DesktopError({
-      code: "REQUEST_ORIGIN_BLOCKED",
-      message: "Request origin is not allowed",
-      details: { url }
-    });
+function assertOriginAllowed(url: string, patterns: string[] | undefined, code: string, message: string) {
+  if (!originAllowed(url, patterns)) {
+    throw new DesktopError({ code, message, details: { url } });
   }
+}
+
+function assertRequestAllowed(config: DesktopClientConfig, url: string) {
+  assertOriginAllowed(url, config.security?.allowedRequestOrigins, "REQUEST_ORIGIN_BLOCKED", "Request origin is not allowed");
 }
 
 function wrapDesktopCapability(desktop: DesktopCapability, config: DesktopClientConfig): DesktopCapability {
@@ -227,6 +235,130 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
     }
   }
 
+
+  function resolveLinkProxyMode(options?: LinkProxyRequestOptions): LinkProxyMode {
+    return options?.mode ?? config.linkProxy?.mode ?? (config.linkProxy?.proxyBaseURL ? "gateway" : "direct");
+  }
+
+  function resolveLinkTarget(url: string) {
+    const targetUrl = normalizeURL(url);
+    const targetPatterns = config.security?.allowedLinkTargetOrigins;
+    if (targetPatterns?.length) {
+      assertOriginAllowed(targetUrl, targetPatterns, "LINK_PROXY_TARGET_BLOCKED", "Link proxy target origin is not allowed");
+    }
+    return targetUrl;
+  }
+
+  function assertDirectLinkTargetPolicy(url: string) {
+    if (!config.security?.allowedLinkTargetOrigins?.length) {
+      throw new DesktopError({
+        code: "LINK_PROXY_TARGET_POLICY_MISSING",
+        message: "Direct link proxy requests require security.allowedLinkTargetOrigins"
+      });
+    }
+    assertOriginAllowed(url, config.security.allowedLinkTargetOrigins, "LINK_PROXY_TARGET_BLOCKED", "Link proxy target origin is not allowed");
+  }
+
+  function resolveProxyBaseURL(options?: LinkProxyRequestOptions) {
+    const proxyBaseURL = options?.proxyBaseURL ?? config.linkProxy?.proxyBaseURL;
+    if (!proxyBaseURL) {
+      throw new DesktopError({ code: "LINK_PROXY_BASE_URL_MISSING", message: "Link proxy gateway URL is not configured" });
+    }
+    const proxyUrl = normalizeURL(proxyBaseURL);
+    assertOriginAllowed(
+      proxyUrl,
+      config.security?.allowedLinkProxyOrigins ?? config.security?.allowedRequestOrigins,
+      "LINK_PROXY_ORIGIN_BLOCKED",
+      "Link proxy gateway origin is not allowed"
+    );
+    return proxyUrl;
+  }
+
+  async function linkProxyRequest<T>(url: string, options: LinkProxyRequestOptions = {}) {
+    const mode = resolveLinkProxyMode(options);
+    const targetUrl = resolveLinkTarget(url);
+    if (mode === "direct") assertDirectLinkTargetPolicy(targetUrl);
+
+    const method = options.method ?? "GET";
+    const namespace = options.namespace ?? "link-proxy";
+    const startedAt = Date.now();
+    const entry: RequestLogEntry = {
+      id: options.requestId ?? makeRequestId(),
+      requestId: options.requestId,
+      method,
+      url: targetUrl,
+      namespace,
+      startedAt
+    };
+    entry.requestId = entry.id;
+    rememberRequest(entry);
+    config.requestObserver?.onRequestStart?.(entry);
+
+    const token = (options.auth ?? config.linkProxy?.auth ?? false) ? session.getToken() : null;
+
+    try {
+      const result = mode === "gateway"
+        ? await transport.request<T>({
+            method: "POST",
+            url: resolveProxyBaseURL(options),
+            headers: { ...config.linkProxy?.headers, ...options.proxyHeaders },
+            body: {
+              url: targetUrl,
+              method,
+              headers: options.headers,
+              query: options.query,
+              body: options.body,
+              bodyBase64: options.bodyBase64,
+              bodyContentType: options.bodyContentType,
+              responseType: options.responseType
+            },
+            responseType: options.responseType,
+            timeoutMs: options.timeoutMs,
+            signal: options.signal,
+            requestId: entry.id,
+            namespace,
+            token
+          })
+        : await transport.request<T>({
+            method,
+            url: targetUrl,
+            headers: options.headers,
+            query: options.query,
+            body: options.body,
+            bodyBase64: options.bodyBase64,
+            bodyContentType: options.bodyContentType,
+            responseType: options.responseType,
+            timeoutMs: options.timeoutMs,
+            signal: options.signal,
+            requestId: entry.id,
+            namespace,
+            token
+          });
+      const endedAt = Date.now();
+      const nextEntry = { ...entry, endedAt, durationMs: endedAt - startedAt, ok: true };
+      rememberRequest(nextEntry);
+      config.requestObserver?.onRequestEnd?.(nextEntry);
+      return result;
+    } catch (error) {
+      const endedAt = Date.now();
+      const nextEntry = {
+        ...entry,
+        endedAt,
+        durationMs: endedAt - startedAt,
+        ok: false,
+        error: normalizeError(error)
+      };
+      nextEntry.status = nextEntry.error?.status;
+      rememberRequest(nextEntry);
+      config.requestObserver?.onRequestEnd?.(nextEntry);
+      if (error instanceof UnauthorizedError || nextEntry.error?.status === 401 || nextEntry.error?.code === "UNAUTHORIZED") {
+        config.requestObserver?.onUnauthorized?.(nextEntry);
+        config.onUnauthorized?.(nextEntry);
+      }
+      throw error;
+    }
+  }
+
   return {
     http: {
       get: <T>(path: string, options?: HttpRequestOptions) => request<T>("GET", path, options),
@@ -241,6 +373,13 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
     desktop,
     files,
     updates,
+    linkProxy: {
+      request: linkProxyRequest,
+      resolve: resolveLinkTarget,
+      open: async (url: string) => {
+        await desktop.openExternal(resolveLinkTarget(url));
+      }
+    },
     diagnostics: {
       getRecentRequests: () => recentRequests.slice(),
       clearRecentRequests: () => {

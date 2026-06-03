@@ -86,6 +86,20 @@ pnpm exec desktop-foundation-ci --no-type-check --no-build --package-desktop --m
 
 Upload the files from `artifacts/desktop/release-plan.json` however the product team prefers. The included `.github/workflows/desktop-release.yml` is artifact-only by default; it does not force automatic release publishing.
 
+## Link Proxy
+
+Generated clients can route arbitrary URL requests through a product-owned local, VPN, or intranet proxy gateway:
+
+```bash
+VITE_LINK_PROXY_URL=http://127.0.0.1:17890/link-proxy
+VITE_LINK_PROXY_ORIGINS=127.0.0.1,localhost,*.corp.local
+```
+
+Optional variables:
+
+- `VITE_LINK_PROXY_AUTH=1`: send the product session token to the proxy gateway. Defaults to off.
+- `VITE_LINK_TARGET_ORIGINS=*.trusted-vendor.com`: narrow final targets on the client side. Gateway mode can omit this when the proxy owns target policy; direct mode requires it.
+
 ## Visual Regression
 
 Generated projects include optional screenshot scripts:

@@ -31,6 +31,34 @@ export interface SettingsProps {
   logs: string[];
 }
 
+function LinkProxyPanel({ client }: { client: DesktopClient }) {
+  const [result, setResult] = useState("等待代理请求。");
+
+  async function runProxyRequest() {
+    setResult("请求中...");
+    try {
+      const reply = await client.linkProxy.request("https://vendor.example.com/status", {
+        method: "GET",
+        query: { source: "desktop-demo" }
+      });
+      setResult(JSON.stringify(reply, null, 2));
+    } catch (error) {
+      setResult(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+        <Button size="sm" onClick={() => void runProxyRequest()}>
+          请求链接
+        </Button>
+      </div>
+      <CodeBlock>{result}</CodeBlock>
+    </div>
+  );
+}
+
 function UpdateCenter({ client }: { client: DesktopClient }) {
   const [state, setState] = useState<AppUpdateState>(() => client.updates.getState());
   const [message, setMessage] = useState("等待检查更新。");
@@ -106,6 +134,12 @@ export function Settings({ client, logs }: SettingsProps) {
           title: "更新中心",
           description: "读取 public/update/latest.json，走 bridge manifest 更新状态流转。",
           content: <UpdateCenter client={client} />
+        },
+        {
+          id: "link-proxy",
+          title: "链接代理",
+          description: "通过本地/VPN/内网代理请求外部链接，不把业务 token 默认透传给目标站点。",
+          content: <LinkProxyPanel client={client} />
         },
         {
           id: "diagnostics",

@@ -15,6 +15,11 @@ function envValue(name: string) {
   return (import.meta.env[name] as string | undefined)?.trim();
 }
 
+function envList(name: string) {
+  const value = envValue(name);
+  return value ? value.split(",").map((item) => item.trim()).filter(Boolean) : undefined;
+}
+
 function createProductUpdateConfig(currentVersion: string): AppUpdateConfig {
   const manifestUrl = envValue("VITE_UPDATE_MANIFEST_URL");
   const githubRepository = envValue("VITE_UPDATE_GITHUB_REPO");
@@ -49,7 +54,18 @@ export const clientConfig: DesktopClientConfig = {
   version: appVersion,
   apiBaseURL: import.meta.env.VITE_API_BASE_URL || productAdapter.clientDefaults.apiBaseURL,
   tokenKey: productAdapter.clientDefaults.tokenKey,
-  updateConfig: createProductUpdateConfig(appVersion)
+  updateConfig: createProductUpdateConfig(appVersion),
+  linkProxy: envValue("VITE_LINK_PROXY_URL")
+    ? {
+        mode: "gateway",
+        proxyBaseURL: envValue("VITE_LINK_PROXY_URL"),
+        auth: envValue("VITE_LINK_PROXY_AUTH") === "1"
+      }
+    : undefined,
+  security: {
+    allowedLinkProxyOrigins: envList("VITE_LINK_PROXY_ORIGINS"),
+    allowedLinkTargetOrigins: envList("VITE_LINK_TARGET_ORIGINS")
+  }
 };
 
 export async function createProductClient(): Promise<DesktopClient> {

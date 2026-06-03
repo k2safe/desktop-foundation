@@ -10,6 +10,8 @@
 - `client.secureStorage`
 - `client.desktop`
 - `client.files`
+- `client.updates`
+- `client.linkProxy`
 - `client.diagnostics`
 
 Required config:
@@ -28,6 +30,7 @@ Optional config:
 - `files`
 - `updates`
 - `updateConfig`
+- `linkProxy`
 - `version`
 - `security`
 - `requestObserver`
@@ -58,6 +61,31 @@ Options:
 - `auth`
 - `requestId`
 - `namespace`
+
+## Link Proxy
+
+`client.linkProxy` gives products one controlled place to request arbitrary links through the active bridge transport. The common desktop setup is gateway mode: the proxy service can be local, VPN-only, or intranet, while the final target URL is passed to that trusted gateway.
+
+```ts
+createDesktopClient({
+  product: "product",
+  apiBaseURL: "https://api.example.com",
+  linkProxy: {
+    mode: "gateway",
+    proxyBaseURL: "http://127.0.0.1:17890/link-proxy"
+  },
+  security: {
+    allowedLinkProxyOrigins: ["127.0.0.1", "localhost", "*.corp.local"]
+  }
+});
+
+const reply = await client.linkProxy.request("https://vendor.example.com/status", {
+  method: "GET",
+  query: { source: "desktop" }
+});
+```
+
+Gateway mode does not require `allowedLinkTargetOrigins` because the product-owned proxy can enforce target policy server-side. Add it when the client should narrow targets before hitting the proxy. Direct mode does require `allowedLinkTargetOrigins`, so the bridge cannot become an unbounded browser-side request surface. `auth` defaults to false; set `linkProxy.auth` or request-level `auth: true` only when the proxy gateway itself expects the product session token.
 
 ## Session And Storage
 

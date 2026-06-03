@@ -14,7 +14,9 @@ createDesktopClient({
     allowedRequestOrigins: ["api.example.com"],
     allowedExternalOrigins: ["docs.example.com"],
     allowedExternalSchemes: ["https"],
-    allowedDownloadDirectories: ["/Users/me/Downloads"]
+    allowedDownloadDirectories: ["/Users/me/Downloads"],
+    allowedLinkProxyOrigins: ["127.0.0.1", "localhost", "*.corp.local"],
+    allowedLinkTargetOrigins: ["*.trusted-vendor.com"]
   }
 });
 ```
@@ -25,6 +27,8 @@ Rules:
 - `allowedExternalOrigins` gates `client.desktop.openExternal`.
 - `allowedExternalSchemes` blocks unsafe schemes unless explicitly allowed.
 - `allowedDownloadDirectories` gates file dialog directories, exports, writes, and downloads.
+- `allowedLinkProxyOrigins` gates the proxy gateway used by `client.linkProxy`; this may intentionally include local, VPN, or intranet hosts.
+- `allowedLinkTargetOrigins` optionally narrows final link targets in gateway mode and is required for direct mode.
 
 Origins can be exact hosts, full origins, wildcard host suffixes such as `*.example.com`, or `*`.
 

@@ -192,6 +192,28 @@ export interface AppUpdateCapability {
   getState(): AppUpdateState;
 }
 
+export type LinkProxyMode = "gateway" | "direct";
+
+export interface LinkProxyConfig {
+  mode?: LinkProxyMode;
+  proxyBaseURL?: string;
+  headers?: Record<string, string>;
+  auth?: boolean;
+}
+
+export interface LinkProxyRequestOptions extends HttpRequestOptions {
+  method?: HttpMethod;
+  mode?: LinkProxyMode;
+  proxyBaseURL?: string;
+  proxyHeaders?: Record<string, string>;
+}
+
+export interface LinkProxyCapability {
+  request<T>(url: string, options?: LinkProxyRequestOptions): Promise<T>;
+  resolve(url: string): string;
+  open(url: string, options?: { requestId?: string; namespace?: string }): Promise<void>;
+}
+
 export interface AppUpdateConfig {
   currentVersion?: string;
   manifestUrl?: string;
@@ -226,6 +248,8 @@ export interface DesktopSecurityPolicy {
   allowedExternalOrigins?: string[];
   allowedExternalSchemes?: string[];
   allowedDownloadDirectories?: string[];
+  allowedLinkProxyOrigins?: string[];
+  allowedLinkTargetOrigins?: string[];
 }
 
 export interface WindowState {
@@ -279,6 +303,7 @@ export interface DesktopClientConfig {
   files?: FileCapability;
   updates?: AppUpdateCapability;
   updateConfig?: AppUpdateConfig;
+  linkProxy?: LinkProxyConfig;
   version?: string;
   requestObserver?: RequestObserver;
   onUnauthorized?: (entry: RequestLogEntry) => void;
@@ -301,5 +326,6 @@ export interface DesktopClient {
   desktop: DesktopCapability;
   files: FileCapability;
   updates: AppUpdateCapability;
+  linkProxy: LinkProxyCapability;
   diagnostics: DesktopDiagnostics;
 }
