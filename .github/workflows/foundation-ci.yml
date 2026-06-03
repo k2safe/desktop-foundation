@@ -1,12 +1,15 @@
 name: desktop-foundation
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-    tags:
-      - "v*"
+  workflow_dispatch:
+
+# Enable automatic triggers again when GitHub Actions quota is available.
+# pull_request:
+# push:
+#   branches:
+#     - main
+#   tags:
+#     - "v*"
 
 jobs:
   verify:
@@ -33,7 +36,7 @@ jobs:
         run: pnpm smoke:multipart
 
       - name: Run clean external demo smoke
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         run: pnpm smoke:external-ai-demo
 
       - name: Type-check and build packages

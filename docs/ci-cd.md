@@ -76,6 +76,12 @@ The preview app is ad-hoc signed and has a distinct macOS bundle id, which avoid
 Actions are optional. When quota is unavailable, build and normalize on a local macOS machine:
 
 ```bash
+pnpm release:local-check
+```
+
+This is the foundation repo's local release gate. It runs package manifest drift detection, multipart upload smoke, clean external demo smoke, package build/type-check, and Rust tests. Treat a green local gate as the replacement for GitHub Actions while quota is unavailable.
+
+```bash
 pnpm tauri build
 pnpm exec desktop-foundation-ci \
   --no-type-check \

@@ -15,7 +15,8 @@
     "smoke:multipart": "pnpm --filter @desktop-foundation/bridge build && node scripts/smoke-multipart-upload.mjs",
     "smoke:external-ai-demo": "node scripts/smoke-external-ai-demo.mjs",
     "pack:packages": "node scripts/pack-foundation-packages.mjs",
-    "release:check-package-drift": "node scripts/check-package-manifest-drift.mjs"
+    "release:check-package-drift": "node scripts/check-package-manifest-drift.mjs",
+    "release:local-check": "node scripts/release-local-check.mjs"
   },
   "devDependencies": {
     "playwright": "^1.60.0",
