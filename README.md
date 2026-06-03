@@ -20,6 +20,7 @@
 - [Product Adapter](docs/product-adapter.md)
 - [Product Onboarding Checklist](docs/product-onboarding-checklist.md)
 - [Product Integration Kit](integration-kit/README.md)
+- [Doctor Reference](docs/doctor.md)
 - [Product Integration Example](docs/product-integration-example.md)
 - [Product Integration Guide](docs/product-integration.md)
 - [Package Consumption](docs/package-consumption.md)

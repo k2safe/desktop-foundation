@@ -30,9 +30,10 @@ function printHelp() {
     "  --script <name>       Run an additional package script. Can be repeated.",
     "  --no-type-check       Disable the default type-check step.",
     "  --no-build            Disable the default build step.",
-    "  --strict              Fail when a requested script or package artifact is missing.",
+    "  --strict              Fail when a requested script/package artifact is missing; with --integration-check, also fail on warnings.",
     "  --integration-check   Check whether a product project is wired to the foundation contract.",
     "  --integration-report <path> Write integration check report JSON.",
+    "  --integration-summary Print grouped fail/warn next actions. Alias: --summary.",
     "",
     "Desktop packaging:",
     "  --package-desktop     Normalize built desktop artifacts into artifacts/desktop.",
@@ -94,7 +95,8 @@ function parseArgs(argv) {
     zip: true,
     checksum: true,
     releasePlan: false,
-    integrationCheck: false
+    integrationCheck: false,
+    integrationSummary: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -143,6 +145,10 @@ function parseArgs(argv) {
     if (arg === "--integration-report") {
       options.integrationReportPath = readNext(argv, index, arg);
       index += 1;
+      continue;
+    }
+    if (arg === "--integration-summary" || arg === "--summary") {
+      options.integrationSummary = true;
       continue;
     }
     if (arg === "--script") {
@@ -457,6 +463,26 @@ function reportNextActions(findings) {
     }));
 }
 
+function printIntegrationSummary(report) {
+  const actionItems = report.findings.filter((finding) => finding.status !== "pass");
+  console.log("");
+  console.log("desktop-foundation-ci: next actions");
+  console.log(`  status: ${report.summary.status} (${report.summary.pass} pass, ${report.summary.warn} warn, ${report.summary.fail} fail)`);
+  console.log(`  scanned: ${report.stats.filesScanned} files, ${report.stats.sourceFilesScanned} source files`);
+
+  if (!actionItems.length) {
+    console.log("  no action required.");
+    return;
+  }
+
+  for (const finding of actionItems) {
+    console.log(`  - [${finding.status.toUpperCase()}] ${finding.id}: ${finding.message}`);
+    if (Array.isArray(finding.files) && finding.files.length) {
+      console.log(`    files: ${finding.files.join(", ")}`);
+    }
+  }
+}
+
 function runIntegrationCheck(options, packageJson) {
   const cwd = process.cwd();
   const findings = [];
@@ -719,6 +745,9 @@ function runIntegrationCheck(options, packageJson) {
     console.log(`desktop-foundation-ci: ${label} ${finding.id} - ${finding.message}`);
   }
   console.log(`desktop-foundation-ci: integration ${summary.status} (${summary.pass} pass, ${summary.warn} warn, ${summary.fail} fail)`);
+  if (options.integrationSummary) {
+    printIntegrationSummary(report);
+  }
 
   if (options.integrationReportPath) {
     const reportPath = resolve(cwd, options.integrationReportPath);
@@ -729,6 +758,9 @@ function runIntegrationCheck(options, packageJson) {
 
   if (summary.fail > 0) {
     throw new Error("desktop-foundation-ci: integration check failed.");
+  }
+  if (options.strict && summary.warn > 0) {
+    throw new Error("desktop-foundation-ci: integration check has warnings under --strict.");
   }
   return report;
 }

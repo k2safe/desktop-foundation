@@ -34,14 +34,17 @@ Use `desktop-foundation doctor` to check whether the current product app follows
 
 ```bash
 pnpm exec desktop-foundation doctor --report artifacts/foundation-doctor.json
+pnpm exec desktop-foundation doctor --strict --report artifacts/foundation-doctor.json
 ```
+
+`doctor` prints grouped next actions by default. `--strict` exits non-zero on fail or warn findings, which is useful when integration is ready to become a CI gate.
 
 ## CI Wrapper
 
 Use `desktop-foundation-ci` from a product app to keep the foundation contract visible:
 
 ```bash
-pnpm exec desktop-foundation-ci --integration-check --integration-report artifacts/foundation-integration.json
+pnpm exec desktop-foundation-ci --integration-check --integration-summary --integration-report artifacts/foundation-integration.json
 pnpm exec desktop-foundation-ci --type-check --build
 pnpm exec desktop-foundation-ci --package-desktop --manifest --release-plan --github-repo owner/repository
 ```

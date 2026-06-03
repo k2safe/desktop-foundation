@@ -4,11 +4,12 @@
 
 ## 使用顺序
 
-1. 先读 `ai-task.md`，确认接入目标、可改文件和禁止事项。
-2. 按 `file-map.md` 找到产品项目里应该新增或迁移的文件。
-3. 用 `minimal-migration-diff.md` 作为最小改造骨架。
-4. 对照 `acceptance-checklist.md` 验收。
-5. 遇到边界不清时看 `boundaries.md`，先判断应该在产品侧做，还是需要回到底座新增通用能力。
+1. 如果要快速交给另一个 AI，先复制 `for-ai-short.md`。
+2. 先读 `ai-task.md`，确认接入目标、可改文件和禁止事项。
+3. 按 `file-map.md` 找到产品项目里应该新增或迁移的文件。
+4. 用 `minimal-migration-diff.md` 作为最小改造骨架。
+5. 对照 `acceptance-checklist.md` 验收。
+6. 遇到边界不清时看 `boundaries.md`，先判断应该在产品侧做，还是需要回到底座新增通用能力。
 
 ## 接入原则
 

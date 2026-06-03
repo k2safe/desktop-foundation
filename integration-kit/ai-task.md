@@ -40,7 +40,7 @@
 6. 表格使用 `DataTable`、`Table` 或 `EditableTable`；如果业务必须用原生表格，要包在横向滚动容器里。
 7. 弹窗和抽屉里的长内容要让 body 自己滚动，宽表格要让表格容器横向滚动。
 8. 更新能力先接客户端 adapter；真实下载、安装、签名、公证由产品发布链路决定。
-9. 运行 doctor、build、桌面打包命令，修到无 fail。
+9. 运行 doctor、build、桌面打包命令，修到无 fail。收口阶段运行 `pnpm exec desktop-foundation doctor --strict --report artifacts/foundation-doctor.json`，把 warn 也清掉或明确说明原因。
 
 ## 交付说明模板
 

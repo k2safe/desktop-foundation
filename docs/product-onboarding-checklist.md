@@ -6,7 +6,7 @@
 
 从 `artifacts/npm/foundation-packages.json` 复制 `consumer.dependencies`、`consumer.devDependencies` 和 `consumer.pnpm.overrides` 到接入项目。
 
-当前推荐版本是 `0.1.11`。如果仓库里已有更新版本，以 `artifacts/npm/foundation-packages.json` 为准。
+当前推荐版本是 `0.1.12`。如果仓库里已有更新版本，以 `artifacts/npm/foundation-packages.json` 为准。
 
 ## 2. 样式入口
 
@@ -85,8 +85,10 @@ VITE_UPDATE_GITHUB_REPO=owner/repo
 ```bash
 pnpm exec desktop-foundation doctor --report artifacts/foundation-doctor.json
 pnpm build
-pnpm exec desktop-foundation-ci --integration-check
+pnpm exec desktop-foundation-ci --integration-check --integration-summary
 ```
+
+收口阶段再跑 `pnpm exec desktop-foundation doctor --strict --report artifacts/foundation-doctor.json`，把 warn 清掉或明确说明。
 
 有桌面构建环境时再跑：
 

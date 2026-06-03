@@ -1,72 +1,72 @@
 {
-  "generatedAt": "2026-06-03T01:20:13.654Z",
+  "generatedAt": "2026-06-03T01:50:54.009Z",
   "repository": "git@github.com:k2safe/desktop-foundation.git",
   "branch": "main",
   "baseUrl": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm",
   "packages": [
     {
       "name": "@desktop-foundation/bridge",
-      "version": "0.1.11",
-      "file": "desktop-foundation-bridge-0.1.11.tgz",
-      "path": "artifacts/npm/desktop-foundation-bridge-0.1.11.tgz",
-      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-0.1.11.tgz",
-      "sha256": "16d1e1c90803afa37877c531b6f1eba3000ac4d52e5667875a642bb1fece12fb",
-      "size": 25898
+      "version": "0.1.12",
+      "file": "desktop-foundation-bridge-0.1.12.tgz",
+      "path": "artifacts/npm/desktop-foundation-bridge-0.1.12.tgz",
+      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-0.1.12.tgz",
+      "sha256": "7d3a33d14a8fb7b9e50673c470426d2c7e1f72af1ee71cfecf6e3037fb8e9f97",
+      "size": 25899
     },
     {
       "name": "@desktop-foundation/ui-react",
-      "version": "0.1.11",
-      "file": "desktop-foundation-ui-react-0.1.11.tgz",
-      "path": "artifacts/npm/desktop-foundation-ui-react-0.1.11.tgz",
-      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.11.tgz",
-      "sha256": "9b6a26b5f661cdc00800ff51133a0fd2e56b1fe7290beb7186f75ef80dc50464",
+      "version": "0.1.12",
+      "file": "desktop-foundation-ui-react-0.1.12.tgz",
+      "path": "artifacts/npm/desktop-foundation-ui-react-0.1.12.tgz",
+      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.12.tgz",
+      "sha256": "b5add19640a2f3859cee4da9717d1258b13f8ec13eaef6e24cad5c64580f731e",
       "size": 66530
     },
     {
       "name": "@desktop-foundation/app-shell",
-      "version": "0.1.11",
-      "file": "desktop-foundation-app-shell-0.1.11.tgz",
-      "path": "artifacts/npm/desktop-foundation-app-shell-0.1.11.tgz",
-      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-0.1.11.tgz",
-      "sha256": "bb092ffc69919d2a6f4f1d954a2be7492028279e85c21ef0ba78ab7a3bbd6dfa",
+      "version": "0.1.12",
+      "file": "desktop-foundation-app-shell-0.1.12.tgz",
+      "path": "artifacts/npm/desktop-foundation-app-shell-0.1.12.tgz",
+      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-0.1.12.tgz",
+      "sha256": "67bc2b53e2382fc26e513af59abf812e79201cc8bb4d3962aa22408c4cc844d9",
       "size": 11494
     },
     {
       "name": "@desktop-foundation/theme-presets",
-      "version": "0.1.11",
-      "file": "desktop-foundation-theme-presets-0.1.11.tgz",
-      "path": "artifacts/npm/desktop-foundation-theme-presets-0.1.11.tgz",
-      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-0.1.11.tgz",
-      "sha256": "ac6d3dc6a02f1423801d0f9f0d696b7693eb6f4d731d9c7721c08a2d03f47b05",
+      "version": "0.1.12",
+      "file": "desktop-foundation-theme-presets-0.1.12.tgz",
+      "path": "artifacts/npm/desktop-foundation-theme-presets-0.1.12.tgz",
+      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-0.1.12.tgz",
+      "sha256": "0046ad0773caf88429384298f02e0bcdeb731e03eb9c05896c4e91d608299ee2",
       "size": 5337
     },
     {
       "name": "@desktop-foundation/create-desktop-app",
-      "version": "0.1.11",
-      "file": "desktop-foundation-create-desktop-app-0.1.11.tgz",
-      "path": "artifacts/npm/desktop-foundation-create-desktop-app-0.1.11.tgz",
-      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-0.1.11.tgz",
-      "sha256": "f5e885adc9b9c58382b32037cec6eaa1a994482aa0c52ca8bc3d8ede3851e728",
-      "size": 18774
+      "version": "0.1.12",
+      "file": "desktop-foundation-create-desktop-app-0.1.12.tgz",
+      "path": "artifacts/npm/desktop-foundation-create-desktop-app-0.1.12.tgz",
+      "url": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-0.1.12.tgz",
+      "sha256": "ae55926d6c658065778af2bb3ae7b40a4779493cf9addb5994b59dc06ab7cbc8",
+      "size": 19683
     }
   ],
   "consumer": {
     "dependencies": {
-      "@desktop-foundation/bridge": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-0.1.11.tgz",
-      "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.11.tgz",
-      "@desktop-foundation/app-shell": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-0.1.11.tgz",
-      "@desktop-foundation/theme-presets": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-0.1.11.tgz"
+      "@desktop-foundation/bridge": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-0.1.12.tgz",
+      "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.12.tgz",
+      "@desktop-foundation/app-shell": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-0.1.12.tgz",
+      "@desktop-foundation/theme-presets": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-0.1.12.tgz"
     },
     "devDependencies": {
-      "@desktop-foundation/create-desktop-app": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-0.1.11.tgz"
+      "@desktop-foundation/create-desktop-app": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-0.1.12.tgz"
     },
     "pnpm": {
       "overrides": {
-        "@desktop-foundation/bridge": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-0.1.11.tgz",
-        "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.11.tgz",
-        "@desktop-foundation/app-shell": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-0.1.11.tgz",
-        "@desktop-foundation/theme-presets": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-0.1.11.tgz",
-        "@desktop-foundation/create-desktop-app": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-0.1.11.tgz"
+        "@desktop-foundation/bridge": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-0.1.12.tgz",
+        "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-0.1.12.tgz",
+        "@desktop-foundation/app-shell": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-0.1.12.tgz",
+        "@desktop-foundation/theme-presets": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-0.1.12.tgz",
+        "@desktop-foundation/create-desktop-app": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-0.1.12.tgz"
       }
     },
     "cargo": {

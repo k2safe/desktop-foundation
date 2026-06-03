@@ -20,7 +20,8 @@ function printHelp() {
     "",
     "Doctor options:",
     "  --report <path>     Write a JSON report. Maps to desktop-foundation-ci --integration-report.",
-    "  --strict            Forward strict mode to the underlying checker.",
+    "  --summary           Print grouped fail/warn next actions. Enabled by default for doctor.",
+    "  --strict            Fail when the integration check has fail or warn findings.",
     "  --help              Show this help.",
     "",
     "Examples:",
@@ -51,7 +52,7 @@ function readNext(argv, index, flag) {
 }
 
 function normalizeDoctorArgs(argv) {
-  const args = ["--integration-check"];
+  const args = ["--integration-check", "--integration-summary"];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--help" || arg === "-h") {

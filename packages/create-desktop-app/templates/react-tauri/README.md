@@ -11,6 +11,18 @@ pnpm build
 pnpm package:desktop
 ```
 
+## First Integration Pass
+
+This generated app is intentionally generic. Replace only product-owned files first:
+
+1. Update `src/product-adapter.tsx` with product brand, layout template, user menu, client defaults, and update configuration.
+2. Update `src/menus.tsx` with product routes and menu groups.
+3. Update `src/theme.ts` only through theme presets, tokens, or template selection.
+4. Replace `src/pages/*` with product pages. Keep table and overlay overflow local to the component.
+5. Keep foundation package internals untouched.
+
+Do not copy or edit `@desktop-foundation/*` source code. If a product needs a reusable foundation behavior, add it to the foundation repository as a generic capability, then consume the released package.
+
 ## Product Files
 
 - `src/product-adapter.tsx`: product-owned adapter for brand, menus, shell layout, user menu, theme, and client defaults.
@@ -26,9 +38,14 @@ The generated `src-tauri/capabilities/default.json` enables `desktop-core:defaul
 
 ```bash
 pnpm doctor
+pnpm exec desktop-foundation doctor --strict --report artifacts/foundation-doctor.json
 ```
 
-The doctor command checks the foundation contract and writes `artifacts/foundation-doctor.json`.
+The doctor command checks the foundation contract, prints grouped next actions, and writes `artifacts/foundation-doctor.json`.
+
+- Fix all fail findings before handing off.
+- Warn findings are acceptable only with a clear reason or a follow-up task.
+- Use `--strict` when the product integration is ready to become a CI gate.
 
 ## Update Manifest
 
@@ -68,3 +85,14 @@ pnpm exec desktop-foundation-ci --no-type-check --no-build --package-desktop --m
 ```
 
 Upload the files from `artifacts/desktop/release-plan.json` however the product team prefers. The included `.github/workflows/desktop-release.yml` is artifact-only by default; it does not force automatic release publishing.
+
+## CI Gate
+
+For pull requests, a lightweight gate is usually enough:
+
+```bash
+pnpm exec desktop-foundation doctor --strict --report artifacts/foundation-doctor.json
+pnpm build
+```
+
+Add visual regression only after the product owns committed screenshots. Add release upload, signing, notarization, and private update authentication in the product repository's own workflow.
