@@ -62,9 +62,22 @@ Before handing the foundation to an outside AI, validate it in a fresh directory
 Minimum smoke:
 
 ```bash
+pnpm smoke:external-ai-demo
+```
+
+The script creates a temporary product project, installs the GitHub tarball dependencies from the manifest, runs integration-check, builds the Vite app, and verifies a local `FormData` upload through a mock server. To inspect the generated project after the run:
+
+```bash
+pnpm smoke:external-ai-demo -- --keep
+```
+
+The manual equivalent is:
+
+```bash
 pnpm install
 pnpm exec desktop-foundation-ci --integration-check --integration-report artifacts/foundation-integration.json
 pnpm build
+pnpm upload:smoke
 ```
 
 If the product exposes file upload, add a local mock upload smoke that posts browser `FormData` through `client.http.post`. The mock server should assert that it receives `multipart/form-data` with a generated boundary and the expected fields/files. For Node/headless smoke, pass memory/noop adapters into `createDesktopClient`; do not rely on browser defaults such as `window.localStorage`.

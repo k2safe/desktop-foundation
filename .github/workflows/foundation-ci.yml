@@ -32,6 +32,10 @@ jobs:
       - name: Run multipart smoke
         run: pnpm smoke:multipart
 
+      - name: Run clean external demo smoke
+        if: github.event_name == 'push'
+        run: pnpm smoke:external-ai-demo
+
       - name: Type-check and build packages
         run: pnpm type-check
 

@@ -57,13 +57,14 @@
 pnpm type-check
 pnpm build
 pnpm smoke:multipart
+pnpm smoke:external-ai-demo
 pnpm visual:regression
 cargo test --offline
 cargo check -p desktop-core-rs --features tauri,http-reqwest --offline
 cargo fmt --check
 ```
 
-`pnpm smoke:multipart` 会起本地 demo HTTP 服务，验证 `FormData` 上传和 Tauri bridge multipart 序列化。`pnpm visual:regression` 在没有安装 Playwright 时会安全跳过；安装后会输出桌面和移动端截图。`cargo fmt --check` 需要本机 Rust toolchain 安装 `rustfmt` 组件。
+`pnpm smoke:multipart` 会起本地 demo HTTP 服务，验证 `FormData` 上传和 Tauri bridge multipart 序列化。`pnpm smoke:external-ai-demo` 会在临时目录生成一个干净产品项目，只消费 `artifacts/npm/foundation-packages.json` 里的 GitHub tarball 依赖，再跑 install、integration-check、build 和 FormData mock 上传。`pnpm visual:regression` 在没有安装 Playwright 时会安全跳过；安装后会输出桌面和移动端截图。`cargo fmt --check` 需要本机 Rust toolchain 安装 `rustfmt` 组件。
 
 ## App 使用方式
 
