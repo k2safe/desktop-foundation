@@ -1,0 +1,42 @@
+name: desktop-foundation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check package manifest drift
+        run: pnpm release:check-package-drift -- --manifest artifacts/npm/foundation-packages.json
+
+      - name: Run multipart smoke
+        run: pnpm smoke:multipart
+
+      - name: Type-check and build packages
+        run: pnpm type-check
+
+      - name: Test Rust core
+        run: cargo test --locked
+
+      - name: Test Rust core with reqwest feature
+        run: cargo test --locked --features http-reqwest
