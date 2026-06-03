@@ -306,12 +306,20 @@ fn sanitize_curl_form_attribute(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+    use std::io::{Read, Write};
+    use std::net::TcpListener;
+    use std::sync::mpsc;
+    use std::thread;
+
     use base64::engine::general_purpose;
     use base64::Engine as _;
+    use serde_json::Value;
 
-    use crate::http::{HttpMultipartField, HttpMultipartFile, HttpMultipartForm};
+    use crate::adapters::HttpAdapter;
+    use crate::http::{HttpMethod, HttpMultipartField, HttpMultipartFile, HttpMultipartForm, HttpRequest};
 
-    use super::{multipart_args, CurlTempFiles};
+    use super::{multipart_args, CurlHttpAdapter, CurlTempFiles};
 
     #[test]
     fn multipart_args_write_file_parts_for_curl_form_upload() {
@@ -340,5 +348,108 @@ mod tests {
         assert!(args[3].contains(";filename=desktop.zip"));
         assert!(args[3].contains(";type=application/zip"));
         assert_eq!(std::fs::read(temp.multipart_file(0)).unwrap(), b"zip bytes");
+    }
+
+    #[test]
+    fn curl_multipart_upload_reaches_local_server() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let (sender, receiver) = mpsc::channel();
+
+        let server = thread::spawn(move || {
+            let (mut stream, _addr) = listener.accept().unwrap();
+            let mut bytes = Vec::new();
+            let mut buffer = [0_u8; 4096];
+            let mut content_length = None;
+            let mut header_end = None;
+
+            loop {
+                let read = stream.read(&mut buffer).unwrap();
+                if read == 0 {
+                    break;
+                }
+                bytes.extend_from_slice(&buffer[..read]);
+
+                if header_end.is_none() {
+                    header_end = bytes.windows(4).position(|window| window == b"\r\n\r\n").map(|index| index + 4);
+                    if let Some(end) = header_end {
+                        let headers = String::from_utf8_lossy(&bytes[..end]);
+                        content_length = headers.lines().find_map(|line| {
+                            let (key, value) = line.split_once(':')?;
+                            if key.eq_ignore_ascii_case("content-length") {
+                                value.trim().parse::<usize>().ok()
+                            } else {
+                                None
+                            }
+                        });
+                    }
+                }
+
+                if let (Some(end), Some(length)) = (header_end, content_length) {
+                    if bytes.len() >= end + length {
+                        break;
+                    }
+                }
+            }
+
+            let _ = sender.send(bytes);
+            let body = br#"{"code":200,"data":{"ok":true}}"#;
+            stream
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .unwrap();
+            stream.write_all(body).unwrap();
+        });
+
+        let response = CurlHttpAdapter
+            .request(
+                HttpRequest {
+                    method: HttpMethod::Post,
+                    url: format!("http://127.0.0.1:{port}/upload"),
+                    headers: BTreeMap::new(),
+                    query: BTreeMap::new(),
+                    body: None,
+                    body_base64: None,
+                    body_content_type: None,
+                    multipart: Some(HttpMultipartForm {
+                        fields: vec![HttpMultipartField {
+                            name: "release".to_string(),
+                            value: "0.1.20".to_string(),
+                        }],
+                        files: vec![HttpMultipartFile {
+                            name: "package".to_string(),
+                            file_name: "desktop-release.zip".to_string(),
+                            content_type: Some("application/zip".to_string()),
+                            body_base64: general_purpose::STANDARD.encode("zip bytes from curl adapter"),
+                        }],
+                    }),
+                    response_type: None,
+                    timeout_ms: Some(5000),
+                    auth: Some(false),
+                    request_id: Some("curl-multipart-smoke".to_string()),
+                    namespace: Some("multipart-demo".to_string()),
+                },
+                None,
+            )
+            .unwrap();
+
+        server.join().unwrap();
+        let request = String::from_utf8_lossy(&receiver.recv().unwrap()).to_string();
+
+        assert_eq!(response.status, 200);
+        assert_eq!(response.body.and_then(|body| body.get("data").cloned()), Some(Value::Object([("ok".to_string(), Value::Bool(true))].into_iter().collect())));
+        assert!(request.contains("POST /upload HTTP/1.1"));
+        assert!(request.contains("Content-Type: multipart/form-data; boundary="));
+        assert!(request.contains("name=\"release\""));
+        assert!(request.contains("0.1.20"));
+        assert!(request.contains("name=\"package\""));
+        assert!(request.contains("filename=\"desktop-release.zip\""));
+        assert!(request.contains("application/zip"));
+        assert!(request.contains("zip bytes from curl adapter"));
     }
 }

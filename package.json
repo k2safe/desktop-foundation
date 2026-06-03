@@ -12,6 +12,7 @@
     "visual:regression:update": "node scripts/visual-regression.mjs --update",
     "visual:regression:expanded": "node scripts/visual-regression.mjs --expanded",
     "visual:regression:expanded:update": "node scripts/visual-regression.mjs --expanded --update",
+    "smoke:multipart": "pnpm --filter @desktop-foundation/bridge build && node scripts/smoke-multipart-upload.mjs",
     "pack:packages": "node scripts/pack-foundation-packages.mjs",
     "release:check-package-drift": "node scripts/check-package-manifest-drift.mjs"
   },

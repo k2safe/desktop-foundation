@@ -75,6 +75,12 @@ await client.http.post("/releases", form);
 
 Do not set `Content-Type: multipart/form-data` manually for `FormData` uploads; the transport owns the boundary. For non-browser callers, use `multipart.fields` and `multipart.files` with file `bodyBase64`.
 
+The foundation repo includes a local demo smoke for this path:
+
+```bash
+pnpm smoke:multipart
+```
+
 ## Link Proxy
 
 `client.linkProxy` gives products one controlled place to request arbitrary links through the active bridge transport. The common desktop setup is gateway mode: the proxy service can be local, VPN-only, or intranet, while the final target URL is passed to that trusted gateway.
