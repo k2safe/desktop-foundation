@@ -11,6 +11,8 @@ export { DesktopLoginPage, desktopLoginTemplates, resolveDesktopLoginTemplate } 
 export type { DesktopLoginFieldContext, DesktopLoginPageProps, DesktopLoginTemplate, DesktopLoginTemplateId, DesktopLoginTemplateSource } from "./DesktopLoginPage";
 export { DebugPanel } from "./DebugPanel";
 export type { DebugPanelProps } from "./DebugPanel";
+export { UpdateCenterPanel } from "./UpdateCenterPanel";
+export type { UpdateCenterAction, UpdateCenterPanelLabels, UpdateCenterPanelProps } from "./UpdateCenterPanel";
 export { AccessDeniedState, AccessGuard, FeatureGuard, PermissionGuard } from "./PermissionGuard";
 export type { AccessDeniedStateProps, AccessGuardProps, FeatureGuardProps, PermissionGuardProps } from "./PermissionGuard";
 export { SessionProvider, useSession } from "./SessionProvider";

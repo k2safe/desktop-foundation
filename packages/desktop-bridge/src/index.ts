@@ -42,6 +42,7 @@ export type {
   AppUpdateConfig,
   AppUpdateDownloadOptions,
   AppUpdateInfo,
+  AppUpdateInstallResult,
   AppUpdateManifest,
   AppUpdateState,
   AppUpdateStatus,

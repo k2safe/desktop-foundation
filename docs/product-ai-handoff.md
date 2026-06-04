@@ -185,7 +185,7 @@ HTTP、网络、未授权、业务 code 会被标准化为 `DesktopError`。业�
 
 ## 3. 更新能力
 
-真实业务更新中心的最小接入范例见 [Update Center Integration](update-center-integration.md)。外部 AI 需要先照那份文档确认 env、manifest、页面调用和验收命令，再迁移产品自己的文案和入口。
+真实业务更新中心的最小接入范例见 [Update Center Integration](update-center-integration.md)。外部 AI 需要先照那份文档确认 env、manifest、`UpdateCenterPanel` 页面模板和验收命令，再迁移产品自己的文案和入口。
 
 GitHub Releases 方式最轻：
 

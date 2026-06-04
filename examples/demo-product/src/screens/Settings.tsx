@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, CodeBlock, EditableTable, SettingsPage, type EditableTableColumn } from "@desktop-foundation/ui-react";
-import type { AppUpdateState, DesktopClient } from "@desktop-foundation/bridge";
+import { UpdateCenterPanel } from "@desktop-foundation/app-shell";
+import type { DesktopClient } from "@desktop-foundation/bridge";
 
 interface RuntimeFlag {
   id: string;
@@ -59,46 +60,6 @@ function LinkProxyPanel({ client }: { client: DesktopClient }) {
   );
 }
 
-function UpdateCenter({ client }: { client: DesktopClient }) {
-  const [state, setState] = useState<AppUpdateState>(() => client.updates.getState());
-  const [message, setMessage] = useState("等待检查更新。");
-
-  async function run(label: string, task: () => Promise<unknown>) {
-    setMessage(`${label}...`);
-    try {
-      const result = await task();
-      setMessage(`${label}完成`);
-      return result;
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error));
-      return null;
-    } finally {
-      setState(client.updates.getState());
-    }
-  }
-
-  return (
-    <div style={{ display: "grid", gap: 14 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        <Button size="sm" onClick={() => void run("检查", () => client.updates.checkForUpdate())}>
-          检查更新
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => void run("下载", () => client.updates.downloadUpdate())}>
-          下载
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => void run("安装", () => client.updates.installUpdate())}>
-          安装 adapter
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => void run("打开发布页", () => client.updates.openUpdatePage())}>
-          发布页
-        </Button>
-      </div>
-      <CodeBlock>{message}</CodeBlock>
-      <CodeBlock>{JSON.stringify(state, null, 2)}</CodeBlock>
-    </div>
-  );
-}
-
 export function Settings({ client, logs }: SettingsProps) {
   const [activeSectionId, setActiveSectionId] = useState("runtime");
   const [flags, setFlags] = useState<RuntimeFlag[]>([
@@ -132,9 +93,22 @@ export function Settings({ client, logs }: SettingsProps) {
         {
           id: "updates",
           title: "更新中心",
-          description: "读取 public/update/latest.json，默认停在下载和校验；安装需 native adapter。",
+          description: "读取 public/update/latest.json，下载、校验并通过底座安装边界执行。",
           feature: "updates",
-          content: <UpdateCenter client={client} />
+          content: (
+            <UpdateCenterPanel
+              client={client}
+              showHeader={false}
+              showRawState
+              labels={{
+                check: "检查更新",
+                download: "下载",
+                install: "安装 adapter",
+                releasePage: "发布页",
+                idleMessage: "等待检查更新。"
+              }}
+            />
+          )
         },
         {
           id: "link-proxy",

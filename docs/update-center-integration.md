@@ -205,7 +205,38 @@ const updates = createManifestUpdateCapability(
 
 ## 5. Minimal Update Center Page
 
-页面代码只读状态、触发动作、展示结果：
+产品可以直接复用 app-shell 提供的页面模板：
+
+```tsx
+import { UpdateCenterPanel } from "@desktop-foundation/app-shell";
+
+export function UpdateCenterPage() {
+  return <UpdateCenterPanel />;
+}
+```
+
+如果没有使用 `DesktopClientProvider`，显式传入 client：
+
+```tsx
+<UpdateCenterPanel client={client} />
+```
+
+嵌在设置页 section 里时，通常关闭内部标题：
+
+```tsx
+<UpdateCenterPanel
+  client={client}
+  showHeader={false}
+  labels={{
+    check: "检查更新",
+    download: "下载",
+    install: "安装",
+    releasePage: "发布页"
+  }}
+/>
+```
+
+这个模板只读状态、触发动作、展示结果。需要完全自定义页面时，业务代码仍然只调用 `client.updates.*`：
 
 ```tsx
 import { useEffect, useState } from "react";
