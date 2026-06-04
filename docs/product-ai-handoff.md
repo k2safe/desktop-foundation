@@ -7,7 +7,7 @@
 先读取 foundation package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.29/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.30/foundation-packages.json
 ```
 
 如果明确要追 `main` 上的最新底座，再读取 development manifest：
@@ -42,7 +42,7 @@ import "@desktop-foundation/ui-react/styles.css";
 4. 用 `DesktopLayout` 接菜单、顶部、用户头像和业务路由。
 5. 用 `DesktopLoginPage` 接登录页，业务字段通过 `extraFields` 传入。
 6. 把表格、表单、弹窗、设置页替换为 foundation 组件。
-7. 配置 `updateConfig`，先接 manifest 检查，安装器后补。
+7. 配置 `updateConfig`，Tauri 项目默认通过 `df_update_install` 接安装边界。
 8. 配置 `onAuditEvent` 或 `auditObserver`，把底座 audit events 接到产品日志/审计服务。
 9. 跑验收命令，失败项先修复再迁移业务页面。
 
@@ -202,17 +202,17 @@ export const clientConfig = {
 };
 ```
 
-默认接入阶段只做发现新版本、下载更新包、校验 size/sha256。不要在业务页面里写替换 `.app`、安装后重启、relaunch 等逻辑；需要真实安装时，产品安装并注册 Tauri updater 插件，打开 `VITE_TAURI_UPDATER=1`，在 client/native adapter 边界接入。
+默认接入阶段做发现新版本、下载更新包、校验 size/sha256，并在 Tauri 里通过 `createTauriDesktopClient` 自动接到底座 `df_update_install`。macOS 下 zip 内含 `.app` 或直接 `.app` 会被 staged 到退出后替换并可 relaunch；`.pkg`、`.dmg` 和其它平台安装包会打开系统安装器。不要在业务页面里写替换 `.app`、安装后重启、relaunch 等逻辑；需要官方 Tauri signed updater 流程时，产品再安装并注册 `@tauri-apps/plugin-updater`，打开 `VITE_TAURI_UPDATER=1`，在 client/native adapter 边界覆盖默认安装器。
 
 UI 当前只调用：
 
 ```ts
 const result = await client.updates.checkForUpdate();
 await client.updates.downloadUpdate(result.update);
-await client.updates.openUpdatePage(result.update);
+await client.updates.installUpdate(result.update);
 ```
 
-adapter 接好后，页面仍然只调用 `client.updates.installUpdate(result.update)`，不要在页面里直接操作安装文件。
+页面只调用 `client.updates.installUpdate(result.update)`，不要在页面里直接操作安装文件。外部 AI 对接时如果看到业务项目自己 `cp/mv/ditto/open /Applications/*.app`，应当删除并回到底座更新能力。
 
 ## 4. 上传能力
 
@@ -291,7 +291,7 @@ pnpm exec desktop-foundation-ci \
 可后补：
 
 - `pnpm visual:regression`
-- Tauri updater 插件配置、签名和公证
+- 可选 Tauri updater 插件配置、签名和公证
 - macOS 签名和公证
 - GitHub Actions 自动 release upload
 

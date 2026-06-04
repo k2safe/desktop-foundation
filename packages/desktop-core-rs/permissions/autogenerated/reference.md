@@ -6,7 +6,7 @@ Default permissions for desktop-foundation core capabilities.
 
 This exposes the platform bridge commands used by the TypeScript desktop client:
 HTTP, session, storage, secure storage, desktop actions, file operations, downloads,
-and window state.
+update installation, and window state.
 
 #### This default permission set includes the following:
 
@@ -26,6 +26,7 @@ and window state.
 - `allow-df-file-write-text`
 - `allow-df-file-export-json`
 - `allow-df-file-download`
+- `allow-df-update-install`
 - `allow-df-secure-storage-get`
 - `allow-df-secure-storage-set`
 - `allow-df-secure-storage-remove`
@@ -532,6 +533,32 @@ Enables the df_storage_set command without any pre-configured scope.
 <td>
 
 Denies the df_storage_set command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:allow-df-update-install`
+
+</td>
+<td>
+
+Enables the df_update_install command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:deny-df-update-install`
+
+</td>
+<td>
+
+Denies the df_update_install command without any pre-configured scope.
 
 </td>
 </tr>

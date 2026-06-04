@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-df-update-install"
+description = "Enables the df_update_install command without any pre-configured scope."
+commands.allow = ["df_update_install"]
+
+[[permission]]
+identifier = "deny-df-update-install"
+description = "Denies the df_update_install command without any pre-configured scope."
+commands.deny = ["df_update_install"]

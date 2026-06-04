@@ -78,7 +78,7 @@ Useful optional variables:
 - `VITE_UPDATE_REQUIRE_CHECKSUM=1`: fails downloads when the active file adapter cannot verify sha256.
 - `VITE_TAURI_UPDATER=1`: enables the optional Tauri updater plugin adapter. Install and register `@tauri-apps/plugin-updater` before turning this on.
 
-Without `VITE_TAURI_UPDATER=1`, product UI should stop at check, release notes, download, and checksum status. Do not replace `.app` files or relaunch the app from business pages. With the Tauri updater adapter enabled and verified, UI can call `client.updates.installUpdate()` and still keep install behavior at the native adapter boundary.
+Without `VITE_TAURI_UPDATER=1`, `createTauriDesktopClient` still wires manifest installs to `desktop-core` through `df_update_install`. Product UI can call `client.updates.installUpdate()` after download/checksum verification. Do not replace `.app` files or relaunch the app from business pages. Enable the optional Tauri updater adapter only when the product wants the official signed updater flow.
 
 Release files can be produced locally or in GitHub Actions:
 

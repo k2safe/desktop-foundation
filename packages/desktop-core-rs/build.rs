@@ -15,6 +15,7 @@ const COMMANDS: &[&str] = &[
     "df_file_write_text",
     "df_file_export_json",
     "df_file_download",
+    "df_update_install",
     "df_secure_storage_get",
     "df_secure_storage_set",
     "df_secure_storage_remove",

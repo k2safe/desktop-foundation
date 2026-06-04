@@ -9,6 +9,8 @@ import {
 } from "./tauriPlugins";
 import type {
   AsyncKeyValueStore,
+  AppUpdateInstallAdapter,
+  AppUpdateInstallResult,
   DesktopCapability,
   DesktopClient,
   DesktopClientConfig,
@@ -32,6 +34,21 @@ interface CoreHttpResponse<T> {
   body?: T;
   bodyBase64?: string;
   requestId?: string;
+}
+
+export interface CoreUpdateInstallRequest {
+  path: string;
+  targetPath?: string;
+  appName?: string;
+  relaunch?: boolean;
+  backup?: boolean;
+}
+
+export interface TauriUpdateInstallAdapterOptions {
+  command?: string;
+  appName?: string;
+  relaunch?: boolean;
+  backup?: boolean;
 }
 
 function normalizeCoreError(error: unknown): Error {
@@ -209,6 +226,46 @@ export function createTauriFileCapability(invoke: TauriInvoke, namespace: string
   };
 }
 
+function metadataString(metadata: Record<string, unknown> | undefined, key: string) {
+  const value = metadata?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function metadataBoolean(metadata: Record<string, unknown> | undefined, key: string) {
+  const value = metadata?.[key];
+  return typeof value === "boolean" ? value : undefined;
+}
+
+export function createTauriUpdateInstallAdapter(
+  invoke: TauriInvoke,
+  options: TauriUpdateInstallAdapterOptions = {}
+): AppUpdateInstallAdapter {
+  const command = options.command ?? "plugin:desktop-core|df_update_install";
+  return async (context) => {
+    if (!context.downloadedPath) {
+      throw new DesktopError({
+        code: "UPDATE_INSTALL_DOWNLOAD_MISSING",
+        message: "Download the update before installing it."
+      });
+    }
+
+    const metadata = context.update.metadata;
+    const request: CoreUpdateInstallRequest = {
+      path: context.downloadedPath,
+      targetPath: metadataString(metadata, "targetPath") ?? metadataString(metadata, "target_path"),
+      appName: metadataString(metadata, "appName") ?? metadataString(metadata, "productName") ?? options.appName,
+      relaunch: metadataBoolean(metadata, "relaunch") ?? options.relaunch ?? true,
+      backup: metadataBoolean(metadata, "backup") ?? options.backup ?? true
+    };
+
+    try {
+      return await invoke<AppUpdateInstallResult>(command, { request });
+    } catch (error) {
+      throw normalizeCoreError(error);
+    }
+  };
+}
+
 export interface TauriSessionState {
   token?: string | null;
   remember?: boolean;
@@ -295,20 +352,23 @@ export async function createTauriDesktopClient(
   const desktop = config.nativePlugins ? createTauriNativeDesktopCapability(config.nativePlugins, commandDesktop) : commandDesktop;
   const files = config.nativePlugins ? createTauriNativeFileCapability(config.nativePlugins, commandFiles) : commandFiles;
   const transport = createTauriHttpTransport(invoke);
+  const updateConfig = {
+    ...config.updateConfig,
+    currentVersion: config.updateConfig?.currentVersion ?? config.version,
+    transport: config.updateConfig?.transport ?? transport,
+    installUpdate: config.updateConfig?.installUpdate ?? createTauriUpdateInstallAdapter(invoke, { appName: config.product })
+  };
   const hasNativeUpdates = Boolean(config.nativePlugins?.checkUpdate || config.nativePlugins?.downloadUpdate || config.nativePlugins?.installUpdate);
   const fallbackUpdates = config.updates ?? createManifestUpdateCapability(
-    {
-      ...config.updateConfig,
-      currentVersion: config.updateConfig?.currentVersion ?? config.version,
-      transport: config.updateConfig?.transport ?? transport
-    },
+    updateConfig,
     desktop,
     files
   );
-  const updates = hasNativeUpdates && config.nativePlugins ? createTauriNativeUpdateCapability(config.nativePlugins, fallbackUpdates) : config.updates;
+  const updates = hasNativeUpdates && config.nativePlugins ? createTauriNativeUpdateCapability(config.nativePlugins, fallbackUpdates) : fallbackUpdates;
 
   return createDesktopClient({
     ...config,
+    updateConfig,
     session,
     storage: createTauriKeyValueStore(invoke, namespace, config.storageScope, config.initialStorageValues),
     secureStorage: createTauriSecureStorage(invoke, namespace),

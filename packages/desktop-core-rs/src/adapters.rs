@@ -4,16 +4,22 @@ use crate::desktop::{CopyTextRequest, DesktopActionReply, NotifyRequest, OpenExt
 use crate::error::{DesktopError, DesktopResult};
 use crate::file::{
     ExportJsonRequest, FileDialogReply, FilePathReply, OpenFileDialogRequest, ReadTextFileRequest,
-    SaveFileDialogReply, SaveFileDialogRequest, TextFileReply, WriteBinaryFileRequest, WriteTextFileRequest,
+    SaveFileDialogReply, SaveFileDialogRequest, TextFileReply, WriteBinaryFileRequest,
+    WriteTextFileRequest,
 };
 use crate::http::{HttpRequest, HttpResponse};
 use crate::runtime::DesktopAction;
 use crate::secure::{SecureStorageGetRequest, SecureStorageRemoveRequest, SecureStorageSetRequest};
 use crate::session::SessionState;
 use crate::storage::StorageValue;
+use crate::update::{UpdateInstallReply, UpdateInstallRequest};
 
 pub trait HttpAdapter: Send + Sync {
-    fn request(&self, request: HttpRequest, session: Option<SessionState>) -> DesktopResult<HttpResponse>;
+    fn request(
+        &self,
+        request: HttpRequest,
+        session: Option<SessionState>,
+    ) -> DesktopResult<HttpResponse>;
 }
 
 pub trait DesktopAdapter: Send + Sync {
@@ -24,7 +30,10 @@ pub trait DesktopAdapter: Send + Sync {
 
 pub trait FileAdapter: Send + Sync {
     fn open_file_dialog(&self, request: OpenFileDialogRequest) -> DesktopResult<FileDialogReply>;
-    fn save_file_dialog(&self, request: SaveFileDialogRequest) -> DesktopResult<SaveFileDialogReply>;
+    fn save_file_dialog(
+        &self,
+        request: SaveFileDialogRequest,
+    ) -> DesktopResult<SaveFileDialogReply>;
     fn read_text_file(&self, request: ReadTextFileRequest) -> DesktopResult<TextFileReply>;
     fn write_text_file(&self, request: WriteTextFileRequest) -> DesktopResult<FilePathReply>;
     fn write_binary_file(&self, request: WriteBinaryFileRequest) -> DesktopResult<FilePathReply>;
@@ -37,11 +46,19 @@ pub trait SecureStorageAdapter: Send + Sync {
     fn remove(&self, request: SecureStorageRemoveRequest) -> DesktopResult<DesktopActionReply>;
 }
 
+pub trait UpdateInstallerAdapter: Send + Sync {
+    fn install_update(&self, request: UpdateInstallRequest) -> DesktopResult<UpdateInstallReply>;
+}
+
 #[derive(Default)]
 pub struct NoopHttpAdapter;
 
 impl HttpAdapter for NoopHttpAdapter {
-    fn request(&self, request: HttpRequest, _session: Option<SessionState>) -> DesktopResult<HttpResponse> {
+    fn request(
+        &self,
+        request: HttpRequest,
+        _session: Option<SessionState>,
+    ) -> DesktopResult<HttpResponse> {
         let mut error = DesktopError::new(
             "HTTP_TRANSPORT_NOT_CONFIGURED",
             "HTTP transport is not configured for desktop-core-rs",
@@ -68,7 +85,12 @@ impl DesktopAdapter for RecordingDesktopAdapter {
     fn open_external(&self, request: OpenExternalRequest) -> DesktopResult<DesktopActionReply> {
         self.actions
             .lock()
-            .map_err(|_| DesktopError::new("DESKTOP_ACTION_LOCK_FAILED", "Failed to lock desktop actions"))?
+            .map_err(|_| {
+                DesktopError::new(
+                    "DESKTOP_ACTION_LOCK_FAILED",
+                    "Failed to lock desktop actions",
+                )
+            })?
             .push(DesktopAction::OpenExternal(request.url));
         Ok(DesktopActionReply { ok: true })
     }
@@ -76,7 +98,12 @@ impl DesktopAdapter for RecordingDesktopAdapter {
     fn copy_text(&self, request: CopyTextRequest) -> DesktopResult<DesktopActionReply> {
         self.actions
             .lock()
-            .map_err(|_| DesktopError::new("DESKTOP_ACTION_LOCK_FAILED", "Failed to lock desktop actions"))?
+            .map_err(|_| {
+                DesktopError::new(
+                    "DESKTOP_ACTION_LOCK_FAILED",
+                    "Failed to lock desktop actions",
+                )
+            })?
             .push(DesktopAction::CopyText(request.text));
         Ok(DesktopActionReply { ok: true })
     }
@@ -84,7 +111,12 @@ impl DesktopAdapter for RecordingDesktopAdapter {
     fn notify(&self, request: NotifyRequest) -> DesktopResult<DesktopActionReply> {
         self.actions
             .lock()
-            .map_err(|_| DesktopError::new("DESKTOP_ACTION_LOCK_FAILED", "Failed to lock desktop actions"))?
+            .map_err(|_| {
+                DesktopError::new(
+                    "DESKTOP_ACTION_LOCK_FAILED",
+                    "Failed to lock desktop actions",
+                )
+            })?
             .push(DesktopAction::Notify {
                 title: request.title,
                 body: request.body,
@@ -98,27 +130,48 @@ pub struct NoopFileAdapter;
 
 impl FileAdapter for NoopFileAdapter {
     fn open_file_dialog(&self, _request: OpenFileDialogRequest) -> DesktopResult<FileDialogReply> {
-        Err(DesktopError::new("FILE_ADAPTER_NOT_CONFIGURED", "File adapter is not configured"))
+        Err(DesktopError::new(
+            "FILE_ADAPTER_NOT_CONFIGURED",
+            "File adapter is not configured",
+        ))
     }
 
-    fn save_file_dialog(&self, _request: SaveFileDialogRequest) -> DesktopResult<SaveFileDialogReply> {
-        Err(DesktopError::new("FILE_ADAPTER_NOT_CONFIGURED", "File adapter is not configured"))
+    fn save_file_dialog(
+        &self,
+        _request: SaveFileDialogRequest,
+    ) -> DesktopResult<SaveFileDialogReply> {
+        Err(DesktopError::new(
+            "FILE_ADAPTER_NOT_CONFIGURED",
+            "File adapter is not configured",
+        ))
     }
 
     fn read_text_file(&self, _request: ReadTextFileRequest) -> DesktopResult<TextFileReply> {
-        Err(DesktopError::new("FILE_ADAPTER_NOT_CONFIGURED", "File adapter is not configured"))
+        Err(DesktopError::new(
+            "FILE_ADAPTER_NOT_CONFIGURED",
+            "File adapter is not configured",
+        ))
     }
 
     fn write_text_file(&self, _request: WriteTextFileRequest) -> DesktopResult<FilePathReply> {
-        Err(DesktopError::new("FILE_ADAPTER_NOT_CONFIGURED", "File adapter is not configured"))
+        Err(DesktopError::new(
+            "FILE_ADAPTER_NOT_CONFIGURED",
+            "File adapter is not configured",
+        ))
     }
 
     fn write_binary_file(&self, _request: WriteBinaryFileRequest) -> DesktopResult<FilePathReply> {
-        Err(DesktopError::new("FILE_ADAPTER_NOT_CONFIGURED", "File adapter is not configured"))
+        Err(DesktopError::new(
+            "FILE_ADAPTER_NOT_CONFIGURED",
+            "File adapter is not configured",
+        ))
     }
 
     fn export_json(&self, _request: ExportJsonRequest) -> DesktopResult<FilePathReply> {
-        Err(DesktopError::new("FILE_ADAPTER_NOT_CONFIGURED", "File adapter is not configured"))
+        Err(DesktopError::new(
+            "FILE_ADAPTER_NOT_CONFIGURED",
+            "File adapter is not configured",
+        ))
     }
 }
 
@@ -138,5 +191,17 @@ impl SecureStorageAdapter for NoopSecureStorageAdapter {
 
     fn remove(&self, _request: SecureStorageRemoveRequest) -> DesktopResult<DesktopActionReply> {
         Ok(DesktopActionReply { ok: true })
+    }
+}
+
+#[derive(Default)]
+pub struct NoopUpdateInstallerAdapter;
+
+impl UpdateInstallerAdapter for NoopUpdateInstallerAdapter {
+    fn install_update(&self, _request: UpdateInstallRequest) -> DesktopResult<UpdateInstallReply> {
+        Err(DesktopError::new(
+            "UPDATE_INSTALLER_NOT_CONFIGURED",
+            "Update installer adapter is not configured",
+        ))
     }
 }

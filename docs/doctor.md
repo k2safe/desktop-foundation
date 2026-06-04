@@ -69,8 +69,8 @@ pnpm exec desktop-foundation ci --integration-check --integration-summary
 | `tauri-capability` | warn | Tauri ACL 缺 `desktop-core:default`。 | 在 `src-tauri/capabilities/default.json` 加 `desktop-core:default`。 |
 | `updates` | warn | 没有更新配置入口。 | 在 client 里配置 `VITE_UPDATE_MANIFEST_URL` 或 `createGitHubReleasesUpdateConfig`。 |
 | `updates:placeholder` | warn | 更新仓库或 URL 还在用占位值。 | 发布前替换成产品自己的 `VITE_UPDATE_*` 配置。 |
-| `updates:install-boundary` | pass | 检测真实安装 adapter 是否在 client/native 边界接入。 | 未接 adapter 时，业务 UI 只展示发现、下载、校验状态；接入后也只调用 `client.updates.installUpdate`。 |
-| `updates:install-bypass` | warn | 检测到疑似业务页面直接替换 `.app` 或重启。 | 删除业务侧安装/重启逻辑，统一放到底座/Tauri updater adapter。 |
+| `updates:install-boundary` | pass | 检测安装边界是否在 `createTauriDesktopClient`、`df_update_install`、client adapter 或 native adapter 接入。 | 业务 UI 只调用 `client.updates.installUpdate`，不要自己替换安装包。 |
+| `updates:install-bypass` | warn | 检测到疑似业务页面直接替换 `.app` 或重启。 | 删除业务侧安装/重启逻辑，统一放到底座 `df_update_install` 或 Tauri updater adapter。 |
 | `link-proxy` | pass | 检测 link proxy 接入面。 | 需要请求任意第三方链接时，统一走 `client.linkProxy`。 |
 | `link-proxy:gateway-policy` | warn | 配了代理网关但没配代理网关白名单。 | 本地/VPN/内网代理网关写到 `allowedLinkProxyOrigins` 或 `VITE_LINK_PROXY_ORIGINS`。 |
 | `link-proxy:direct-policy` | warn | direct 模式缺目标白名单。 | direct 模式必须配 `allowedLinkTargetOrigins` 或 `VITE_LINK_TARGET_ORIGINS`。 |

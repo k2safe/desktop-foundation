@@ -7,7 +7,7 @@
 稳定接入先读 release package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.29/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.30/foundation-packages.json
 ```
 
 然后读取 manifest 里的：
@@ -34,7 +34,7 @@ pnpm upload:smoke
 底座仓库自带等价 smoke：
 
 ```bash
-pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.29/foundation-packages.json
+pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.30/foundation-packages.json
 ```
 
 发版前还可以用本地 artifacts 验证尚未上传的 tarball：
@@ -109,5 +109,5 @@ Warn decisions:
 - 后端 multipart parser 和对象存储
 - 审计日志上报和 PII 策略
 - release signing、notarization、rollout
-- native installer/update adapter
+- product signing, notarization, rollout policy, and any custom native updater adapter that replaces `df_update_install`
 - 真实菜单、路由、字段字典和多语言 copy

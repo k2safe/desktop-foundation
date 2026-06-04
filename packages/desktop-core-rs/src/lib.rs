@@ -13,13 +13,15 @@ pub mod security;
 pub mod session;
 pub mod storage;
 pub mod system;
+pub mod update;
 
 #[cfg(feature = "tauri")]
 pub mod tauri_commands;
 pub mod window;
 
-pub use desktop::*;
+pub use adapters::*;
 pub use curl_http::*;
+pub use desktop::*;
 pub use error::*;
 pub use file::*;
 pub use http::*;
@@ -32,5 +34,5 @@ pub use security::*;
 pub use session::*;
 pub use storage::*;
 pub use system::*;
+pub use update::*;
 pub use window::*;
-pub use adapters::*;

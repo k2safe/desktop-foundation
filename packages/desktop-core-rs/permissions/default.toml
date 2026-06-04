@@ -8,7 +8,7 @@ Default permissions for desktop-foundation core capabilities.
 
 This exposes the platform bridge commands used by the TypeScript desktop client:
 HTTP, session, storage, secure storage, desktop actions, file operations, downloads,
-and window state.
+update installation, and window state.
 """
 
 permissions = [
@@ -28,6 +28,7 @@ permissions = [
   "allow-df-file-write-text",
   "allow-df-file-export-json",
   "allow-df-file-download",
+  "allow-df-update-install",
   "allow-df-secure-storage-get",
   "allow-df-secure-storage-set",
   "allow-df-secure-storage-remove",

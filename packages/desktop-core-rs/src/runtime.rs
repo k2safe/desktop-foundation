@@ -8,23 +8,32 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 use crate::adapters::{
-    DesktopAdapter, FileAdapter, HttpAdapter, NoopFileAdapter, NoopHttpAdapter, NoopSecureStorageAdapter,
-    RecordingDesktopAdapter, SecureStorageAdapter,
+    DesktopAdapter, FileAdapter, HttpAdapter, NoopFileAdapter, NoopHttpAdapter,
+    NoopSecureStorageAdapter, NoopUpdateInstallerAdapter, RecordingDesktopAdapter,
+    SecureStorageAdapter, UpdateInstallerAdapter,
 };
 use crate::desktop::{CopyTextRequest, DesktopActionReply, NotifyRequest, OpenExternalRequest};
 use crate::error::{DesktopError, DesktopResult};
 use crate::file::{
-    DownloadFileReply, DownloadFileRequest, ExportJsonRequest, FileDialogReply, OpenFileDialogRequest,
-    ReadTextFileRequest, SaveFileDialogReply, SaveFileDialogRequest, TextFileReply, WriteBinaryFileRequest,
-    WriteTextFileRequest,
+    DownloadFileReply, DownloadFileRequest, ExportJsonRequest, FileDialogReply,
+    OpenFileDialogRequest, ReadTextFileRequest, SaveFileDialogReply, SaveFileDialogRequest,
+    TextFileReply, WriteBinaryFileRequest, WriteTextFileRequest,
 };
 use crate::http::{HttpMethod, HttpRequest, HttpResponse, HttpResponseType};
-use crate::persistence::{storage_entries_to_map, storage_map_to_entries, FilePersistence, PersistedState};
+use crate::persistence::{
+    storage_entries_to_map, storage_map_to_entries, FilePersistence, PersistedState,
+};
 use crate::secure::{SecureStorageGetRequest, SecureStorageRemoveRequest, SecureStorageSetRequest};
 use crate::security::SecurityPolicy;
 use crate::session::{SessionClearRequest, SessionGetRequest, SessionSetRequest, SessionState};
-use crate::storage::{StorageGetRequest, StorageRemoveRequest, StorageScope, StorageSetRequest, StorageValue};
-use crate::system::{SystemDesktopAdapter, SystemFileAdapter, SystemSecureStorageAdapter};
+use crate::storage::{
+    StorageGetRequest, StorageRemoveRequest, StorageScope, StorageSetRequest, StorageValue,
+};
+use crate::system::{
+    SystemDesktopAdapter, SystemFileAdapter, SystemSecureStorageAdapter,
+    SystemUpdateInstallerAdapter,
+};
+use crate::update::{UpdateInstallReply, UpdateInstallRequest};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DesktopAction {
@@ -42,6 +51,7 @@ pub struct DesktopCore {
     desktop_adapter: Arc<dyn DesktopAdapter>,
     file_adapter: Arc<dyn FileAdapter>,
     secure_storage_adapter: Arc<dyn SecureStorageAdapter>,
+    update_installer_adapter: Arc<dyn UpdateInstallerAdapter>,
     security_policy: Arc<SecurityPolicy>,
     persistence: Option<Arc<FilePersistence>>,
 }
@@ -66,6 +76,7 @@ impl DesktopCore {
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
+            update_installer_adapter: Arc::new(NoopUpdateInstallerAdapter),
             security_policy: Arc::new(SecurityPolicy::default()),
             actions,
             http_adapter,
@@ -82,12 +93,16 @@ impl DesktopCore {
             desktop_adapter,
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
+            update_installer_adapter: Arc::new(NoopUpdateInstallerAdapter),
             security_policy: Arc::new(SecurityPolicy::default()),
             persistence: None,
         }
     }
 
-    pub fn with_adapters(http_adapter: Arc<dyn HttpAdapter>, desktop_adapter: Arc<dyn DesktopAdapter>) -> Self {
+    pub fn with_adapters(
+        http_adapter: Arc<dyn HttpAdapter>,
+        desktop_adapter: Arc<dyn DesktopAdapter>,
+    ) -> Self {
         Self::with_all_adapters(
             http_adapter,
             desktop_adapter,
@@ -110,6 +125,7 @@ impl DesktopCore {
             desktop_adapter,
             file_adapter,
             secure_storage_adapter,
+            update_installer_adapter: Arc::new(NoopUpdateInstallerAdapter),
             security_policy: Arc::new(SecurityPolicy::default()),
             persistence: None,
         }
@@ -125,15 +141,32 @@ impl DesktopCore {
     }
 
     pub fn persistent_platform(app_id: &str) -> DesktopResult<Self> {
-        Self::with_persistence_and_platform_adapters(FilePersistence::default_path(app_id)?, app_id, Arc::new(NoopHttpAdapter))
+        Self::with_persistence_and_platform_adapters(
+            FilePersistence::default_path(app_id)?,
+            app_id,
+            Arc::new(NoopHttpAdapter),
+        )
     }
 
-    pub fn persistent_with_http_adapter(app_id: &str, http_adapter: Arc<dyn HttpAdapter>) -> DesktopResult<Self> {
-        Self::with_persistence_and_http_adapter(FilePersistence::default_path(app_id)?, http_adapter)
+    pub fn persistent_with_http_adapter(
+        app_id: &str,
+        http_adapter: Arc<dyn HttpAdapter>,
+    ) -> DesktopResult<Self> {
+        Self::with_persistence_and_http_adapter(
+            FilePersistence::default_path(app_id)?,
+            http_adapter,
+        )
     }
 
-    pub fn persistent_platform_with_http_adapter(app_id: &str, http_adapter: Arc<dyn HttpAdapter>) -> DesktopResult<Self> {
-        Self::with_persistence_and_platform_adapters(FilePersistence::default_path(app_id)?, app_id, http_adapter)
+    pub fn persistent_platform_with_http_adapter(
+        app_id: &str,
+        http_adapter: Arc<dyn HttpAdapter>,
+    ) -> DesktopResult<Self> {
+        Self::with_persistence_and_platform_adapters(
+            FilePersistence::default_path(app_id)?,
+            app_id,
+            http_adapter,
+        )
     }
 
     pub fn with_persistence_path(path: impl Into<std::path::PathBuf>) -> DesktopResult<Self> {
@@ -146,6 +179,7 @@ impl DesktopCore {
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
+            update_installer_adapter: Arc::new(NoopUpdateInstallerAdapter),
             security_policy: Arc::new(SecurityPolicy::default()),
             actions,
             http_adapter: Arc::new(NoopHttpAdapter),
@@ -166,6 +200,7 @@ impl DesktopCore {
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
+            update_installer_adapter: Arc::new(NoopUpdateInstallerAdapter),
             security_policy: Arc::new(SecurityPolicy::default()),
             actions,
             http_adapter,
@@ -188,6 +223,7 @@ impl DesktopCore {
             desktop_adapter,
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
+            update_installer_adapter: Arc::new(NoopUpdateInstallerAdapter),
             security_policy: Arc::new(SecurityPolicy::default()),
             persistence: Some(persistence),
         })
@@ -210,6 +246,7 @@ impl DesktopCore {
             desktop_adapter,
             file_adapter,
             secure_storage_adapter,
+            update_installer_adapter: Arc::new(NoopUpdateInstallerAdapter),
             security_policy: Arc::new(SecurityPolicy::default()),
             persistence: Some(persistence),
         })
@@ -220,13 +257,20 @@ impl DesktopCore {
         app_id: &str,
         http_adapter: Arc<dyn HttpAdapter>,
     ) -> DesktopResult<Self> {
-        Self::with_persistence_and_all_adapters(
-            path,
+        let persistence = Arc::new(FilePersistence::new(path));
+        let state = persistence.load()?;
+        Ok(Self {
+            sessions: Arc::new(Mutex::new(state.sessions)),
+            storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
+            actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter,
-            Arc::new(SystemDesktopAdapter),
-            Arc::new(SystemFileAdapter::new(app_id)),
-            Arc::new(SystemSecureStorageAdapter::new(app_id)?),
-        )
+            desktop_adapter: Arc::new(SystemDesktopAdapter),
+            file_adapter: Arc::new(SystemFileAdapter::new(app_id)),
+            secure_storage_adapter: Arc::new(SystemSecureStorageAdapter::new(app_id)?),
+            update_installer_adapter: Arc::new(SystemUpdateInstallerAdapter::new(app_id)),
+            security_policy: Arc::new(SecurityPolicy::default()),
+            persistence: Some(persistence),
+        })
     }
 
     fn persist_state(&self) -> DesktopResult<()> {
@@ -253,10 +297,12 @@ impl DesktopCore {
         let session = if request.auth == Some(false) {
             None
         } else {
-            request
-                .namespace
-                .as_ref()
-                .and_then(|namespace| self.session_get(SessionGetRequest { namespace: namespace.clone() }).ok())
+            request.namespace.as_ref().and_then(|namespace| {
+                self.session_get(SessionGetRequest {
+                    namespace: namespace.clone(),
+                })
+                .ok()
+            })
         };
         self.http_adapter.request(request, session)
     }
@@ -339,7 +385,10 @@ impl DesktopCore {
         })
     }
 
-    pub fn storage_remove(&self, request: StorageRemoveRequest) -> DesktopResult<DesktopActionReply> {
+    pub fn storage_remove(
+        &self,
+        request: StorageRemoveRequest,
+    ) -> DesktopResult<DesktopActionReply> {
         if request.scope == StorageScope::Secure {
             return self.secure_storage_remove(SecureStorageRemoveRequest {
                 namespace: request.namespace,
@@ -372,33 +421,50 @@ impl DesktopCore {
         self.desktop_adapter.notify(request)
     }
 
-    pub fn open_file_dialog(&self, request: OpenFileDialogRequest) -> DesktopResult<FileDialogReply> {
+    pub fn open_file_dialog(
+        &self,
+        request: OpenFileDialogRequest,
+    ) -> DesktopResult<FileDialogReply> {
         if let Some(directory) = request.directory.as_ref() {
-            self.security_policy.validate_file_path(&PathBuf::from(directory))?;
+            self.security_policy
+                .validate_file_path(&PathBuf::from(directory))?;
         }
         self.file_adapter.open_file_dialog(request)
     }
 
-    pub fn save_file_dialog(&self, request: SaveFileDialogRequest) -> DesktopResult<SaveFileDialogReply> {
+    pub fn save_file_dialog(
+        &self,
+        request: SaveFileDialogRequest,
+    ) -> DesktopResult<SaveFileDialogReply> {
         if let Some(directory) = request.directory.as_ref() {
-            self.security_policy.validate_file_path(&PathBuf::from(directory))?;
+            self.security_policy
+                .validate_file_path(&PathBuf::from(directory))?;
         }
         self.file_adapter.save_file_dialog(request)
     }
 
     pub fn read_text_file(&self, request: ReadTextFileRequest) -> DesktopResult<TextFileReply> {
-        self.security_policy.validate_file_path(&PathBuf::from(&request.path))?;
+        self.security_policy
+            .validate_file_path(&PathBuf::from(&request.path))?;
         self.file_adapter.read_text_file(request)
     }
 
-    pub fn write_text_file(&self, request: WriteTextFileRequest) -> DesktopResult<crate::file::FilePathReply> {
-        self.security_policy.validate_file_path(&PathBuf::from(&request.path))?;
+    pub fn write_text_file(
+        &self,
+        request: WriteTextFileRequest,
+    ) -> DesktopResult<crate::file::FilePathReply> {
+        self.security_policy
+            .validate_file_path(&PathBuf::from(&request.path))?;
         self.file_adapter.write_text_file(request)
     }
 
-    pub fn export_json(&self, request: ExportJsonRequest) -> DesktopResult<crate::file::FilePathReply> {
+    pub fn export_json(
+        &self,
+        request: ExportJsonRequest,
+    ) -> DesktopResult<crate::file::FilePathReply> {
         if let Some(directory) = request.directory.as_ref() {
-            self.security_policy.validate_file_path(&PathBuf::from(directory))?;
+            self.security_policy
+                .validate_file_path(&PathBuf::from(directory))?;
         }
         self.file_adapter.export_json(request)
     }
@@ -421,17 +487,27 @@ impl DesktopCore {
             request_id: request.request_id,
             namespace: request.namespace,
         })?;
-        let body_base64 = response
-            .body_base64
-            .ok_or_else(|| DesktopError::new("DOWNLOAD_BODY_EMPTY", "Downloaded response did not include file bytes"))?;
+        let body_base64 = response.body_base64.ok_or_else(|| {
+            DesktopError::new(
+                "DOWNLOAD_BODY_EMPTY",
+                "Downloaded response did not include file bytes",
+            )
+        })?;
         let bytes = general_purpose::STANDARD
             .decode(&body_base64)
-            .map_err(|error| DesktopError::new("DOWNLOAD_BASE64_DECODE_FAILED", "Failed to decode downloaded file").with_details(Value::String(error.to_string())))?;
-        self.file_adapter.write_binary_file(WriteBinaryFileRequest {
-            path: path.to_string_lossy().to_string(),
-            content_base64: body_base64,
-            create_dir: true,
-        })?;
+            .map_err(|error| {
+                DesktopError::new(
+                    "DOWNLOAD_BASE64_DECODE_FAILED",
+                    "Failed to decode downloaded file",
+                )
+                .with_details(Value::String(error.to_string()))
+            })?;
+        self.file_adapter
+            .write_binary_file(WriteBinaryFileRequest {
+                path: path.to_string_lossy().to_string(),
+                content_base64: body_base64,
+                create_dir: true,
+            })?;
         let sha256 = Sha256::digest(&bytes)
             .iter()
             .map(|byte| format!("{byte:02x}"))
@@ -445,15 +521,37 @@ impl DesktopCore {
         })
     }
 
-    pub fn secure_storage_get(&self, request: SecureStorageGetRequest) -> DesktopResult<StorageValue> {
+    pub fn install_update(
+        &self,
+        request: UpdateInstallRequest,
+    ) -> DesktopResult<UpdateInstallReply> {
+        self.security_policy
+            .validate_file_path(&PathBuf::from(&request.path))?;
+        if let Some(target_path) = request.target_path.as_ref() {
+            self.security_policy
+                .validate_file_path(&PathBuf::from(target_path))?;
+        }
+        self.update_installer_adapter.install_update(request)
+    }
+
+    pub fn secure_storage_get(
+        &self,
+        request: SecureStorageGetRequest,
+    ) -> DesktopResult<StorageValue> {
         self.secure_storage_adapter.get(request)
     }
 
-    pub fn secure_storage_set(&self, request: SecureStorageSetRequest) -> DesktopResult<StorageValue> {
+    pub fn secure_storage_set(
+        &self,
+        request: SecureStorageSetRequest,
+    ) -> DesktopResult<StorageValue> {
         self.secure_storage_adapter.set(request)
     }
 
-    pub fn secure_storage_remove(&self, request: SecureStorageRemoveRequest) -> DesktopResult<DesktopActionReply> {
+    pub fn secure_storage_remove(
+        &self,
+        request: SecureStorageRemoveRequest,
+    ) -> DesktopResult<DesktopActionReply> {
         self.secure_storage_adapter.remove(request)
     }
 
@@ -461,7 +559,12 @@ impl DesktopCore {
         Ok(self
             .actions
             .lock()
-            .map_err(|_| DesktopError::new("DESKTOP_ACTION_LOCK_FAILED", "Failed to lock desktop actions"))?
+            .map_err(|_| {
+                DesktopError::new(
+                    "DESKTOP_ACTION_LOCK_FAILED",
+                    "Failed to lock desktop actions",
+                )
+            })?
             .clone())
     }
 }
@@ -477,7 +580,12 @@ fn download_target_path(request: &DownloadFileRequest) -> DesktopResult<PathBuf>
         .or_else(dirs::download_dir)
         .or_else(dirs::document_dir)
         .or_else(dirs::data_dir)
-        .ok_or_else(|| DesktopError::new("DOWNLOAD_DIR_UNAVAILABLE", "Unable to resolve download directory"))?;
+        .ok_or_else(|| {
+            DesktopError::new(
+                "DOWNLOAD_DIR_UNAVAILABLE",
+                "Unable to resolve download directory",
+            )
+        })?;
     let file_name = request
         .file_name
         .clone()
@@ -520,6 +628,7 @@ impl Default for DesktopCore {
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
+            update_installer_adapter: Arc::new(NoopUpdateInstallerAdapter),
             security_policy: Arc::new(SecurityPolicy::default()),
             actions,
             http_adapter: Arc::new(NoopHttpAdapter),
@@ -543,7 +652,11 @@ mod tests {
     }
 
     impl HttpAdapter for EchoHttpAdapter {
-        fn request(&self, _request: HttpRequest, session: Option<SessionState>) -> DesktopResult<HttpResponse> {
+        fn request(
+            &self,
+            _request: HttpRequest,
+            session: Option<SessionState>,
+        ) -> DesktopResult<HttpResponse> {
             *self.seen_token.lock().unwrap() = session.and_then(|state| state.token);
             Ok(HttpResponse {
                 status: 200,
@@ -657,7 +770,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(reply.status, 200);
-        assert_eq!(*adapter.seen_token.lock().unwrap(), Some("admin-token".to_string()));
+        assert_eq!(
+            *adapter.seen_token.lock().unwrap(),
+            Some("admin-token".to_string())
+        );
     }
 
     #[test]
@@ -739,10 +855,11 @@ mod tests {
         let adapter = Arc::new(EchoHttpAdapter {
             seen_token: Mutex::new(None),
         });
-        let core = DesktopCore::with_http_adapter(adapter.clone()).with_security_policy(SecurityPolicy {
-            allowed_http_hosts: vec!["api.example.com".to_string()],
-            ..SecurityPolicy::default()
-        });
+        let core =
+            DesktopCore::with_http_adapter(adapter.clone()).with_security_policy(SecurityPolicy {
+                allowed_http_hosts: vec!["api.example.com".to_string()],
+                ..SecurityPolicy::default()
+            });
 
         let error = core
             .http_request(HttpRequest {

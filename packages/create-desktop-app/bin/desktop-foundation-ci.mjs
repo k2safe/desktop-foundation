@@ -978,17 +978,19 @@ function runIntegrationCheck(options, packageJson) {
   }
 
   const updateInstallAdapterFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /df_update_install/,
+    /createTauriDesktopClient\s*\(/,
     /installUpdate\s*:/,
     /nativePlugins\s*:/,
     /@tauri-apps\/plugin-updater/,
     /\bdownloadAndInstall\s*\(/
   ]);
   if (updateInstallAdapterFiles.length) {
-    pushFinding(findings, "pass", "updates:install-boundary", "Update installer adapter wiring detected; keep install/restart behavior at the client or native adapter boundary.", {
+    pushFinding(findings, "pass", "updates:install-boundary", "Update installer boundary detected; use the built-in desktop-core installer, a client adapter, or the native updater plugin for install/restart behavior.", {
       files: updateInstallAdapterFiles
     });
   } else {
-    pushFinding(findings, "pass", "updates:install-boundary", "No installer adapter wiring was detected; product UI should stay at discover, download, and checksum status until the adapter is ready.");
+    pushFinding(findings, "pass", "updates:install-boundary", "No installer boundary was detected; product UI should stay at discover, download, and checksum status until desktop-core or a native adapter is wired.");
   }
 
   const updateInstallBypassFiles = matchingSourceFiles(sourceFiles, cwd, [

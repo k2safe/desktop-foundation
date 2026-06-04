@@ -34,7 +34,7 @@ Tauri 项目必须接 desktop-core-rs 和 desktop-core:default capability。
 
 如果产品需要上传文件，浏览器/Tauri UI 里直接传 FormData 给 client.http.post；不要手动设置 multipart/form-data 的 Content-Type。Node/headless smoke 里使用 createDesktopClient 时必须显式传 session、storage、secureStorage、desktop、files adapter 或 noop adapter，因为默认 web adapter 会访问 window/localStorage。
 
-自动更新默认先接发现新版本、下载更新包、校验 size/sha256。不要在业务项目里自己写替换 .app、安装后重启等逻辑；需要真实安装时，产品安装并注册 Tauri updater 插件，打开 VITE_TAURI_UPDATER=1，UI 仍只调用 client.updates.installUpdate。
+自动更新默认接发现新版本、下载更新包、校验 size/sha256，并由 createTauriDesktopClient 通过 df_update_install 执行安装边界。不要在业务项目里自己写替换 .app、安装后重启等逻辑；需要官方 Tauri updater 流程时，产品再安装并注册 Tauri updater 插件，打开 VITE_TAURI_UPDATER=1，UI 仍只调用 client.updates.installUpdate。
 
 完成后运行：
 pnpm exec desktop-foundation-ci --integration-check --integration-report artifacts/foundation-integration.json

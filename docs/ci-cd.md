@@ -171,7 +171,7 @@ Projects that do not use Playwright can omit the visual job. Generated projects 
 
 ## Update Capability
 
-CI/CD or a local build can publish `latest.json`, but the desktop client owns how update information is shown to users. The bridge exposes `client.updates` so product UI can check, show, download, verify checksum/size, open release notes, or install through a native plugin adapter. Manifest checks use the active bridge HTTP transport when available; Tauri products therefore go through `desktop-core` HTTP instead of relying on WebView CORS.
+CI/CD or a local build can publish `latest.json`, but the desktop client owns how update information is shown to users. The bridge exposes `client.updates` so product UI can check, show, download, verify checksum/size, open release notes, or install through the desktop-core/native adapter boundary. Manifest checks use the active bridge HTTP transport when available; Tauri products therefore go through `desktop-core` HTTP instead of relying on WebView CORS.
 
 ```ts
 const result = await client.updates.checkForUpdate();
@@ -204,15 +204,11 @@ createDesktopClient({
   updateConfig: createGitHubReleasesUpdateConfig({
     repository: 'owner/repository',
     channel: 'stable',
-    requireChecksumVerification: true,
-    installUpdate: async ({ update, downloadedPath }) => {
-      await nativeInstaller.apply(downloadedPath, update.version);
-      return { status: 'installed', message: 'Update installed. Restart the app.' };
-    }
+    requireChecksumVerification: true
   })
 });
 ```
 
 `downloadUpdate` defaults to `auth: false`, so public GitHub Releases or static manifest hosts do not receive product session tokens. If a private update server requires auth, pass `client.updates.downloadUpdate(update, { auth: true })` from product UI.
 
-`installUpdate` is intentionally an adapter boundary. Without `updateConfig.installUpdate`, the manifest updater moves a verified package to `installable` and returns a message telling the product to provide an installer. Product UI can ship with check, release notes, download, and checksum status first. Do not implement direct `.app` replacement, `/Applications` file mutation, or relaunch behavior in business pages. Products that use Tauri updater can pass adapters through `nativePlugins`; after that, the UI still calls `client.updates`. See [Tauri Updater Adapter](tauri-updater-adapter.md) for the concrete adapter shape.
+`installUpdate` is intentionally an adapter boundary. In Tauri clients created with `createTauriDesktopClient`, manifest installs use the built-in `df_update_install` command after checksum verification. On macOS, zip packages containing a `.app` and direct `.app` bundles are staged for replacement after quit/relaunch; `.pkg`, `.dmg`, and unsupported platform packages open with the system installer. Do not implement direct `.app` replacement, `/Applications` file mutation, or relaunch behavior in business pages. Products that need the official Tauri updater can pass adapters through `nativePlugins`; after that, the UI still calls `client.updates`. See [Tauri Updater Adapter](tauri-updater-adapter.md) for the concrete adapter shape.

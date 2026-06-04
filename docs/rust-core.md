@@ -49,6 +49,7 @@ fn main() {
 - `df_file_write_text`
 - `df_file_export_json`
 - `df_file_download`
+- `df_update_install`
 - `df_secure_storage_get`
 - `df_secure_storage_set`
 - `df_secure_storage_remove`
@@ -61,6 +62,7 @@ When registered as the `desktop-core` plugin, TypeScript can invoke them through
 - `plugin:desktop-core|df_open_external`
 - `plugin:desktop-core|df_copy_text`
 - `plugin:desktop-core|df_notify`
+- `plugin:desktop-core|df_update_install`
 
 `@desktop-foundation/bridge` exports `createTauriHttpTransport` and `createTauriDesktopCapability` for this command contract.
 
@@ -81,9 +83,9 @@ It also exports `createTauriDesktopClient`, which wires:
 - Rust storage command write-through cache
 - Rust secure storage commands
 - Rust desktop/window commands
-- Rust file dialog, text file, JSON export, and download commands
+- Rust file dialog, text file, JSON export, download, and update install commands
 
-Products can pass `nativePlugins` to `createTauriDesktopClient` when they prefer official Tauri plugins for opener, clipboard, notification, and dialog behavior. Those adapters replace only the matching frontend capability methods; the Rust core command contract remains the fallback and still owns HTTP, session, storage, secure storage, file download, and window commands.
+Products can pass `nativePlugins` to `createTauriDesktopClient` when they prefer official Tauri plugins for opener, clipboard, notification, dialog, or updater behavior. Those adapters replace only the matching frontend capability methods; the Rust core command contract remains the fallback and still owns HTTP, session, storage, secure storage, file download, update install, and window commands.
 
 ## Platform Capabilities
 
@@ -96,6 +98,7 @@ Use `DesktopCore::persistent_platform_with_http_adapter` in product apps. It wir
 - text file read/write
 - JSON export into Downloads/Documents/app-data
 - HTTP-backed file download
+- update install through `df_update_install`; macOS `.zip` packages containing `.app` and direct `.app` bundles are staged for replacement after quit/relaunch, while installer packages are opened with the system installer
 - macOS Keychain secure storage
 - Linux Secret Service secure storage through `secret-tool`
 - Windows user-bound DPAPI secure storage through PowerShell-protected files
@@ -129,7 +132,7 @@ let core = DesktopCore::persistent_platform_with_http_adapter("product", Arc::ne
     });
 ```
 
-This protects HTTP requests, external URLs, file reads/writes, exports, and downloads even when a command is invoked directly.
+This protects HTTP requests, external URLs, file reads/writes, exports, downloads, and update install package paths even when a command is invoked directly.
 
 ## Boundary
 

@@ -197,6 +197,7 @@ export interface AppUpdateInstallResult {
   status?: Extract<AppUpdateStatus, "installable" | "installing" | "installed">;
   message?: string;
   path?: string;
+  targetPath?: string;
   relaunchRequired?: boolean;
 }
 

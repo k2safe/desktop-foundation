@@ -1,6 +1,6 @@
 # Tauri Updater Adapter
 
-The foundation update UI talks to `client.updates`. Product projects can keep the default manifest downloader for check, download, and checksum verification, then enable the official Tauri updater plugin when native install/restart behavior is ready.
+The foundation update UI talks to `client.updates`. Product projects can keep the default manifest downloader for check, download, checksum verification, and built-in desktop-core installation, then enable the official Tauri updater plugin when they need Tauri's signed updater flow.
 
 ## Generated Template Toggle
 
@@ -10,7 +10,7 @@ Generated projects already contain a lightweight toggle in `src/api/client.ts`:
 VITE_TAURI_UPDATER=1
 ```
 
-When this flag is absent, the product uses the manifest flow only. When the flag is set inside Tauri, the client dynamically loads `@tauri-apps/plugin-updater` and wires it through `createTauriUpdaterPluginAdapters`.
+When this flag is absent, the product uses the foundation manifest flow. In Tauri, `createTauriDesktopClient` wires manifest installs to `plugin:desktop-core|df_update_install`. When the flag is set inside Tauri, the client dynamically loads `@tauri-apps/plugin-updater` and wires it through `createTauriUpdaterPluginAdapters`.
 
 ## Client Wiring
 
@@ -46,7 +46,7 @@ export async function createProductClient() {
 }
 ```
 
-`createTauriUpdaterPluginAdapters` is structural: the bridge package does not depend on `@tauri-apps/plugin-updater`. Product repositories install and configure the Tauri plugin when they are ready for native install behavior.
+`createTauriUpdaterPluginAdapters` is structural: the bridge package does not depend on `@tauri-apps/plugin-updater`. Product repositories install and configure the Tauri plugin only when they want the official updater plugin instead of the built-in desktop-core installer.
 
 ## State Flow
 
@@ -66,19 +66,20 @@ await client.updates.downloadUpdate();
 await client.updates.installUpdate();
 ```
 
-Do not implement direct `.app` replacement, `/Applications` file mutation, shell commands, or relaunch logic in business pages.
+Do not implement direct `.app` replacement, `/Applications` file mutation, shell commands, or relaunch logic in business pages. The default Tauri boundary is `df_update_install`; the optional plugin boundary is `createTauriUpdaterPluginAdapters`.
 
 ## Product Responsibilities
 
-- Add and configure `@tauri-apps/plugin-updater` in the product repository.
-- Register the Rust-side Tauri updater plugin and its permissions in the product `src-tauri` app.
+- Keep `desktop-core-rs:default` permissions enabled so `df_update_install` is available to generated Tauri clients.
+- Add and configure `@tauri-apps/plugin-updater` in the product repository only when using the official updater flow.
+- Register the Rust-side Tauri updater plugin and its permissions in the product `src-tauri` app when the optional plugin is enabled.
 - Keep signing, notarization, private release access, and updater endpoint policy in the product release pipeline.
 - Keep manifest/checksum generation in the existing `desktop-foundation-ci --manifest --release-plan` path when using the foundation manifest downloader.
 - Expose the install button only after native updater behavior is verified for the target platform.
 
 ## Lightweight Manifest Fallback
 
-Products can start without native install support:
+Products can start without the official updater plugin:
 
 ```ts
 createTauriDesktopClient(invoke, {
@@ -93,4 +94,4 @@ createTauriDesktopClient(invoke, {
 });
 ```
 
-This keeps update check, release notes, download state, checksum, and error UI available while the product team finishes native install behavior. In Tauri, manifest checks use the `desktop-core` HTTP transport that `createTauriDesktopClient` wires into the shared update capability.
+This keeps update check, release notes, download state, checksum, install state, and error UI available through the built-in desktop-core path. In Tauri, manifest checks use the `desktop-core` HTTP transport and manifest installs use `df_update_install`, both wired by `createTauriDesktopClient`.
