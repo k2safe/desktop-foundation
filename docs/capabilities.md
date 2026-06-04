@@ -21,7 +21,7 @@ artifacts/npm/foundation-capabilities.json
 ```json
 {
   "schemaVersion": 1,
-  "foundationVersion": "0.1.30",
+  "foundationVersion": "0.1.31",
   "capabilities": [
     {
       "id": "i18n",
