@@ -12,10 +12,12 @@ function printHelp() {
     "",
     "Usage:",
     "  desktop-foundation doctor [options]",
+    "  desktop-foundation smoke [options]",
     "  desktop-foundation ci [desktop-foundation-ci options]",
     "",
     "Commands:",
     "  doctor              Check whether the current product project follows the foundation contract.",
+    "  smoke               Run local headless smoke checks against the foundation bridge capability surface.",
     "  ci                  Forward options to desktop-foundation-ci.",
     "",
     "Doctor options:",
@@ -24,9 +26,14 @@ function printHelp() {
     "  --strict            Fail when the integration check has fail or warn findings.",
     "  --help              Show this help.",
     "",
+    "Smoke options:",
+    "  --report <path>     Write a JSON smoke report. Maps to desktop-foundation-ci --smoke-report.",
+    "  --summary           Print smoke summary. Enabled by default for smoke.",
+    "",
     "Examples:",
     "  pnpm exec desktop-foundation doctor",
     "  pnpm exec desktop-foundation doctor --report artifacts/foundation-doctor.json",
+    "  pnpm exec desktop-foundation smoke --report artifacts/foundation-smoke.json",
     "  pnpm exec desktop-foundation ci --integration-check"
   ].join("\n"));
 }
@@ -69,6 +76,24 @@ function normalizeDoctorArgs(argv) {
   return args;
 }
 
+function normalizeSmokeArgs(argv) {
+  const args = ["--capability-smoke", "--smoke-summary"];
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === "--help" || arg === "-h") {
+      printHelp();
+      process.exit(0);
+    }
+    if (arg === "--report") {
+      args.push("--smoke-report", readNext(argv, index, arg));
+      index += 1;
+      continue;
+    }
+    args.push(arg);
+  }
+  return args;
+}
+
 try {
   const rawArgs = process.argv.slice(2);
   const directDoctor = invokedAs.includes("doctor");
@@ -81,6 +106,10 @@ try {
 
   if (command === "doctor") {
     runCi(normalizeDoctorArgs(rawArgs));
+  }
+
+  if (command === "smoke") {
+    runCi(normalizeSmokeArgs(rawArgs));
   }
 
   if (command === "ci") {

@@ -12,6 +12,7 @@
     "visual:regression:update": "node scripts/visual-regression.mjs --update",
     "visual:regression:expanded": "node scripts/visual-regression.mjs --expanded",
     "visual:regression:expanded:update": "node scripts/visual-regression.mjs --expanded --update",
+    "smoke:capabilities": "pnpm --filter @desktop-foundation/bridge build && node packages/create-desktop-app/bin/desktop-foundation.mjs smoke --report artifacts/foundation-smoke.json",
     "smoke:multipart": "pnpm --filter @desktop-foundation/bridge build && node scripts/smoke-multipart-upload.mjs",
     "smoke:external-ai-demo": "node scripts/smoke-external-ai-demo.mjs",
     "pack:packages": "node scripts/pack-foundation-packages.mjs",

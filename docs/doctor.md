@@ -7,6 +7,7 @@
 ```bash
 pnpm exec desktop-foundation doctor --report artifacts/foundation-doctor.json
 pnpm exec desktop-foundation doctor --strict --report artifacts/foundation-doctor.json
+pnpm exec desktop-foundation smoke --report artifacts/foundation-smoke.json
 pnpm exec desktop-foundation ci --integration-check --integration-summary
 ```
 
@@ -15,6 +16,7 @@ pnpm exec desktop-foundation ci --integration-check --integration-summary
 - `--strict` 会在有 fail 或 warn 时退出失败，适合接入收口和 CI gate。
 - `desktop-foundation-ci --integration-check` 默认只在 fail 时退出失败；加 `--summary` 或 `--integration-summary` 才打印分组摘要。
 - 报告里的 `capabilities` 来自 [Foundation Capabilities](capabilities.md)，用于把 findings 聚合成产品能力矩阵。
+- `smoke` 用当前项目安装的 `@desktop-foundation/bridge` 跑本地 headless 能力自检，只验证底座 public API、adapter 边界、安全白名单、更新安装 dry-run 和诊断缓冲，不连接真实业务后端。
 
 ## Report 结构
 
@@ -40,6 +42,25 @@ pnpm exec desktop-foundation ci --integration-check --integration-summary
 ```
 
 先看 `summary.fail`。fail 必须修；warn 可以按阶段处理，但接入收口时建议用 `--strict` 清干净。`capabilities.summary` 用来判断哪一类底座能力还没收口；`disposition` 和 `recommendation` 说明处理时机，具体怎么修仍然回到 `findings`。
+
+## Smoke Report
+
+```bash
+pnpm exec desktop-foundation smoke --report artifacts/foundation-smoke.json
+```
+
+`smoke` 会在本地构造 memory session/storage/secureStorage、mock HTTP transport、mock desktop/files adapters，然后覆盖这些底座链路：
+
+- HTTP JSON 和 FormData multipart
+- session/storage/secureStorage round-trip
+- file dialog、text read/write、JSON export、download checksum
+- desktop openExternal/copyText/notify/window commands
+- update manifest check、download size/sha256、`installUpdate` dry-run adapter
+- `linkProxy` direct allowlist
+- blocked external URL、blocked file path、blocked download origin、blocked link target
+- request/audit diagnostics buffers
+
+它不检查业务 API、业务权限、对象存储、真实安装包签名或真实发布仓库。失败时优先看 `checks[].id` 和 `checks[].message`。
 
 ## Findings
 

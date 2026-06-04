@@ -98,6 +98,7 @@ artifacts/npm/foundation-capabilities.json
 当前底座只能用 demo 验证“接入形状”和“本地能力链路”：
 
 - `examples/demo-product` 验证 AppShell、theme、login、access、i18n、audit、updates UI、table/overlay、HTTP mock。
+- `pnpm smoke:capabilities` 或 `pnpm exec desktop-foundation smoke --report artifacts/foundation-smoke.json` 验证 bridge public API、adapter 边界、安全白名单、更新安装 dry-run 和 diagnostics。
 - `pnpm smoke:multipart` 验证 FormData 和 Tauri bridge multipart 序列化。
 - `pnpm smoke:external-ai-demo` 验证干净项目只通过 manifest 消费 tarball 后仍能 install、integration-check、build 和 mock upload。
 

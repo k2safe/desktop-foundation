@@ -3,7 +3,8 @@ import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync,
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const knownChecks = ["type-check", "build", "lint", "visual:regression"];
@@ -37,6 +38,9 @@ function printHelp() {
     "  --integration-check   Check whether a product project is wired to the foundation contract.",
     "  --integration-report <path> Write integration check report JSON with findings and capability matrix.",
     "  --integration-summary Print grouped fail/warn next actions and capability matrix. Alias: --summary.",
+    "  --capability-smoke    Run local headless smoke checks against the foundation bridge capability surface.",
+    "  --smoke-report <path> Write capability smoke report JSON.",
+    "  --smoke-summary       Print capability smoke summary. Alias: --capability-smoke-summary.",
     "",
     "Desktop packaging:",
     "  --package-desktop     Normalize built desktop artifacts into artifacts/desktop.",
@@ -99,7 +103,9 @@ function parseArgs(argv) {
     checksum: true,
     releasePlan: false,
     integrationCheck: false,
-    integrationSummary: false
+    integrationSummary: false,
+    capabilitySmoke: false,
+    smokeSummary: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -152,6 +158,20 @@ function parseArgs(argv) {
     }
     if (arg === "--integration-summary" || arg === "--summary") {
       options.integrationSummary = true;
+      continue;
+    }
+    if (arg === "--capability-smoke") {
+      options.capabilitySmoke = true;
+      options.requested.clear();
+      continue;
+    }
+    if (arg === "--smoke-report" || arg === "--capability-smoke-report") {
+      options.smokeReportPath = readNext(argv, index, arg);
+      index += 1;
+      continue;
+    }
+    if (arg === "--smoke-summary" || arg === "--capability-smoke-summary") {
+      options.smokeSummary = true;
       continue;
     }
     if (arg === "--script") {
@@ -1132,6 +1152,530 @@ function runIntegrationCheck(options, packageJson) {
   return report;
 }
 
+const smokeUpdateSha256 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+function assertSmoke(condition, message, details = {}) {
+  if (!condition) {
+    const error = new Error(message);
+    error.details = details;
+    throw error;
+  }
+}
+
+function smokeBodyKind(value) {
+  if (typeof FormData !== "undefined" && value instanceof FormData) return "FormData";
+  if (value && typeof value === "object") return "object";
+  return typeof value;
+}
+
+function createSmokeMultipartBody() {
+  if (typeof FormData === "undefined") {
+    throw new Error("Global FormData is not available in this Node runtime.");
+  }
+  const form = new FormData();
+  form.append("purpose", "desktop-foundation-capability-smoke");
+  form.append("release", "local");
+  return form;
+}
+
+function createSmokeKeyValueStore(initialValues = {}) {
+  const values = new Map(Object.entries(initialValues));
+  return {
+    get: (key) => (values.has(key) ? values.get(key) : null),
+    set: (key, value) => {
+      values.set(key, value);
+    },
+    remove: (key) => {
+      values.delete(key);
+    }
+  };
+}
+
+function createSmokeSecureStore() {
+  const values = new Map();
+  return {
+    async get(key) {
+      return values.has(key) ? values.get(key) : null;
+    },
+    async set(key, value) {
+      values.set(key, value);
+    },
+    async remove(key) {
+      values.delete(key);
+    }
+  };
+}
+
+function createSmokeSession(adapterLog) {
+  let token = "smoke-token";
+  return {
+    getToken: () => token,
+    setToken: (nextToken, remember) => {
+      token = nextToken;
+      adapterLog.push(`session.setToken remember=${Boolean(remember)}`);
+    },
+    clearToken: () => {
+      token = null;
+      adapterLog.push("session.clearToken");
+    }
+  };
+}
+
+function createSmokeTransport(adapterLog) {
+  return {
+    async request(request) {
+      adapterLog.push(`http.${request.method} ${request.url}`);
+      if (new URL(request.url).pathname.endsWith("/latest.json")) {
+        return {
+          version: "1.0.1",
+          channel: "stable",
+          notes: "Dry-run update package for desktop-foundation capability smoke.",
+          releasePageUrl: "https://docs.example.com/releases/v1.0.1",
+          downloadUrl: "https://updates.example.com/DesktopFoundation-1.0.1-macos.zip",
+          size: 128,
+          sha256: smokeUpdateSha256,
+          metadata: {
+            appName: "Desktop Foundation",
+            targetPath: "/Applications/Desktop Foundation.app",
+            relaunch: true,
+            smoke: true
+          }
+        };
+      }
+      return {
+        ok: true,
+        method: request.method,
+        url: request.url,
+        requestId: request.requestId,
+        namespace: request.namespace,
+        token: Boolean(request.token),
+        bodyKind: smokeBodyKind(request.body),
+        query: request.query
+      };
+    }
+  };
+}
+
+function createSmokeDesktop(adapterLog) {
+  return {
+    async openExternal(url) {
+      adapterLog.push(`desktop.openExternal ${url}`);
+    },
+    async copyText(text) {
+      adapterLog.push(`desktop.copyText length=${text.length}`);
+    },
+    async notify(options) {
+      adapterLog.push(`desktop.notify ${options.title}`);
+    },
+    async getWindowState() {
+      adapterLog.push("desktop.getWindowState");
+      return { x: 16, y: 24, width: 1280, height: 820, maximized: false, fullscreen: false };
+    },
+    async setWindowState(state) {
+      adapterLog.push(`desktop.setWindowState ${JSON.stringify(state)}`);
+    },
+    async setWindowTitle(title) {
+      adapterLog.push(`desktop.setWindowTitle ${title}`);
+    }
+  };
+}
+
+function createSmokeFiles(adapterLog) {
+  return {
+    async openFileDialog(options = {}) {
+      adapterLog.push(`files.openFileDialog ${options.directory ?? ""}`);
+      return { paths: ["/tmp/desktop-foundation-smoke/input.csv"], canceled: false };
+    },
+    async saveFileDialog(options = {}) {
+      adapterLog.push(`files.saveFileDialog ${options.defaultFileName ?? ""}`);
+      return { path: "/tmp/desktop-foundation-smoke/export.json", canceled: false };
+    },
+    async readTextFile(path) {
+      adapterLog.push(`files.readTextFile ${path}`);
+      return "id,name\n1,desktop-foundation";
+    },
+    async writeTextFile(path, content) {
+      adapterLog.push(`files.writeTextFile ${path} bytes=${content.length}`);
+      return path;
+    },
+    async exportJson(fileName) {
+      adapterLog.push(`files.exportJson ${fileName}`);
+      return `/tmp/desktop-foundation-smoke/${fileName}`;
+    },
+    async downloadFile(url, options = {}) {
+      adapterLog.push(`files.downloadFile ${url}`);
+      return {
+        path: options.path ?? `/tmp/desktop-foundation-smoke/${options.fileName ?? "DesktopFoundation-1.0.1-macos.zip"}`,
+        bytes: 128,
+        status: 200,
+        sha256: smokeUpdateSha256,
+        requestId: options.requestId
+      };
+    }
+  };
+}
+
+function resultMessage(value) {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") {
+    if (typeof value.message === "string") return value.message;
+    if (typeof value.status === "string") return value.status;
+    if ("ok" in value) return "ok";
+  }
+  return "ok";
+}
+
+async function loadBridgeModule(cwd) {
+  const productRequire = createRequire(resolve(cwd, "package.json"));
+  try {
+    const entry = productRequire.resolve("@desktop-foundation/bridge");
+    return {
+      source: entry,
+      module: await import(pathToFileURL(entry).href)
+    };
+  } catch (error) {
+    const fallback = resolve(packageRoot, "..", "desktop-bridge", "dist", "index.js");
+    if (existsSync(fallback)) {
+      return {
+        source: fallback,
+        module: await import(pathToFileURL(fallback).href)
+      };
+    }
+    throw new Error(
+      "@desktop-foundation/bridge could not be resolved from the current project. Install the foundation packages or run the bridge build before capability smoke."
+    );
+  }
+}
+
+async function expectDesktopError(task, expectedCode, normalizeDesktopError) {
+  try {
+    await task();
+  } catch (error) {
+    const normalized = normalizeDesktopError(error);
+    assertSmoke(
+      normalized.code === expectedCode,
+      `Expected ${expectedCode}, received ${normalized.code ?? normalized.message}`,
+      { expectedCode, actual: normalized }
+    );
+    return normalized;
+  }
+  throw new Error(`Expected ${expectedCode}, but the operation succeeded.`);
+}
+
+function buildSmokeClient(bridge, packageJson, adapterLog, auditEvents) {
+  const { createDesktopClient } = bridge;
+  return createDesktopClient({
+    product: packageJson.name ?? "desktop-foundation-smoke",
+    apiBaseURL: "https://api.example.com",
+    version: packageJson.version ?? "0.0.0",
+    session: createSmokeSession(adapterLog),
+    storage: createSmokeKeyValueStore({ locale: "zh-CN" }),
+    secureStorage: createSmokeSecureStore(),
+    transport: createSmokeTransport(adapterLog),
+    desktop: createSmokeDesktop(adapterLog),
+    files: createSmokeFiles(adapterLog),
+    updateConfig: {
+      manifestUrl: "https://updates.example.com/latest.json",
+      currentVersion: "1.0.0",
+      channel: "stable",
+      requireChecksumVerification: true,
+      installUpdate: async ({ downloadedPath, update }) => {
+        adapterLog.push(`updates.installUpdate dry-run ${downloadedPath ?? "missing"}`);
+        return {
+          status: "installing",
+          message: "Dry-run installer staged through the update install boundary.",
+          path: downloadedPath,
+          targetPath: String(update.metadata?.targetPath ?? "/Applications/Desktop Foundation.app"),
+          relaunchRequired: Boolean(update.metadata?.relaunch ?? true)
+        };
+      }
+    },
+    linkProxy: {
+      mode: "direct"
+    },
+    security: {
+      allowedRequestOrigins: ["api.example.com", "updates.example.com"],
+      allowedExternalOrigins: ["docs.example.com"],
+      allowedExternalSchemes: ["https"],
+      allowedDownloadDirectories: ["/tmp"],
+      allowedLinkProxyOrigins: ["api.example.com"],
+      allowedLinkTargetOrigins: ["status.example.com", "docs.example.com"]
+    },
+    onAuditEvent: (event) => {
+      auditEvents.push(event);
+    },
+    maxRequestLogEntries: 40,
+    maxAuditEvents: 60
+  });
+}
+
+function createCapabilitySmokeChecks({ bridge, client, bridgeSource }) {
+  const normalizeDesktopError = bridge.normalizeDesktopError ?? ((error) => ({ message: error instanceof Error ? error.message : String(error) }));
+  return [
+    {
+      id: "bridge-load",
+      group: "Runtime",
+      name: "Bridge package load",
+      run: async () => {
+        assertSmoke(typeof bridge.createDesktopClient === "function", "createDesktopClient export is missing.");
+        return { source: bridgeSource };
+      }
+    },
+    {
+      id: "http-json",
+      group: "Network",
+      name: "HTTP JSON",
+      run: async () => {
+        const result = await client.http.get("/capabilities/health", { requestId: "smoke-http-json" });
+        assertSmoke(result.ok === true, "HTTP JSON smoke did not return ok=true.", result);
+        assertSmoke(result.url === "https://api.example.com/capabilities/health", "HTTP JSON URL was not normalized through apiBaseURL.", result);
+        return result;
+      }
+    },
+    {
+      id: "http-multipart",
+      group: "Network",
+      name: "Multipart upload",
+      run: async () => {
+        const result = await client.http.post("/capabilities/upload", createSmokeMultipartBody(), {
+          requestId: "smoke-http-multipart"
+        });
+        assertSmoke(result.bodyKind === "FormData", "Multipart smoke did not preserve FormData at the bridge boundary.", result);
+        return result;
+      }
+    },
+    {
+      id: "session-storage",
+      group: "State",
+      name: "Session and storage",
+      run: async () => {
+        client.session.setToken("next-smoke-token", true);
+        client.storage.set("density", "compact");
+        await client.secureStorage.set("refresh-token", { stored: true });
+        const result = {
+          token: client.session.getToken(),
+          density: client.storage.get("density"),
+          secure: await client.secureStorage.get("refresh-token")
+        };
+        assertSmoke(result.token === "next-smoke-token", "Session token did not round-trip.", result);
+        assertSmoke(result.density === "compact", "Storage value did not round-trip.", result);
+        assertSmoke(result.secure?.stored === true, "Secure storage value did not round-trip.", result);
+        return result;
+      }
+    },
+    {
+      id: "files-download",
+      group: "Desktop",
+      name: "Files and download",
+      run: async () => {
+        const opened = await client.files.openFileDialog({ directory: "/tmp/desktop-foundation-smoke", multiple: false });
+        const saved = await client.files.saveFileDialog({ directory: "/tmp/desktop-foundation-smoke", defaultFileName: "capabilities.json" });
+        const written = await client.files.writeTextFile("/tmp/desktop-foundation-smoke/readme.txt", "desktop foundation smoke", { createDir: true });
+        const content = await client.files.readTextFile(written);
+        const exported = await client.files.exportJson("capabilities.json", { opened, saved }, { directory: "/tmp/desktop-foundation-smoke" });
+        const downloaded = await client.files.downloadFile("https://updates.example.com/manual.zip", {
+          directory: "/tmp/desktop-foundation-smoke",
+          fileName: "manual.zip",
+          auth: false,
+          requestId: "smoke-download"
+        });
+        assertSmoke(downloaded.sha256 === smokeUpdateSha256, "Download checksum was not returned by the file adapter.", downloaded);
+        return { opened, saved, written, content, exported, downloaded };
+      }
+    },
+    {
+      id: "desktop-commands",
+      group: "Desktop",
+      name: "Desktop commands",
+      run: async () => {
+        await client.desktop.copyText("desktop-foundation");
+        await client.desktop.notify({ title: "Capability smoke", body: "Desktop command bridge is ready." });
+        await client.desktop.openExternal("https://docs.example.com/desktop-foundation");
+        const before = (await client.desktop.getWindowState()) ?? { width: 1280, height: 820, maximized: false };
+        await client.desktop.setWindowTitle("Desktop Foundation Smoke");
+        await client.desktop.setWindowState({ width: before.width, height: before.height, maximized: before.maximized });
+        return before;
+      }
+    },
+    {
+      id: "updates",
+      group: "Release",
+      name: "Update install boundary",
+      run: async () => {
+        const check = await client.updates.checkForUpdate();
+        assertSmoke(check.available === true && check.update?.version === "1.0.1", "Update check did not detect the smoke manifest.", check);
+        const downloaded = await client.updates.downloadUpdate(check.update, {
+          directory: "/tmp/desktop-foundation-smoke",
+          auth: false,
+          requestId: "smoke-update-download"
+        });
+        assertSmoke(downloaded.sha256 === smokeUpdateSha256, "Update checksum verification did not preserve the expected sha256.", downloaded);
+        const installed = await client.updates.installUpdate(check.update);
+        assertSmoke(installed?.status === "installing", "Update install adapter did not return installing status.", installed ?? {});
+        return { check, downloaded, installed, state: client.updates.getState() };
+      }
+    },
+    {
+      id: "link-proxy",
+      group: "Network",
+      name: "Link proxy",
+      run: async () => {
+        const direct = await client.linkProxy.request("https://status.example.com/health", {
+          mode: "direct",
+          requestId: "smoke-link-direct"
+        });
+        await client.linkProxy.open("https://docs.example.com/releases");
+        return { direct, resolved: client.linkProxy.resolve("https://status.example.com/health") };
+      }
+    },
+    {
+      id: "security-guards",
+      group: "Policy",
+      name: "Security guards",
+      run: async () => {
+        const blockedExternal = await expectDesktopError(
+          () => client.desktop.openExternal("http://docs.example.com/insecure"),
+          "EXTERNAL_URL_BLOCKED",
+          normalizeDesktopError
+        );
+        const blockedPath = await expectDesktopError(
+          () => client.files.writeTextFile("/private/desktop-foundation-smoke.txt", "blocked"),
+          "FILE_PATH_BLOCKED",
+          normalizeDesktopError
+        );
+        const blockedDownload = await expectDesktopError(
+          () => client.files.downloadFile("https://blocked.example.com/package.zip", { directory: "/tmp", auth: false }),
+          "REQUEST_ORIGIN_BLOCKED",
+          normalizeDesktopError
+        );
+        const blockedLink = await expectDesktopError(
+          () => client.linkProxy.request("https://blocked.example.com/health", { mode: "direct" }),
+          "LINK_PROXY_TARGET_BLOCKED",
+          normalizeDesktopError
+        );
+        return {
+          blockedExternal: blockedExternal.code,
+          blockedPath: blockedPath.code,
+          blockedDownload: blockedDownload.code,
+          blockedLink: blockedLink.code
+        };
+      }
+    },
+    {
+      id: "diagnostics",
+      group: "Diagnostics",
+      name: "Request and audit buffers",
+      run: async () => {
+        client.diagnostics.recordAuditEvent({
+          action: "capability.smoke.manual",
+          ok: true,
+          metadata: { source: "desktop-foundation-ci" }
+        });
+        const requests = client.diagnostics.getRecentRequests();
+        const audits = client.diagnostics.getRecentAuditEvents();
+        assertSmoke(requests.length > 0, "Request diagnostics buffer is empty.");
+        assertSmoke(audits.length > 0, "Audit diagnostics buffer is empty.");
+        return { requests: requests.length, audits: audits.length };
+      }
+    }
+  ];
+}
+
+async function runSmokeCheck(check, normalizeDesktopError) {
+  const startedAt = Date.now();
+  try {
+    const detail = await check.run();
+    return {
+      id: check.id,
+      group: check.group,
+      name: check.name,
+      status: "pass",
+      durationMs: Date.now() - startedAt,
+      message: resultMessage(detail),
+      detail
+    };
+  } catch (error) {
+    const normalized = normalizeDesktopError(error);
+    return {
+      id: check.id,
+      group: check.group,
+      name: check.name,
+      status: "fail",
+      durationMs: Date.now() - startedAt,
+      message: normalized.message,
+      error: normalized,
+      details: error?.details
+    };
+  }
+}
+
+function printSmokeSummary(report) {
+  console.log("desktop-foundation-ci: capability smoke summary");
+  console.log(`  status: ${report.summary.status} (${report.summary.pass} pass, ${report.summary.fail} fail)`);
+  const failed = report.checks.filter((check) => check.status === "fail");
+  if (!failed.length) {
+    console.log("  all local bridge capability checks passed.");
+    return;
+  }
+  for (const check of failed) {
+    console.log(`  - ${check.id}: ${check.message}`);
+  }
+}
+
+async function runCapabilitySmoke(options, packageJson) {
+  const cwd = process.cwd();
+  const adapterLog = [];
+  const auditEvents = [];
+  const bridgeResult = await loadBridgeModule(cwd);
+  const bridge = bridgeResult.module;
+  const normalizeDesktopError = bridge.normalizeDesktopError ?? ((error) => ({ message: error instanceof Error ? error.message : String(error) }));
+  const client = buildSmokeClient(bridge, packageJson, adapterLog, auditEvents);
+  const checks = createCapabilitySmokeChecks({ bridge, client, bridgeSource: bridgeResult.source });
+  const results = [];
+
+  for (const check of checks) {
+    const result = await runSmokeCheck(check, normalizeDesktopError);
+    results.push(result);
+    const label = result.status.toUpperCase().padEnd(4);
+    console.log(`desktop-foundation-ci: SMOKE ${label} ${result.id} - ${result.message} (${result.durationMs} ms)`);
+  }
+
+  const summary = {
+    status: results.some((result) => result.status === "fail") ? "fail" : "pass",
+    pass: results.filter((result) => result.status === "pass").length,
+    fail: results.filter((result) => result.status === "fail").length
+  };
+  const report = {
+    generatedAt: new Date().toISOString(),
+    cwd,
+    packageName: packageJson.name,
+    bridgeSource: bridgeResult.source,
+    summary,
+    checks: results,
+    diagnostics: {
+      requests: client.diagnostics.getRecentRequests(),
+      audits: client.diagnostics.getRecentAuditEvents(),
+      adapterLog: adapterLog.slice(0, 100),
+      observedAuditEvents: auditEvents.slice(0, 100)
+    }
+  };
+
+  console.log(`desktop-foundation-ci: capability smoke ${summary.status} (${summary.pass} pass, ${summary.fail} fail)`);
+  if (options.smokeSummary) printSmokeSummary(report);
+
+  if (options.smokeReportPath) {
+    const reportPath = resolve(cwd, options.smokeReportPath);
+    mkdirSync(dirname(reportPath), { recursive: true });
+    writeFileSync(reportPath, JSON.stringify(report, null, 2) + "\n");
+    console.log("desktop-foundation-ci: wrote " + reportPath);
+  }
+
+  if (summary.fail > 0) {
+    throw new Error("desktop-foundation-ci: capability smoke failed.");
+  }
+  return report;
+}
+
 function safeSegment(value) {
   return String(value || "desktop-app")
     .trim()
@@ -1478,18 +2022,23 @@ function writeReleasePlan(options, packageJson, tauriConfig, packageResult, mani
   return plan;
 }
 
-try {
+async function main() {
   const options = parseArgs(process.argv.slice(2));
   const packageJson = readPackageJson();
   const tauriConfig = readTauriConfig();
   const runner = detectRunner(packageJson.packageManager);
   if (options.integrationCheck) runIntegrationCheck(options, packageJson);
+  if (options.capabilitySmoke) await runCapabilitySmoke(options, packageJson);
   const scripts = [...options.requested, ...options.customScripts];
   for (const script of scripts) runScript(script, packageJson, runner, options.strict);
   const packageResult = options.packageDesktop ? packageDesktopArtifacts(options, packageJson, tauriConfig) : null;
   const manifestResult = options.manifest ? writeManifest(options, packageJson, tauriConfig, packageResult) : null;
   if (options.releasePlan) writeReleasePlan(options, packageJson, tauriConfig, packageResult, manifestResult);
   console.log("desktop-foundation-ci: complete");
+}
+
+try {
+  await main();
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   const message = error instanceof Error ? error.message : String(error);

@@ -54,7 +54,7 @@ function originAllowed(url: string, patterns: string[] | undefined) {
 
 function schemeAllowed(url: string, schemes: string[] | undefined) {
   if (!schemes?.length) return true;
-  const parsed = new URL(url, window.location.href);
+  const parsed = new URL(url, baseLocationHref());
   const scheme = parsed.protocol.replace(":", "").toLowerCase();
   return schemes.some((item) => item.toLowerCase() === scheme);
 }
