@@ -2,7 +2,7 @@
 
 这份文档给真实业务项目或外部 AI 使用。目标是把产品的“更新中心”接到底座能力，而不是在业务页面里自己处理下载、替换 `.app`、重启或打开安装器。
 
-底座从 `v0.1.32` 开始已经把默认 Tauri 安装边界公开完整：
+底座从 `v0.1.32` 开始已经把默认 Tauri 安装边界公开完整；从 `v0.1.33` 开始提供可直接复用的 `UpdateCenterPanel`：
 
 - `createTauriDesktopClient(...)` 会把 manifest update flow 接到 `plugin:desktop-core|df_update_install`。
 - `createTauriUpdateInstallAdapter(...)` 从 `@desktop-foundation/bridge` 根入口导出，手动组装能力时也能复用。
@@ -34,7 +34,7 @@
 稳定接入优先读取当前 release manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.32/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.33/foundation-packages.json
 ```
 
 把 `consumer.dependencies`、`consumer.devDependencies` 和 `consumer.pnpm.overrides` 合并到产品 `package.json`。不要在产品提示词或代码里写死某个旧 tarball URL。
