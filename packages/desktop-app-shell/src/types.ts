@@ -1,5 +1,13 @@
 import type { DesktopClient, DesktopClientConfig } from "@desktop-foundation/bridge";
-import type { AccessControlConfig, DesktopThemeInput, LocaleCode, LocaleDictionary } from "@desktop-foundation/ui-react";
+import type {
+  AccessControlConfig,
+  DesktopThemeInput,
+  LocaleCode,
+  LocaleDictionary,
+  LocaleFormatDefaults,
+  LocaleMissingKeyEvent,
+  LocaleMissingKeyObserver
+} from "@desktop-foundation/ui-react";
 import type { ReactNode } from "react";
 import type { DesktopErrorBoundaryProps } from "./DesktopErrorBoundary";
 
@@ -57,6 +65,10 @@ export interface DesktopAppShellProps<TUser extends DesktopSessionUser = Desktop
   locale?: LocaleCode;
   messages?: LocaleDictionary;
   dictionaries?: Record<string, LocaleDictionary>;
+  formatDefaults?: LocaleFormatDefaults;
+  onMissingLocaleKey?: (event: LocaleMissingKeyEvent) => void;
+  missingKeyObserver?: LocaleMissingKeyObserver;
+  warnOnMissingLocaleKey?: boolean;
   accessControl?: AccessControlConfig;
   errorBoundary?: false | Omit<DesktopErrorBoundaryProps, "children">;
   client: DesktopClientConfig | DesktopClient;

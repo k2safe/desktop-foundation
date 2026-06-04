@@ -28,7 +28,7 @@ When a product starts consuming the foundation, run the static integration contr
 pnpm exec desktop-foundation-ci --integration-check --integration-summary --integration-report artifacts/foundation-integration.json
 ```
 
-The check verifies package pins, pnpm overrides, shared stylesheet import, `DesktopAppShell`, theme template runtime, product adapter usage, copied-source risk, table/overlay overflow risk, login shell usage, Tauri `desktop-core-rs`, capabilities, update configuration, and expected scripts. Missing contract items fail; optional rollout items such as visual baselines or update manifest wiring are reported as warnings.
+The check verifies package pins, pnpm overrides, shared stylesheet import, `DesktopAppShell`, theme template runtime, product adapter usage, i18n surface, missing-key diagnostics, locale formatters, audit events, copied-source risk, table/overlay overflow risk, login shell usage, Tauri `desktop-core-rs`, capabilities, update configuration, and expected scripts. Missing contract items fail; optional rollout items such as visual baselines or update manifest wiring are reported as warnings.
 
 For a CI gate that should fail on warnings as well, add `--strict` after the product has intentionally resolved or accepted every warning.
 

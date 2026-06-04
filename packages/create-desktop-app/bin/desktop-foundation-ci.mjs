@@ -654,6 +654,47 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "warn", "audit-events", "No audit event sink was detected; wire onAuditEvent or auditObserver before real business rollout.");
   }
 
+  const i18nSurfaceFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\blocale\s*=/,
+    /\blocale\s*:/,
+    /\bmessages\s*=/,
+    /\bmessages\s*:/,
+    /\bdictionaries\s*=/,
+    /\bdictionaries\s*:/
+  ]);
+  if (i18nSurfaceFiles.length) {
+    pushFinding(findings, "pass", "i18n", "Locale surface detected.", { files: i18nSurfaceFiles });
+  } else {
+    pushFinding(findings, "warn", "i18n", "No locale surface was detected; set locale/messages/dictionaries in the product adapter before multilingual rollout.");
+  }
+
+  const i18nDiagnosticsFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\bonMissingLocaleKey\s*=/,
+    /\bonMissingLocaleKey\s*:/,
+    /\bonMissingKey\s*=/,
+    /\bonMissingKey\s*:/,
+    /\bmissingKeyObserver\s*=/,
+    /\bmissingKeyObserver\s*:/,
+    /\bgetMissingLocaleKeys\s*\(/
+  ]);
+  if (i18nDiagnosticsFiles.length) {
+    pushFinding(findings, "pass", "i18n:missing-key", "Missing locale key diagnostics detected.", { files: i18nDiagnosticsFiles });
+  } else {
+    pushFinding(findings, "warn", "i18n:missing-key", "No missing-key diagnostics were detected; wire onMissingLocaleKey/onMissingKey or run getMissingLocaleKeys before multilingual rollout.");
+  }
+
+  const i18nFormatterFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\bformatDefaults\s*=/,
+    /\bformatDefaults\s*:/,
+    /\bformat\.(number|currency|date|time|dateTime)\s*\(/,
+    /\bcreateLocaleFormatters\s*\(/
+  ]);
+  if (i18nFormatterFiles.length) {
+    pushFinding(findings, "pass", "i18n:formatters", "Locale formatter policy detected.", { files: i18nFormatterFiles });
+  } else {
+    pushFinding(findings, "warn", "i18n:formatters", "No locale formatter policy was detected; use formatDefaults or useLocale().format for number/date/currency formatting.");
+  }
+
   const copiedFoundationSources = findProjectFiles(files, cwd, [
     /^packages\/desktop-ui-react\/src\//,
     /^packages\/desktop-bridge\/src\//,

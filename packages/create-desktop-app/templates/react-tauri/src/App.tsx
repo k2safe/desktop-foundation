@@ -43,6 +43,12 @@ export function App({ client }: { client: DesktopClient }) {
       locale={adapter.locale}
       messages={adapter.messages}
       dictionaries={adapter.dictionaries}
+      formatDefaults={adapter.formatDefaults}
+      onMissingLocaleKey={(event) => {
+        if (import.meta.env.DEV) {
+          console.warn("[foundation:i18n]", event);
+        }
+      }}
       accessControl={adapter.accessControl}
       session={{ loadUser: async () => adapter.user }}
     >

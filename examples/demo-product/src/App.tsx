@@ -108,6 +108,10 @@ export function App() {
       theme={demoProductTheme}
       client={client}
       locale="zh-CN"
+      formatDefaults={{ currency: "USD", timeZone: "Asia/Shanghai" }}
+      onMissingLocaleKey={(event) => {
+        setLogs((current) => [`${new Date().toISOString()} i18n missing ${event.locale}:${event.key}`, ...current].slice(0, 10));
+      }}
       accessControl={{
         features: {
           desktopNotify: true,

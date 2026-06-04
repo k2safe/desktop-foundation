@@ -11,6 +11,10 @@ export function DesktopAppShell<TUser extends DesktopSessionUser = DesktopSessio
   locale,
   messages,
   dictionaries,
+  formatDefaults,
+  onMissingLocaleKey,
+  missingKeyObserver,
+  warnOnMissingLocaleKey,
   accessControl,
   errorBoundary,
   client,
@@ -27,7 +31,15 @@ export function DesktopAppShell<TUser extends DesktopSessionUser = DesktopSessio
 
   return (
     <ThemeProvider theme={theme} className={className}>
-      <LocaleProvider locale={locale} messages={messages} dictionaries={dictionaries}>
+      <LocaleProvider
+        locale={locale}
+        messages={messages}
+        dictionaries={dictionaries}
+        formatDefaults={formatDefaults}
+        onMissingKey={onMissingLocaleKey}
+        missingKeyObserver={missingKeyObserver}
+        warnOnMissingKey={warnOnMissingLocaleKey}
+      >
         <ToastProvider>
           <ConfirmProvider>
             {errorBoundary === false ? content : <DesktopErrorBoundary {...errorBoundary}>{content}</DesktopErrorBoundary>}

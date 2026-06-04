@@ -7,7 +7,7 @@
 先读取 foundation package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.25/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.26/foundation-packages.json
 ```
 
 如果明确要追 `main` 上的最新底座，再读取 development manifest：
@@ -88,6 +88,24 @@ export function App() {
 ```
 
 底座只翻译通用 shell/组件文案；菜单、页面标题、业务字段、接口错误仍由产品项目自己维护。业务显式传入的 `title`、`submitLabel`、`emptyTitle` 等 prop 优先级高于语言包。
+
+数字、日期和金额格式化也从底座入口接入。产品在 adapter 放默认币种和时区，页面内使用 `useLocale().format`，不要在各业务页散落 `new Intl.NumberFormat(...)`：
+
+```tsx
+<DesktopAppShell
+  theme={template.theme}
+  client={clientConfig}
+  locale={productAdapter.locale}
+  messages={productAdapter.messages}
+  dictionaries={productAdapter.dictionaries}
+  formatDefaults={{ currency: productAdapter.defaultCurrency, timeZone: productAdapter.timeZone }}
+  onMissingLocaleKey={(event) => reportDiagnostic("i18n.missing_key", event)}
+>
+  <Routes />
+</DesktopAppShell>
+```
+
+缺失 key 只记录 key 和 valueKeys，不记录真实业务值。接入真实多语言前，产品可以用 `getMissingLocaleKeys()` 在 CI 或 build validation 里检查自定义字典。
 
 权限和功能开关也从 `DesktopAppShell` 进入。当前用户权限放在 session user 的 `permissions` / `role` / `roles`，产品本地 feature flag 放在 `accessControl.features`：
 
@@ -261,6 +279,7 @@ pnpm exec desktop-foundation-ci \
 - 菜单、命令、按钮和设置分组的权限字段走底座 access control，不在业务页面里重复手写过滤。
 - 请求错误、render error 和业务错误码走 `DesktopError` / `DesktopErrorBoundary`，不要每个页面单独发明错误形状。
 - 登录、退出、权限拒绝、更新、文件下载和关键业务动作能进入 `client.diagnostics.getRecentAuditEvents()`，真实业务配置了 `onAuditEvent` 或 `auditObserver`。
+- 多语言接入传入 `locale`、`formatDefaults` 和 `onMissingLocaleKey`，金额/日期/数字使用 `useLocale().format`。
 - 表格、筛选、表单、弹窗、设置页优先用 foundation 组件。
 - 主题通过模板选择和 token 覆盖完成，不能在业务页大面积覆盖底座 CSS。
 - 更新中心能看到 `client.updates.getState()` 状态流转。

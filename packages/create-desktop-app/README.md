@@ -49,4 +49,4 @@ pnpm exec desktop-foundation-ci --type-check --build
 pnpm exec desktop-foundation-ci --package-desktop --manifest --release-plan --github-repo owner/repository
 ```
 
-`--integration-check` validates the required foundation packages, shared stylesheet, app shell, theme template runtime, product adapter, copied-source risk, table/overlay overflow risk, Tauri core dependency, default capability, update surface, and expected product scripts. `--release-plan --github-repo` writes release metadata with GitHub Release URLs, checksum assets, manifest URL, and `gh release` command arguments without forcing a specific GitHub Actions workflow.
+`--integration-check` validates the required foundation packages, shared stylesheet, app shell, theme template runtime, product adapter, i18n surface, audit events, copied-source risk, table/overlay overflow risk, Tauri core dependency, default capability, update surface, and expected product scripts. `--release-plan --github-repo` writes release metadata with GitHub Release URLs, checksum assets, manifest URL, and `gh release` command arguments without forcing a specific GitHub Actions workflow.

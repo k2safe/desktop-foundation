@@ -1,4 +1,4 @@
-import { Button, CodeBlock, ContentPanel, MetricGrid, PageHeader, ProgressBar } from "@desktop-foundation/ui-react";
+import { Button, CodeBlock, ContentPanel, MetricGrid, PageHeader, ProgressBar, useLocale } from "@desktop-foundation/ui-react";
 import type { DesktopClient } from "@desktop-foundation/bridge";
 import { orders } from "../data";
 
@@ -9,6 +9,7 @@ export interface DashboardProps {
 }
 
 export function Dashboard({ client, logs, onOpenCommands }: DashboardProps) {
+  const { format } = useLocale();
   const totalAmount = orders.reduce((sum, row) => sum + row.amount, 0);
 
   return (
@@ -21,7 +22,7 @@ export function Dashboard({ client, logs, onOpenCommands }: DashboardProps) {
       <MetricGrid
         metrics={[
           { id: "orders", label: "今日订单", value: orders.length, hint: "demo data", trend: "+12%" },
-          { id: "amount", label: "业务金额", value: `$${totalAmount.toFixed(2)}`, hint: "USD" },
+          { id: "amount", label: "业务金额", value: format.currency(totalAmount, "USD"), hint: "USD" },
           { id: "secure", label: "处理队列", value: "ready", hint: "workflow" },
           { id: "desktop", label: "桌面能力", value: "ready", hint: "files / notify" }
         ]}

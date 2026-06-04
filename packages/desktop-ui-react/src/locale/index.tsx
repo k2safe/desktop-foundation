@@ -1,20 +1,53 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useRef, type ReactNode } from "react";
 
 export type LocaleCode = "zh-CN" | "en-US" | (string & {});
 export type LocaleMessageValue = string | number;
 export type LocaleMessageValues = Record<string, LocaleMessageValue>;
 export type LocaleDictionary = Record<string, string>;
+export type LocaleDateValue = Date | number | string;
+
+export interface LocaleMissingKeyEvent {
+  key: string;
+  locale: LocaleCode;
+  fallback?: string;
+  resolvedFromFallback?: boolean;
+  valueKeys?: string[];
+  timestamp: number;
+}
+
+export interface LocaleMissingKeyObserver {
+  onMissingKey?: (event: LocaleMissingKeyEvent) => void;
+}
+
+export interface LocaleFormatDefaults {
+  locale?: LocaleCode;
+  currency?: string;
+  timeZone?: string;
+}
+
+export interface LocaleFormatters {
+  number: (value: number, options?: Intl.NumberFormatOptions) => string;
+  currency: (value: number, currencyOrOptions?: string | Intl.NumberFormatOptions, options?: Intl.NumberFormatOptions) => string;
+  date: (value: LocaleDateValue, options?: Intl.DateTimeFormatOptions) => string;
+  time: (value: LocaleDateValue, options?: Intl.DateTimeFormatOptions) => string;
+  dateTime: (value: LocaleDateValue, options?: Intl.DateTimeFormatOptions) => string;
+}
 
 export interface LocaleContextValue {
   locale: LocaleCode;
   messages: LocaleDictionary;
   t: (key: string, values?: LocaleMessageValues, fallback?: string) => string;
+  format: LocaleFormatters;
 }
 
 export interface LocaleProviderProps {
   locale?: LocaleCode;
   messages?: LocaleDictionary;
   dictionaries?: Record<string, LocaleDictionary>;
+  formatDefaults?: LocaleFormatDefaults;
+  onMissingKey?: (event: LocaleMissingKeyEvent) => void;
+  missingKeyObserver?: LocaleMissingKeyObserver;
+  warnOnMissingKey?: boolean;
   children: ReactNode;
 }
 
@@ -237,27 +270,119 @@ function formatMessage(template: string, values?: LocaleMessageValues) {
   });
 }
 
-function createLocaleContextValue(locale: LocaleCode, messages: LocaleDictionary): LocaleContextValue {
+function toDate(value: LocaleDateValue) {
+  return value instanceof Date ? value : new Date(value);
+}
+
+const dateTimeOptionKeys = new Set([
+  "dateStyle",
+  "timeStyle",
+  "weekday",
+  "era",
+  "year",
+  "month",
+  "day",
+  "dayPeriod",
+  "hour",
+  "minute",
+  "second",
+  "fractionalSecondDigits",
+  "timeZoneName"
+]);
+
+function hasDateTimeStyleOptions(options?: Intl.DateTimeFormatOptions) {
+  return options ? Object.keys(options).some((key) => dateTimeOptionKeys.has(key)) : false;
+}
+
+export function createLocaleFormatters(locale: LocaleCode, defaults: LocaleFormatDefaults = {}): LocaleFormatters {
+  const resolvedLocale = defaults.locale ?? locale;
+
   return {
-    locale,
-    messages,
-    t: (key, values, fallback) => formatMessage(messages[key] ?? fallback ?? key, values)
+    number: (value, options) => new Intl.NumberFormat(resolvedLocale, options).format(value),
+    currency: (value, currencyOrOptions, options) => {
+      const currency = typeof currencyOrOptions === "string" ? currencyOrOptions : defaults.currency ?? "USD";
+      const mergedOptions = typeof currencyOrOptions === "object" ? currencyOrOptions : options;
+      return new Intl.NumberFormat(resolvedLocale, { style: "currency", currency, ...mergedOptions }).format(value);
+    },
+    date: (value, options) =>
+      new Intl.DateTimeFormat(resolvedLocale, { timeZone: defaults.timeZone, ...(hasDateTimeStyleOptions(options) ? {} : { dateStyle: "medium" }), ...options }).format(toDate(value)),
+    time: (value, options) =>
+      new Intl.DateTimeFormat(resolvedLocale, { timeZone: defaults.timeZone, ...(hasDateTimeStyleOptions(options) ? {} : { timeStyle: "short" }), ...options }).format(toDate(value)),
+    dateTime: (value, options) =>
+      new Intl.DateTimeFormat(resolvedLocale, {
+        timeZone: defaults.timeZone,
+        ...(hasDateTimeStyleOptions(options) ? {} : { dateStyle: "medium", timeStyle: "short" }),
+        ...options
+      }).format(toDate(value))
   };
 }
 
-const defaultLocaleContext = createLocaleContextValue("zh-CN", zhCNMessages);
+export function getMissingLocaleKeys(reference: LocaleDictionary, target: LocaleDictionary) {
+  return Object.keys(reference).filter((key) => target[key] === undefined);
+}
+
+function createLocaleContextValue(locale: LocaleCode, messages: LocaleDictionary, format: LocaleFormatters): LocaleContextValue {
+  return {
+    locale,
+    messages,
+    t: (key, values, fallback) => formatMessage(messages[key] ?? fallback ?? key, values),
+    format
+  };
+}
+
+const defaultLocaleContext = createLocaleContextValue("zh-CN", zhCNMessages, createLocaleFormatters("zh-CN"));
 const LocaleContext = createContext<LocaleContextValue>(defaultLocaleContext);
 
-export function LocaleProvider({ locale = "zh-CN", messages, dictionaries, children }: LocaleProviderProps) {
+export function LocaleProvider({
+  locale = "zh-CN",
+  messages,
+  dictionaries,
+  formatDefaults,
+  onMissingKey,
+  missingKeyObserver,
+  warnOnMissingKey = false,
+  children
+}: LocaleProviderProps) {
+  const reportedMissingKeysRef = useRef(new Set<string>());
   const value = useMemo(() => {
-    const mergedMessages = {
-      ...zhCNMessages,
+    const localeMessages = {
       ...(builtinLocaleDictionaries[locale] ?? {}),
       ...(dictionaries?.[locale] ?? {}),
       ...(messages ?? {})
     };
-    return createLocaleContextValue(locale, mergedMessages);
-  }, [dictionaries, locale, messages]);
+    const mergedMessages = {
+      ...zhCNMessages,
+      ...localeMessages
+    };
+    const format = createLocaleFormatters(locale, formatDefaults);
+    return {
+      ...createLocaleContextValue(locale, mergedMessages, format),
+      t: (key: string, values?: LocaleMessageValues, fallback?: string) => {
+        const hasKey = Object.prototype.hasOwnProperty.call(mergedMessages, key);
+        const hasLocaleKey = Object.prototype.hasOwnProperty.call(localeMessages, key);
+        if (!hasLocaleKey || !hasKey) {
+          const missingKeyId = `${locale}:${key}`;
+          if (!reportedMissingKeysRef.current.has(missingKeyId)) {
+            reportedMissingKeysRef.current.add(missingKeyId);
+            const event: LocaleMissingKeyEvent = {
+              key,
+              locale,
+              fallback,
+              resolvedFromFallback: hasKey,
+              valueKeys: values ? Object.keys(values) : undefined,
+              timestamp: Date.now()
+            };
+            missingKeyObserver?.onMissingKey?.(event);
+            onMissingKey?.(event);
+            if (warnOnMissingKey && typeof console !== "undefined") {
+              console.warn(`[desktop-foundation:i18n] Missing locale key "${key}" for ${locale}`);
+            }
+          }
+        }
+        return formatMessage(hasKey ? mergedMessages[key] : fallback ?? key, values);
+      }
+    };
+  }, [dictionaries, formatDefaults, locale, messages, missingKeyObserver, onMissingKey, warnOnMissingKey]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

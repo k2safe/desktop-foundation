@@ -163,6 +163,32 @@ createDesktopClient({
 
 The bridge automatically records desktop/file/update/link-proxy failures and app-shell records login, logout, session-load failure, and access-denied events. See [Audit Events](audit-events.md).
 
+## Locale Formatting And Missing Keys
+
+`useLocale()` exposes translation and formatter helpers:
+
+```tsx
+const { t, format } = useLocale();
+
+t("common.confirm");
+format.currency(1280.5, "USD");
+format.dateTime(Date.now());
+```
+
+`DesktopAppShell` passes i18n policy to `LocaleProvider`:
+
+```tsx
+<DesktopAppShell
+  locale="en-US"
+  messages={messages}
+  dictionaries={dictionaries}
+  formatDefaults={{ currency: "USD", timeZone: "America/New_York" }}
+  onMissingLocaleKey={(event) => reportDiagnostic(event)}
+/>
+```
+
+Use `getMissingLocaleKeys(reference, target)` for build-time checks when products own additional dictionaries.
+
 ## Desktop
 
 ```ts

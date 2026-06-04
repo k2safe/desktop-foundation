@@ -1,6 +1,6 @@
 {
   "name": "@desktop-foundation/ui-react",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "type": "module",
   "sideEffects": [
     "./src/styles.css"

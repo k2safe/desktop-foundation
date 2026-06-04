@@ -11,7 +11,8 @@ import {
   type DesktopUser,
   type DesktopUserMenuItem,
   type LocaleCode,
-  type LocaleDictionary
+  type LocaleDictionary,
+  type LocaleFormatDefaults
 } from "@desktop-foundation/ui-react";
 import { menus } from "./menus";
 import { productTemplate, productTheme } from "./theme";
@@ -23,6 +24,7 @@ export interface ProductAdapter {
   locale: LocaleCode;
   messages?: LocaleDictionary;
   dictionaries?: Record<string, LocaleDictionary>;
+  formatDefaults?: LocaleFormatDefaults;
   accessControl?: AccessControlConfig;
   className: string;
   layout: DesktopLayoutVariant;
@@ -40,6 +42,9 @@ export const productAdapter: ProductAdapter = {
   appName: "{{APP_NAME}}",
   theme: productTheme,
   locale: "en-US",
+  formatDefaults: {
+    currency: "USD"
+  },
   accessControl: {
     features: {
       updates: true,
