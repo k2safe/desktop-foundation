@@ -7,7 +7,7 @@
 先读取 foundation package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.24/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.25/foundation-packages.json
 ```
 
 如果明确要追 `main` 上的最新底座，再读取 development manifest：
@@ -41,7 +41,8 @@ import "@desktop-foundation/ui-react/styles.css";
 5. 用 `DesktopLoginPage` 接登录页，业务字段通过 `extraFields` 传入。
 6. 把表格、表单、弹窗、设置页替换为 foundation 组件。
 7. 配置 `updateConfig`，先接 manifest 检查，安装器后补。
-8. 跑验收命令，失败项先修复再迁移业务页面。
+8. 配置 `onAuditEvent` 或 `auditObserver`，把底座 audit events 接到产品日志/审计服务。
+9. 跑验收命令，失败项先修复再迁移业务页面。
 
 ## 2. 最小代码形状
 
@@ -131,6 +132,23 @@ const commands = [
 ```
 
 HTTP、网络、未授权、业务 code 会被标准化为 `DesktopError`。业务请求优先用 `useRequest` / `useMutation`，自定义 `try/catch` 使用 `normalizeDesktopError(caught)`，不要在各页面里散落 `new Error(...)` 和字符串错误。
+
+审计/诊断事件在 client 边界接入。底座会自动记录登录、退出、权限拒绝、桌面能力、文件下载、更新检查和失败请求；真实业务把 `onAuditEvent` 转发到自己的上报服务：
+
+```tsx
+<DesktopAppShell
+  theme={template.theme}
+  client={{
+    ...clientConfig,
+    onAuditEvent: (event) => reportAuditEvent(event),
+    maxAuditEvents: 200
+  }}
+>
+  <Routes />
+</DesktopAppShell>
+```
+
+业务页面需要补充关键动作时，调用 `client.diagnostics.recordAuditEvent({ action, ok, metadata })`。不要把密码、token、完整文件内容或其它敏感信息放进 `metadata`。
 
 登录页保留在底座，产品只传文案、认证逻辑和额外字段：
 
@@ -242,6 +260,7 @@ pnpm exec desktop-foundation-ci \
 - 菜单、顶部头像、退出入口走 `DesktopLayout`。
 - 菜单、命令、按钮和设置分组的权限字段走底座 access control，不在业务页面里重复手写过滤。
 - 请求错误、render error 和业务错误码走 `DesktopError` / `DesktopErrorBoundary`，不要每个页面单独发明错误形状。
+- 登录、退出、权限拒绝、更新、文件下载和关键业务动作能进入 `client.diagnostics.getRecentAuditEvents()`，真实业务配置了 `onAuditEvent` 或 `auditObserver`。
 - 表格、筛选、表单、弹窗、设置页优先用 foundation 组件。
 - 主题通过模板选择和 token 覆盖完成，不能在业务页大面积覆盖底座 CSS。
 - 更新中心能看到 `client.updates.getState()` 状态流转。

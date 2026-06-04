@@ -32,10 +32,35 @@ export function useLogin<TUser extends DesktopSessionUser = DesktopSessionUser, 
         const nextPayload = { ...payload, ...override } as TPayload;
         const reply = await config.login(client, nextPayload);
         session.setAuthenticated(reply.token, reply.user ?? null, reply.remember ?? nextPayload.remember);
+        client.diagnostics.recordAuditEvent({
+          action: "auth.login.success",
+          ok: true,
+          metadata: {
+            account: nextPayload.account,
+            remember: reply.remember ?? nextPayload.remember,
+            userId: reply.user?.id
+          }
+        });
         config.onSuccess?.(reply);
         return reply;
       } catch (caught) {
         const normalized = normalizeDesktopError(caught, { message: "Login failed" });
+        client.diagnostics.recordAuditEvent({
+          action: "auth.login.failed",
+          level: "error",
+          ok: false,
+          message: normalized.message,
+          metadata: { account: payload.account },
+          error: {
+            name: normalized.name,
+            message: normalized.message,
+            code: normalized.code,
+            status: normalized.status,
+            kind: normalized.kind,
+            retryable: normalized.retryable,
+            requestId: normalized.requestId
+          }
+        });
         setError(normalized);
         throw normalized;
       } finally {

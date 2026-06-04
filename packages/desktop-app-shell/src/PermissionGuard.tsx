@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
-import { ErrorState, useAccess, useLocale, type AccessMatchMode, type AccessRule } from "@desktop-foundation/ui-react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { createAccessRule, ErrorState, useAccess, useLocale, type AccessMatchMode, type AccessRule } from "@desktop-foundation/ui-react";
+import { useDesktopClient } from "./DesktopClientProvider";
 
 export interface AccessGuardProps extends AccessRule {
   access?: AccessRule;
@@ -27,8 +28,40 @@ export function AccessDeniedState({ title, description, action, className }: Acc
 }
 
 export function AccessGuard({ access, children, fallback = null, ...rule }: AccessGuardProps) {
+  const client = useDesktopClient();
   const { canAccess } = useAccess();
-  return <>{canAccess({ access, ...rule }) ? children : fallback}</>;
+  const accessRule = useMemo(
+    () => ({ access, ...rule }),
+    [access, rule.feature, rule.featureMode, rule.features, rule.permission, rule.permissionMode, rule.permissions, rule.role, rule.roleMode, rule.roles]
+  );
+  const normalizedRule = useMemo(() => createAccessRule(accessRule), [accessRule]);
+  const auditKey = useMemo(() => JSON.stringify(normalizedRule ?? {}), [normalizedRule]);
+  const lastDeniedAuditKey = useRef<string | null>(null);
+  const allowed = canAccess(accessRule);
+
+  useEffect(() => {
+    if (allowed) {
+      lastDeniedAuditKey.current = null;
+      return;
+    }
+    if (lastDeniedAuditKey.current === auditKey) return;
+    lastDeniedAuditKey.current = auditKey;
+    client.diagnostics.recordAuditEvent({
+      action: "access.denied",
+      level: "warn",
+      ok: false,
+      metadata: {
+        features: normalizedRule?.features,
+        featureMode: normalizedRule?.featureMode,
+        permissions: normalizedRule?.permissions,
+        permissionMode: normalizedRule?.permissionMode,
+        roles: normalizedRule?.roles,
+        roleMode: normalizedRule?.roleMode
+      }
+    });
+  }, [allowed, auditKey, client, normalizedRule]);
+
+  return <>{allowed ? children : fallback}</>;
 }
 
 export interface PermissionGuardProps {

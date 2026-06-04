@@ -30,7 +30,7 @@ function parseArgs(argv) {
       options.output = resolve(argv[index + 1] || "");
       index += 1;
     } else if (arg === "--help" || arg === "-h") {
-      console.log("write-release-package-manifest --tag v0.1.24 [--repo owner/repo] [--source file] [--output file]");
+      console.log("write-release-package-manifest --tag v0.1.25 [--repo owner/repo] [--source file] [--output file]");
       process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${arg}`);

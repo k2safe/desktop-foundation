@@ -642,6 +642,18 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "warn", "access-control", "No access control surface detected; define permissions/features in product-adapter, menus, commands, or page guards before real business rollout.");
   }
 
+  const auditEventFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\bonAuditEvent\s*:/,
+    /\bauditObserver\s*:/,
+    /\brecordAuditEvent\s*\(/,
+    /\bgetRecentAuditEvents\s*\(/
+  ]);
+  if (auditEventFiles.length) {
+    pushFinding(findings, "pass", "audit-events", "Audit event surface detected.", { files: auditEventFiles });
+  } else {
+    pushFinding(findings, "warn", "audit-events", "No audit event sink was detected; wire onAuditEvent or auditObserver before real business rollout.");
+  }
+
   const copiedFoundationSources = findProjectFiles(files, cwd, [
     /^packages\/desktop-ui-react\/src\//,
     /^packages\/desktop-bridge\/src\//,

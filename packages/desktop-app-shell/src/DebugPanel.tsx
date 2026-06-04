@@ -32,12 +32,22 @@ export function DebugPanel({ open, appVersion, environment, onClose }: DebugPane
   const tabs: TabItem[] = useMemo(
     () => [
       { value: "requests", label: t("debug.requests") },
+      { value: "audit", label: t("debug.audit") },
       { value: "session", label: t("debug.session") },
       { value: "runtime", label: t("debug.runtime") }
     ],
     [t]
   );
   const requests = useMemo(() => client.diagnostics.getRecentRequests(), [client, tick]);
+  const auditEvents = useMemo(() => client.diagnostics.getRecentAuditEvents(), [client, tick]);
+  const clearCurrentTab = () => {
+    if (tab === "audit") {
+      client.diagnostics.clearRecentAuditEvents();
+    } else {
+      client.diagnostics.clearRecentRequests();
+    }
+    setTick((value) => value + 1);
+  };
 
   return (
     <Drawer
@@ -45,8 +55,8 @@ export function DebugPanel({ open, appVersion, environment, onClose }: DebugPane
       title={t("debug.title")}
       onClose={onClose}
       footer={
-        <Button variant="outline" onClick={() => client.diagnostics.clearRecentRequests()}>
-          {t("debug.clearRequests")}
+        <Button variant="outline" onClick={clearCurrentTab}>
+          {tab === "audit" ? t("debug.clearAudit") : t("debug.clearRequests")}
         </Button>
       }
     >
@@ -67,6 +77,25 @@ export function DebugPanel({ open, appVersion, environment, onClose }: DebugPane
               ))
             ) : (
               <CodeBlock>{t("debug.noRequests")}</CodeBlock>
+            )}
+          </div>
+        ) : null}
+        {tab === "audit" ? (
+          <div className="df-debug-panel__list">
+            {auditEvents.length ? (
+              auditEvents.map((event) => (
+                <div key={event.id} className="df-debug-panel__request">
+                  <div className="df-debug-panel__request-head">
+                    <Badge tone={event.level === "error" ? "danger" : event.level === "warn" ? "warning" : event.ok ? "success" : "neutral"}>{event.level}</Badge>
+                    <span>{new Date(event.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                  <code>{event.action}</code>
+                  {event.target ? <p>{event.target}</p> : null}
+                  {event.message ? <p>{event.message}</p> : null}
+                </div>
+              ))
+            ) : (
+              <CodeBlock>{t("debug.noAuditEvents")}</CodeBlock>
             )}
           </div>
         ) : null}

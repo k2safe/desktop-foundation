@@ -34,9 +34,12 @@ Optional config:
 - `version`
 - `security`
 - `requestObserver`
+- `auditObserver`
 - `onUnauthorized`
+- `onAuditEvent`
 - `defaultHeaders`
 - `maxRequestLogEntries`
+- `maxAuditEvents`
 
 ## HTTP
 
@@ -129,6 +132,36 @@ await client.secureStorage.set("refreshToken", token);
 ```
 
 Use `storage` for preferences and non-sensitive local state. Use `secureStorage` for refresh tokens, private API keys, and secrets.
+
+## Diagnostics And Audit Events
+
+`client.diagnostics` keeps recent request logs and recent audit events in memory:
+
+```ts
+client.diagnostics.getRecentRequests();
+client.diagnostics.clearRecentRequests();
+
+client.diagnostics.getRecentAuditEvents();
+client.diagnostics.clearRecentAuditEvents();
+client.diagnostics.recordAuditEvent({
+  action: "orders.export.requested",
+  ok: true,
+  metadata: { count: 12 }
+});
+```
+
+Pass `onAuditEvent` or `auditObserver` to forward events to a product-owned audit/logging service:
+
+```ts
+createDesktopClient({
+  product: "product",
+  apiBaseURL: "https://api.example.com",
+  onAuditEvent: (event) => reportAuditEvent(event),
+  maxAuditEvents: 200
+});
+```
+
+The bridge automatically records desktop/file/update/link-proxy failures and app-shell records login, logout, session-load failure, and access-denied events. See [Audit Events](audit-events.md).
 
 ## Desktop
 

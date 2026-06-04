@@ -173,6 +173,9 @@ export function createDemoProductClient(pushLog: (value: string) => void): Deskt
     desktop: demoDesktopCapability(pushLog),
     files: demoFileCapability(pushLog),
     updateConfig: demoUpdateConfig(),
+    onAuditEvent: (event) => {
+      pushLog(`audit ${event.level} ${event.action}${event.message ? ` ${event.message}` : ""}`);
+    },
     linkProxy: {
       mode: "gateway",
       proxyBaseURL: "http://127.0.0.1:17890/link-proxy",

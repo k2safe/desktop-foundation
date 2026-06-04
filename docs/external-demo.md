@@ -74,7 +74,7 @@ pnpm smoke:external-ai-demo -- --keep
 To verify an immutable release manifest directly:
 
 ```bash
-pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.24/foundation-packages.json
+pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.25/foundation-packages.json
 ```
 
 Before pushing a new version's tarballs to GitHub raw, use local artifact mode:
@@ -95,3 +95,5 @@ pnpm upload:smoke
 ```
 
 If the product exposes file upload, add a local mock upload smoke that posts browser `FormData` through `client.http.post`. The mock server should assert that it receives `multipart/form-data` with a generated boundary and the expected fields/files. For Node/headless smoke, pass memory/noop adapters into `createDesktopClient`; do not rely on browser defaults such as `window.localStorage`.
+
+For a real product rollout, wire `onAuditEvent` or `auditObserver` in the generated client and forward audit events to the product logging service. The internal demo logs audit events locally so the DebugPanel audit tab and integration-check can be exercised without a backend.

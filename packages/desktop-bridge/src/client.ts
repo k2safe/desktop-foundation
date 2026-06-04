@@ -3,7 +3,21 @@ import { createWebDesktopCapability } from "./desktop";
 import { createWebFileCapability } from "./files";
 import { createWebSecureStorage } from "./secureStorage";
 import { createManifestUpdateCapability } from "./updates";
-import type { DesktopCapability, DesktopClient, DesktopClientConfig, FileCapability, HttpMethod, HttpRequestOptions, LinkProxyMode, LinkProxyRequestOptions, RequestLogEntry, SessionStore } from "./types";
+import type {
+  AppUpdateCapability,
+  AuditEvent,
+  AuditEventInput,
+  DesktopCapability,
+  DesktopClient,
+  DesktopClientConfig,
+  FileCapability,
+  HttpMethod,
+  HttpRequestOptions,
+  LinkProxyMode,
+  LinkProxyRequestOptions,
+  RequestLogEntry,
+  SessionStore
+} from "./types";
 import { createWebTransport } from "./webTransport";
 import { DesktopError, UnauthorizedError, normalizeDesktopError } from "./errors";
 
@@ -132,8 +146,12 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
   const storage = config.storage ?? createWebStorage(window.localStorage);
   const secureStorage = config.secureStorage ?? createWebSecureStorage(`${config.product}:desktop:secure`);
   const transport = config.transport ?? createWebTransport();
-  const desktop = wrapDesktopCapability(config.desktop ?? createWebDesktopCapability(), config);
-  const files = wrapFileCapability(config.files ?? createWebFileCapability(), config, session);
+  const recentRequests: RequestLogEntry[] = [];
+  const recentAuditEvents: AuditEvent[] = [];
+  const maxRequestLogEntries = config.maxRequestLogEntries ?? 50;
+  const maxAuditEvents = config.maxAuditEvents ?? 100;
+  const rawDesktop = wrapDesktopCapability(config.desktop ?? createWebDesktopCapability(), config);
+  const rawFiles = wrapFileCapability(config.files ?? createWebFileCapability(), config, session);
   const assertUpdateManifestUrl = config.updateConfig?.assertManifestUrl;
   const updateConfig = {
     ...config.updateConfig,
@@ -144,9 +162,6 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
       assertRequestAllowed(config, url);
     }
   };
-  const updates = config.updates ?? createManifestUpdateCapability(updateConfig, desktop, files);
-  const recentRequests: RequestLogEntry[] = [];
-  const maxRequestLogEntries = config.maxRequestLogEntries ?? 50;
 
   function rememberRequest(entry: RequestLogEntry) {
     const existingIndex = recentRequests.findIndex((item) => item.id === entry.id);
@@ -164,6 +179,10 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
     return `req_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   }
 
+  function makeAuditEventId() {
+    return `audit_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  }
+
   function normalizeError(error: unknown): RequestLogEntry["error"] {
     const normalized = normalizeDesktopError(error);
     return {
@@ -176,6 +195,223 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
       requestId: normalized.requestId
     };
   }
+
+  function rememberAuditEvent(event: AuditEvent) {
+    recentAuditEvents.unshift(event);
+    if (recentAuditEvents.length > maxAuditEvents) {
+      recentAuditEvents.splice(maxAuditEvents);
+    }
+  }
+
+  function recordAuditEvent(input: AuditEventInput): AuditEvent {
+    const event: AuditEvent = {
+      id: input.id ?? makeAuditEventId(),
+      timestamp: input.timestamp ?? Date.now(),
+      product: input.product ?? config.product,
+      namespace: input.namespace ?? config.product,
+      level: input.level ?? (input.ok === false || input.error ? "error" : "info"),
+      action: input.action,
+      ok: input.ok,
+      message: input.message,
+      target: input.target,
+      requestId: input.requestId,
+      metadata: input.metadata,
+      error: input.error
+    };
+    rememberAuditEvent(event);
+    config.auditObserver?.onAuditEvent?.(event);
+    config.onAuditEvent?.(event);
+    return event;
+  }
+
+  function auditError(error: unknown) {
+    const normalized = normalizeDesktopError(error);
+    return {
+      name: normalized.name,
+      message: normalized.message,
+      code: normalized.code,
+      status: normalized.status,
+      kind: normalized.kind,
+      retryable: normalized.retryable,
+      requestId: normalized.requestId
+    };
+  }
+
+  async function withAudit<T>(input: Omit<AuditEventInput, "ok" | "error">, task: () => Promise<T>, successMetadata?: (result: T) => Record<string, unknown> | undefined) {
+    try {
+      const result = await task();
+      recordAuditEvent({
+        ...input,
+        ok: true,
+        metadata: {
+          ...(input.metadata ?? {}),
+          ...(successMetadata?.(result) ?? {})
+        }
+      });
+      return result;
+    } catch (error) {
+      const normalized = auditError(error);
+      recordAuditEvent({
+        ...input,
+        level: "error",
+        ok: false,
+        message: normalized.message,
+        error: normalized
+      });
+      throw error;
+    }
+  }
+
+  function wrapAuditedDesktopCapability(desktop: DesktopCapability): DesktopCapability {
+    return {
+      ...desktop,
+      openExternal: (url) =>
+        withAudit(
+          {
+            action: "desktop.openExternal",
+            target: url,
+            metadata: { url }
+          },
+          () => desktop.openExternal(url)
+        ),
+      copyText: (text) =>
+        withAudit(
+          {
+            action: "desktop.copyText",
+            metadata: { length: text.length }
+          },
+          () => desktop.copyText(text)
+        ),
+      notify: (options) =>
+        withAudit(
+          {
+            action: "desktop.notify",
+            metadata: { title: options.title, hasBody: Boolean(options.body) }
+          },
+          () => desktop.notify(options)
+        ),
+      setWindowState: (state) =>
+        withAudit(
+          {
+            action: "desktop.window.setState",
+            metadata: { keys: Object.keys(state) }
+          },
+          () => desktop.setWindowState(state)
+        ),
+      setWindowTitle: (title) =>
+        withAudit(
+          {
+            action: "desktop.window.setTitle",
+            metadata: { length: title.length }
+          },
+          () => desktop.setWindowTitle(title)
+        )
+    };
+  }
+
+  function wrapAuditedFileCapability(files: FileCapability): FileCapability {
+    return {
+      ...files,
+      openFileDialog: (options) =>
+        withAudit(
+          {
+            action: "file.openDialog",
+            target: options?.directory,
+            metadata: { directory: options?.directory, multiple: options?.multiple }
+          },
+          () => files.openFileDialog(options),
+          (result) => ({ canceled: result.canceled, count: result.paths.length })
+        ),
+      saveFileDialog: (options) =>
+        withAudit(
+          {
+            action: "file.saveDialog",
+            target: options?.directory,
+            metadata: { directory: options?.directory, defaultFileName: options?.defaultFileName }
+          },
+          () => files.saveFileDialog(options),
+          (result) => ({ canceled: result.canceled, selected: Boolean(result.path) })
+        ),
+      writeTextFile: (path, content, options) =>
+        withAudit(
+          {
+            action: "file.writeText",
+            target: path,
+            metadata: { path, bytes: content.length, createDir: options?.createDir }
+          },
+          () => files.writeTextFile(path, content, options)
+        ),
+      exportJson: (fileName, data, options) =>
+        withAudit(
+          {
+            action: "file.exportJson",
+            target: fileName,
+            metadata: { fileName, directory: options?.directory, itemCount: Array.isArray(data) ? data.length : undefined }
+          },
+          () => files.exportJson(fileName, data, options)
+        ),
+      downloadFile: (url, options) =>
+        withAudit(
+          {
+            action: "file.download",
+            target: url,
+            requestId: options?.requestId,
+            metadata: { url, fileName: options?.fileName, directory: options?.directory, path: options?.path }
+          },
+          () => files.downloadFile(url, options),
+          (result) => ({ path: result.path, bytes: result.bytes, status: result.status, sha256: result.sha256 })
+        )
+    };
+  }
+
+  function wrapAuditedUpdateCapability(updates: AppUpdateCapability): AppUpdateCapability {
+    return {
+      ...updates,
+      checkForUpdate: (options) =>
+        withAudit(
+          {
+            action: "update.check",
+            target: options?.manifestUrl,
+            metadata: { manifestUrl: options?.manifestUrl, channel: options?.channel, currentVersion: options?.currentVersion }
+          },
+          () => updates.checkForUpdate(options),
+          (result) => ({ available: result.available, version: result.update?.version })
+        ),
+      downloadUpdate: (update, options) =>
+        withAudit(
+          {
+            action: "update.download",
+            target: update?.downloadUrl,
+            requestId: options?.requestId,
+            metadata: { version: update?.version, downloadUrl: update?.downloadUrl, directory: options?.directory }
+          },
+          () => updates.downloadUpdate(update, options),
+          (result) => ({ path: result.path, bytes: result.bytes, sha256: result.sha256 })
+        ),
+      installUpdate: (update) =>
+        withAudit(
+          {
+            action: "update.install",
+            metadata: { version: update?.version }
+          },
+          () => updates.installUpdate(update),
+          (result) => ({ status: result?.status, relaunchRequired: result?.relaunchRequired })
+        ),
+      openUpdatePage: (update) =>
+        withAudit(
+          {
+            action: "update.openPage",
+            target: update?.releasePageUrl,
+            metadata: { version: update?.version, releasePageUrl: update?.releasePageUrl }
+          },
+          () => updates.openUpdatePage(update)
+        )
+    };
+  }
+
+  const desktop = wrapAuditedDesktopCapability(rawDesktop);
+  const files = wrapAuditedFileCapability(rawFiles);
+  const updates = wrapAuditedUpdateCapability(config.updates ?? createManifestUpdateCapability(updateConfig, desktop, files));
 
   async function request<T>(method: HttpMethod, path: string, bodyOrOptions?: unknown, maybeOptions?: HttpRequestOptions) {
     const options = method === "GET" || method === "DELETE" ? (bodyOrOptions as HttpRequestOptions | undefined) : maybeOptions;
@@ -227,6 +463,16 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
       nextEntry.status = nextEntry.error?.status;
       rememberRequest(nextEntry);
       config.requestObserver?.onRequestEnd?.(nextEntry);
+      recordAuditEvent({
+        action: "http.request.failed",
+        level: "error",
+        ok: false,
+        target: url,
+        requestId: nextEntry.requestId,
+        message: nextEntry.error?.message,
+        error: nextEntry.error,
+        metadata: { method, url, status: nextEntry.status, namespace: entry.namespace }
+      });
       if (error instanceof UnauthorizedError || nextEntry.error?.status === 401 || nextEntry.error?.code === "UNAUTHORIZED") {
         config.requestObserver?.onUnauthorized?.(nextEntry);
         config.onUnauthorized?.(nextEntry);
@@ -353,6 +599,16 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
       nextEntry.status = nextEntry.error?.status;
       rememberRequest(nextEntry);
       config.requestObserver?.onRequestEnd?.(nextEntry);
+      recordAuditEvent({
+        action: "linkProxy.request.failed",
+        level: "error",
+        ok: false,
+        target: targetUrl,
+        requestId: nextEntry.requestId,
+        message: nextEntry.error?.message,
+        error: nextEntry.error,
+        metadata: { method, url: targetUrl, status: nextEntry.status, namespace }
+      });
       if (error instanceof UnauthorizedError || nextEntry.error?.status === 401 || nextEntry.error?.code === "UNAUTHORIZED") {
         config.requestObserver?.onUnauthorized?.(nextEntry);
         config.onUnauthorized?.(nextEntry);
@@ -379,14 +635,27 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
       request: linkProxyRequest,
       resolve: resolveLinkTarget,
       open: async (url: string) => {
-        await desktop.openExternal(resolveLinkTarget(url));
+        const targetUrl = resolveLinkTarget(url);
+        await withAudit(
+          {
+            action: "linkProxy.open",
+            target: targetUrl,
+            metadata: { url: targetUrl }
+          },
+          () => desktop.openExternal(targetUrl)
+        );
       }
     },
     diagnostics: {
       getRecentRequests: () => recentRequests.slice(),
       clearRecentRequests: () => {
         recentRequests.splice(0);
-      }
+      },
+      getRecentAuditEvents: () => recentAuditEvents.slice(),
+      clearRecentAuditEvents: () => {
+        recentAuditEvents.splice(0);
+      },
+      recordAuditEvent
     }
   };
 }

@@ -71,6 +71,11 @@ export const clientConfig: DesktopClientConfig = {
   version: appVersion,
   apiBaseURL: import.meta.env.VITE_API_BASE_URL || productAdapter.clientDefaults.apiBaseURL,
   tokenKey: productAdapter.clientDefaults.tokenKey,
+  onAuditEvent: (event) => {
+    if (import.meta.env.DEV) {
+      console.debug("[foundation:audit]", event.action, event);
+    }
+  },
   updateConfig: createProductUpdateConfig(appVersion),
   linkProxy: envValue("VITE_LINK_PROXY_URL")
     ? {

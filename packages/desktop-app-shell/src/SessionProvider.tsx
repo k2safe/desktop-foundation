@@ -45,6 +45,21 @@ export function SessionProvider<TUser extends DesktopSessionUser = DesktopSessio
       applyState({ status: "authenticated", token, user, error: null });
     } catch (error) {
       const normalizedError = normalizeDesktopError(error, { message: "Failed to load session" });
+      client.diagnostics.recordAuditEvent({
+        action: "auth.session.load.failed",
+        level: "error",
+        ok: false,
+        message: normalizedError.message,
+        error: {
+          name: normalizedError.name,
+          message: normalizedError.message,
+          code: normalizedError.code,
+          status: normalizedError.status,
+          kind: normalizedError.kind,
+          retryable: normalizedError.retryable,
+          requestId: normalizedError.requestId
+        }
+      });
       client.session.clearToken();
       applyState({ status: "anonymous", token: null, user: null, error: normalizedError });
       config?.onUnauthorized?.();
@@ -65,6 +80,7 @@ export function SessionProvider<TUser extends DesktopSessionUser = DesktopSessio
 
   const clearSession = useCallback(() => {
     client.session.clearToken();
+    client.diagnostics.recordAuditEvent({ action: "auth.logout", ok: true });
     applyState({ status: "anonymous", token: null, user: null, error: null });
   }, [applyState, client]);
 

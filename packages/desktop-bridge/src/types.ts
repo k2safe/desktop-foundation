@@ -301,15 +301,52 @@ export interface RequestLogEntry {
   };
 }
 
+export type AuditEventLevel = "info" | "warn" | "error";
+
+export interface AuditEventError {
+  name?: string;
+  message: string;
+  code?: string;
+  status?: number;
+  kind?: string;
+  retryable?: boolean;
+  requestId?: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  timestamp: number;
+  product?: string;
+  namespace?: string;
+  level: AuditEventLevel;
+  action: string;
+  ok?: boolean;
+  message?: string;
+  target?: string;
+  requestId?: string;
+  metadata?: Record<string, unknown>;
+  error?: AuditEventError;
+}
+
+export type AuditEventInput = Omit<AuditEvent, "id" | "timestamp" | "level" | "product"> &
+  Partial<Pick<AuditEvent, "id" | "timestamp" | "level" | "product">>;
+
 export interface RequestObserver {
   onRequestStart?: (entry: RequestLogEntry) => void;
   onRequestEnd?: (entry: RequestLogEntry) => void;
   onUnauthorized?: (entry: RequestLogEntry) => void;
 }
 
+export interface AuditObserver {
+  onAuditEvent?: (event: AuditEvent) => void;
+}
+
 export interface DesktopDiagnostics {
   getRecentRequests(): RequestLogEntry[];
   clearRecentRequests(): void;
+  getRecentAuditEvents(): AuditEvent[];
+  clearRecentAuditEvents(): void;
+  recordAuditEvent(event: AuditEventInput): AuditEvent;
 }
 
 export interface DesktopClientConfig {
@@ -327,9 +364,12 @@ export interface DesktopClientConfig {
   linkProxy?: LinkProxyConfig;
   version?: string;
   requestObserver?: RequestObserver;
+  auditObserver?: AuditObserver;
   onUnauthorized?: (entry: RequestLogEntry) => void;
+  onAuditEvent?: (event: AuditEvent) => void;
   security?: DesktopSecurityPolicy;
   maxRequestLogEntries?: number;
+  maxAuditEvents?: number;
   defaultHeaders?: Record<string, string>;
 }
 
