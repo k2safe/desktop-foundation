@@ -295,6 +295,9 @@ export interface RequestLogEntry {
     message: string;
     code?: string;
     status?: number;
+    kind?: string;
+    retryable?: boolean;
+    requestId?: string;
   };
 }
 

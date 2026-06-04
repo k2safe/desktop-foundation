@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { normalizeDesktopError, type DesktopError } from "@desktop-foundation/bridge";
 import { useDesktopClient } from "./DesktopClientProvider";
 import { useSession } from "./SessionProvider";
 import type { DesktopLoginConfig, DesktopLoginPayload, DesktopSessionUser } from "./types";
@@ -17,7 +18,7 @@ export function useLogin<TUser extends DesktopSessionUser = DesktopSessionUser, 
     } as TPayload
   );
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<DesktopError | null>(null);
 
   const setField = useCallback(<K extends keyof TPayload>(key: K, value: TPayload[K]) => {
     setPayload((current) => ({ ...current, [key]: value }));
@@ -34,7 +35,7 @@ export function useLogin<TUser extends DesktopSessionUser = DesktopSessionUser, 
         config.onSuccess?.(reply);
         return reply;
       } catch (caught) {
-        const normalized = caught instanceof Error ? caught : new Error("Login failed");
+        const normalized = normalizeDesktopError(caught, { message: "Login failed" });
         setError(normalized);
         throw normalized;
       } finally {

@@ -85,10 +85,14 @@ export function createWebTransport(): HttpTransport {
           signal: controller?.signal ?? signal
         });
       } catch (error) {
+        const aborted = error instanceof Error && error.name === "AbortError";
         throw new DesktopError({
-          code: "NETWORK_ERROR",
-          message: error instanceof Error ? error.message : "Network error",
-          details: error
+          code: aborted ? "TIMEOUT" : "NETWORK_ERROR",
+          message: error instanceof Error ? error.message : aborted ? "Request timed out" : "Network error",
+          kind: aborted ? "timeout" : "network",
+          retryable: true,
+          details: error,
+          cause: error
         });
       } finally {
         if (timeout) window.clearTimeout(timeout);
@@ -112,6 +116,8 @@ export function createWebTransport(): HttpTransport {
           message: typeof payload === "object" && payload ? payload.message || payload.msg || `HTTP ${response.status}` : `HTTP ${response.status}`,
           status: response.status,
           requestId,
+          kind: typeof payload === "object" && payload ? payload.kind || payload.errorKind : undefined,
+          retryable: typeof payload === "object" && payload && typeof payload.retryable === "boolean" ? payload.retryable : undefined,
           details: payload
         });
       }
@@ -124,6 +130,8 @@ export function createWebTransport(): HttpTransport {
             message: payload.message || payload.msg || "Request failed",
             status: response.status,
             requestId,
+            kind: payload.kind || payload.errorKind,
+            retryable: typeof payload.retryable === "boolean" ? payload.retryable : undefined,
             details: payload
           });
         }

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { normalizeDesktopError } from "@desktop-foundation/bridge";
 import { useDesktopClient } from "./DesktopClientProvider";
 import type { DesktopSessionConfig, DesktopSessionState, DesktopSessionUser } from "./types";
 
@@ -43,7 +44,7 @@ export function SessionProvider<TUser extends DesktopSessionUser = DesktopSessio
       const user = config?.loadUser ? await config.loadUser(client) : null;
       applyState({ status: "authenticated", token, user, error: null });
     } catch (error) {
-      const normalizedError = error instanceof Error ? error : new Error("Failed to load session");
+      const normalizedError = normalizeDesktopError(error, { message: "Failed to load session" });
       client.session.clearToken();
       applyState({ status: "anonymous", token: null, user: null, error: normalizedError });
       config?.onUnauthorized?.();

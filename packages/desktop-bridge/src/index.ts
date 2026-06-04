@@ -11,7 +11,8 @@ export {
   createNoopUpdateCapability
 } from "./updates";
 export { createTauriNativeDesktopCapability, createTauriNativeFileCapability, createTauriNativeUpdateCapability, createTauriUpdaterPluginAdapters } from "./tauriPlugins";
-export { DesktopError, UnauthorizedError } from "./errors";
+export { DesktopError, UnauthorizedError, getDesktopErrorKind, isDesktopError, isRetryableDesktopError, normalizeDesktopError } from "./errors";
+export type { DesktopErrorKind, DesktopErrorShape } from "./errors";
 export { createWebSessionStore, createWebStorage } from "./storage";
 export {
   createTauriDesktopCapability,
@@ -78,4 +79,3 @@ export type {
   WindowState
 } from "./types";
 export type { TauriSessionState } from "./tauri";
-export type { DesktopErrorShape } from "./errors";

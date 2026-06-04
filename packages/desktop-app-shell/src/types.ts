@@ -1,6 +1,7 @@
 import type { DesktopClient, DesktopClientConfig } from "@desktop-foundation/bridge";
 import type { AccessControlConfig, DesktopThemeInput, LocaleCode, LocaleDictionary } from "@desktop-foundation/ui-react";
 import type { ReactNode } from "react";
+import type { DesktopErrorBoundaryProps } from "./DesktopErrorBoundary";
 
 export type SessionStatus = "checking" | "authenticated" | "anonymous";
 
@@ -57,6 +58,7 @@ export interface DesktopAppShellProps<TUser extends DesktopSessionUser = Desktop
   messages?: LocaleDictionary;
   dictionaries?: Record<string, LocaleDictionary>;
   accessControl?: AccessControlConfig;
+  errorBoundary?: false | Omit<DesktopErrorBoundaryProps, "children">;
   client: DesktopClientConfig | DesktopClient;
   session?: DesktopSessionConfig<TUser>;
   children: ReactNode;

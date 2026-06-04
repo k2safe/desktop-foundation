@@ -3,6 +3,8 @@ export type { AuthGuardProps } from "./AuthGuard";
 export { DesktopAppShell } from "./DesktopAppShell";
 export { DesktopAccessProvider } from "./DesktopAccessProvider";
 export type { DesktopAccessProviderProps } from "./DesktopAccessProvider";
+export { DesktopErrorBoundary } from "./DesktopErrorBoundary";
+export type { DesktopErrorBoundaryFallbackProps, DesktopErrorBoundaryProps } from "./DesktopErrorBoundary";
 export { DesktopClientProvider, useDesktopClient } from "./DesktopClientProvider";
 export type { DesktopClientProviderProps } from "./DesktopClientProvider";
 export { DesktopLoginPage, desktopLoginTemplates, resolveDesktopLoginTemplate } from "./DesktopLoginPage";

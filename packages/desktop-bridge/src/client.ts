@@ -5,7 +5,7 @@ import { createWebSecureStorage } from "./secureStorage";
 import { createManifestUpdateCapability } from "./updates";
 import type { DesktopCapability, DesktopClient, DesktopClientConfig, FileCapability, HttpMethod, HttpRequestOptions, LinkProxyMode, LinkProxyRequestOptions, RequestLogEntry, SessionStore } from "./types";
 import { createWebTransport } from "./webTransport";
-import { DesktopError, UnauthorizedError } from "./errors";
+import { DesktopError, UnauthorizedError, normalizeDesktopError } from "./errors";
 
 function joinURL(baseURL: string, path: string) {
   const base = baseURL.replace(/\/$/, "");
@@ -165,16 +165,16 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
   }
 
   function normalizeError(error: unknown): RequestLogEntry["error"] {
-    if (error && typeof error === "object") {
-      const candidate = error as { name?: string; message?: string; code?: string; status?: number; details?: unknown };
-      return {
-        name: candidate.name,
-        message: candidate.message || "Request failed",
-        code: candidate.code,
-        status: candidate.status
-      };
-    }
-    return { message: String(error || "Request failed") };
+    const normalized = normalizeDesktopError(error);
+    return {
+      name: normalized.name,
+      message: normalized.message,
+      code: normalized.code,
+      status: normalized.status,
+      kind: normalized.kind,
+      retryable: normalized.retryable,
+      requestId: normalized.requestId
+    };
   }
 
   async function request<T>(method: HttpMethod, path: string, bodyOrOptions?: unknown, maybeOptions?: HttpRequestOptions) {

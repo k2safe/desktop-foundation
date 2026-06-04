@@ -7,7 +7,7 @@
 先读取 foundation package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.23/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.24/foundation-packages.json
 ```
 
 如果明确要追 `main` 上的最新底座，再读取 development manifest：
@@ -118,6 +118,20 @@ const commands = [
 
 页面级用 `AccessGuard`，按钮级可用 `PermissionGuard`。底座只做前端入口隐藏和守卫，接口鉴权必须由产品后端继续兜底。
 
+错误处理默认在底座内。`DesktopAppShell` 默认启用 `DesktopErrorBoundary`，产品可以通过 `errorBoundary.onError` 接入上报：
+
+```tsx
+<DesktopAppShell
+  theme={template.theme}
+  client={clientConfig}
+  errorBoundary={{ onError: (error, info) => reportError(error, info.componentStack) }}
+>
+  <Routes />
+</DesktopAppShell>
+```
+
+HTTP、网络、未授权、业务 code 会被标准化为 `DesktopError`。业务请求优先用 `useRequest` / `useMutation`，自定义 `try/catch` 使用 `normalizeDesktopError(caught)`，不要在各页面里散落 `new Error(...)` 和字符串错误。
+
 登录页保留在底座，产品只传文案、认证逻辑和额外字段：
 
 ```tsx
@@ -227,6 +241,7 @@ pnpm exec desktop-foundation-ci \
 - 登录页使用底座壳，产品字段通过 slot 传入。
 - 菜单、顶部头像、退出入口走 `DesktopLayout`。
 - 菜单、命令、按钮和设置分组的权限字段走底座 access control，不在业务页面里重复手写过滤。
+- 请求错误、render error 和业务错误码走 `DesktopError` / `DesktopErrorBoundary`，不要每个页面单独发明错误形状。
 - 表格、筛选、表单、弹窗、设置页优先用 foundation 组件。
 - 主题通过模板选择和 token 覆盖完成，不能在业务页大面积覆盖底座 CSS。
 - 更新中心能看到 `client.updates.getState()` 状态流转。

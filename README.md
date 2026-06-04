@@ -31,6 +31,7 @@
 - [UI Theme](docs/ui-theme.md)
 - [I18n](docs/i18n.md)
 - [Access Control](docs/access-control.md)
+- [Error Handling](docs/error-handling.md)
 - [UI Component Catalog](docs/ui-component-catalog.md)
 - [Scaffolding](docs/scaffolding.md)
 - [Rust Core](docs/rust-core.md)
@@ -51,6 +52,7 @@
 - 零依赖组件文档页和可选 Playwright 截图入口
 - 通用 `desktop-foundation doctor` 接入检查命令
 - Tauri native plugin 可选适配层，可用官方插件替换部分 Rust command 能力
+- 多语言、访问控制、统一错误处理和默认错误边界
 - 通用产品接入 DEMO：`examples/demo-product`
 
 ## Validation

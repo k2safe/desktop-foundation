@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { normalizeDesktopError, type DesktopError } from "@desktop-foundation/bridge";
 
 export interface RequestState<TData> {
   data: TData | null;
-  error: Error | null;
+  error: DesktopError | null;
   loading: boolean;
 }
 
 export interface UseRequestOptions<TData> {
   immediate?: boolean;
   onSuccess?: (data: TData) => void;
-  onError?: (error: Error) => void;
+  onError?: (error: DesktopError) => void;
 }
 
 export function useRequest<TData, TArgs extends unknown[] = []>(
@@ -35,7 +36,7 @@ export function useRequest<TData, TArgs extends unknown[] = []>(
         onSuccess?.(data);
         return data;
       } catch (caught) {
-        const error = caught instanceof Error ? caught : new Error("Request failed");
+        const error = normalizeDesktopError(caught);
         if (mountedRef.current) {
           setState((current) => ({ ...current, error, loading: false }));
         }

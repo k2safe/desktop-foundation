@@ -111,6 +111,9 @@ export const zhCNMessages: LocaleDictionary = {
   "columns.moveUp": "上移",
   "columns.moveDown": "下移",
   "error.title": "出现错误",
+  "errorBoundary.description": "请重试，或联系支持人员。",
+  "errorBoundary.reset": "重试",
+  "errorBoundary.title": "页面出现错误",
   "filePicker.choose": "选择文件",
   "filePicker.empty": "未选择文件"
 };
@@ -208,6 +211,9 @@ export const enUSMessages: LocaleDictionary = {
   "columns.moveUp": "Move up",
   "columns.moveDown": "Move down",
   "error.title": "Something went wrong",
+  "errorBoundary.description": "Try again, or contact support.",
+  "errorBoundary.reset": "Try again",
+  "errorBoundary.title": "Page error",
   "filePicker.choose": "Choose file",
   "filePicker.empty": "No file selected"
 };
