@@ -1,5 +1,5 @@
 import type { DesktopClient, DesktopClientConfig } from "@desktop-foundation/bridge";
-import type { DesktopThemeInput, LocaleCode, LocaleDictionary } from "@desktop-foundation/ui-react";
+import type { AccessControlConfig, DesktopThemeInput, LocaleCode, LocaleDictionary } from "@desktop-foundation/ui-react";
 import type { ReactNode } from "react";
 
 export type SessionStatus = "checking" | "authenticated" | "anonymous";
@@ -10,6 +10,7 @@ export interface DesktopSessionUser {
   account?: string;
   email?: string;
   role?: string;
+  roles?: string[];
   permissions?: string[];
   raw?: unknown;
 }
@@ -55,6 +56,7 @@ export interface DesktopAppShellProps<TUser extends DesktopSessionUser = Desktop
   locale?: LocaleCode;
   messages?: LocaleDictionary;
   dictionaries?: Record<string, LocaleDictionary>;
+  accessControl?: AccessControlConfig;
   client: DesktopClientConfig | DesktopClient;
   session?: DesktopSessionConfig<TUser>;
   children: ReactNode;

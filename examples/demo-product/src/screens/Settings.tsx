@@ -133,18 +133,22 @@ export function Settings({ client, logs }: SettingsProps) {
           id: "updates",
           title: "更新中心",
           description: "读取 public/update/latest.json，默认停在下载和校验；安装需 native adapter。",
+          feature: "updates",
           content: <UpdateCenter client={client} />
         },
         {
           id: "link-proxy",
           title: "链接代理",
           description: "通过本地/VPN/内网代理请求外部链接，不把业务 token 默认透传给目标站点。",
+          feature: "linkProxy",
           content: <LinkProxyPanel client={client} />
         },
         {
           id: "diagnostics",
           title: "诊断",
           description: "bridge 自动记录最近请求，产品可以直接接入 DebugPanel 或自定义诊断页。",
+          permission: "diagnostics:read",
+          feature: "diagnostics",
           content: <CodeBlock>{JSON.stringify(client.diagnostics.getRecentRequests(), null, 2)}</CodeBlock>
         },
         {

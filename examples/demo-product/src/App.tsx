@@ -1,6 +1,6 @@
 import "@desktop-foundation/ui-react/styles.css";
 import { useMemo, useState } from "react";
-import { AuthGuard, DebugPanel, DesktopAppShell, DesktopLoginPage, useSession } from "@desktop-foundation/app-shell";
+import { AccessDeniedState, AccessGuard, AuthGuard, DebugPanel, DesktopAppShell, DesktopLoginPage, useSession } from "@desktop-foundation/app-shell";
 import { Badge, Button, CommandPalette, DesktopLayout, LoadingBlock, type CommandPaletteItem, type DesktopMenuItem } from "@desktop-foundation/ui-react";
 import type { DesktopClient } from "@desktop-foundation/bridge";
 import { createDemoProductClient, loginDemoUser } from "./client";
@@ -24,10 +24,11 @@ function ProductWorkspace({ client, logs }: ProductWorkspaceProps) {
 
   const commands: CommandPaletteItem[] = [
     { id: "dashboard", label: "打开工作台", group: "导航" },
-    { id: "orders", label: "打开订单中心", group: "导航" },
-    { id: "settings", label: "打开底座设置", group: "导航" },
-    { id: "notify", label: "发送测试通知", group: "桌面能力" },
-    { id: "export", label: "导出订单 JSON", group: "文件能力" }
+    { id: "orders", label: "打开订单中心", group: "导航", permission: "orders:read" },
+    { id: "settings", label: "打开底座设置", group: "导航", permission: "settings:read" },
+    { id: "notify", label: "发送测试通知", group: "桌面能力", feature: "desktopNotify" },
+    { id: "export", label: "导出订单 JSON", group: "文件能力", permission: "orders:export" },
+    { id: "review", label: "打开复核台", group: "实验功能", feature: "reviewWorkbench" }
   ];
 
   function handleMenuSelect(item: DesktopMenuItem) {
@@ -50,6 +51,7 @@ function ProductWorkspace({ client, logs }: ProductWorkspaceProps) {
         brand={{ name: "Product Demo" }}
         menus={createMenus(screen)}
         user={{ name: session.user?.name ?? demoUser.name, role: session.user?.role ?? demoUser.role }}
+        userMenuItems={[{ id: "audit", label: "审计日志", description: "需要 audit:read 权限", permission: "audit:read" }]}
         topbarRight={
           <>
             <Badge tone="success">Demo</Badge>
@@ -65,8 +67,16 @@ function ProductWorkspace({ client, logs }: ProductWorkspaceProps) {
         onLogout={session.clearSession}
       >
         {screen === "dashboard" ? <Dashboard client={client} logs={logs} onOpenCommands={() => setPaletteOpen(true)} /> : null}
-        {screen === "orders" ? <Orders client={client} /> : null}
-        {screen === "settings" ? <Settings client={client} logs={logs} /> : null}
+        {screen === "orders" ? (
+          <AccessGuard permission="orders:read" fallback={<AccessDeniedState />}>
+            <Orders client={client} />
+          </AccessGuard>
+        ) : null}
+        {screen === "settings" ? (
+          <AccessGuard permission="settings:read" fallback={<AccessDeniedState />}>
+            <Settings client={client} logs={logs} />
+          </AccessGuard>
+        ) : null}
       </DesktopLayout>
       <CommandPalette
         open={paletteOpen}
@@ -98,6 +108,15 @@ export function App() {
       theme={demoProductTheme}
       client={client}
       locale="zh-CN"
+      accessControl={{
+        features: {
+          desktopNotify: true,
+          updates: true,
+          diagnostics: true,
+          linkProxy: false,
+          reviewWorkbench: false
+        }
+      }}
       session={{
         loadUser: async () => demoUser
       }}

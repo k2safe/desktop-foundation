@@ -7,7 +7,7 @@
 先读取 foundation package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.22/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.23/foundation-packages.json
 ```
 
 如果明确要追 `main` 上的最新底座，再读取 development manifest：
@@ -87,6 +87,36 @@ export function App() {
 ```
 
 底座只翻译通用 shell/组件文案；菜单、页面标题、业务字段、接口错误仍由产品项目自己维护。业务显式传入的 `title`、`submitLabel`、`emptyTitle` 等 prop 优先级高于语言包。
+
+权限和功能开关也从 `DesktopAppShell` 进入。当前用户权限放在 session user 的 `permissions` / `role` / `roles`，产品本地 feature flag 放在 `accessControl.features`：
+
+```tsx
+<DesktopAppShell
+  theme={template.theme}
+  client={clientConfig}
+  accessControl={{ features: { updates: true, reviewWorkbench: false } }}
+  session={{ loadUser }}
+>
+  <Routes />
+</DesktopAppShell>
+```
+
+菜单、命令、设置分组和详情动作可以直接挂访问规则：
+
+```tsx
+const menus = [
+  { id: "dashboard", label: "工作台" },
+  { id: "orders", label: "订单中心", permission: "orders:read" },
+  { id: "settings", label: "设置", permission: "settings:read" }
+];
+
+const commands = [
+  { id: "export", label: "导出订单", permission: "orders:export" },
+  { id: "review", label: "复核台", feature: "reviewWorkbench" }
+];
+```
+
+页面级用 `AccessGuard`，按钮级可用 `PermissionGuard`。底座只做前端入口隐藏和守卫，接口鉴权必须由产品后端继续兜底。
 
 登录页保留在底座，产品只传文案、认证逻辑和额外字段：
 
@@ -196,6 +226,7 @@ pnpm exec desktop-foundation-ci \
 - 左侧、顶部、内容区没有异常白边。
 - 登录页使用底座壳，产品字段通过 slot 传入。
 - 菜单、顶部头像、退出入口走 `DesktopLayout`。
+- 菜单、命令、按钮和设置分组的权限字段走底座 access control，不在业务页面里重复手写过滤。
 - 表格、筛选、表单、弹窗、设置页优先用 foundation 组件。
 - 主题通过模板选择和 token 覆盖完成，不能在业务页大面积覆盖底座 CSS。
 - 更新中心能看到 `client.updates.getState()` 状态流转。

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useAccess, type AccessControlled } from "../../access";
 import { Drawer } from "../primitives/Drawer";
 import { Button, type ButtonProps } from "../primitives/Button";
 
@@ -7,7 +8,7 @@ export interface DetailDrawerRow {
   value: ReactNode;
 }
 
-export interface DetailDrawerAction {
+export interface DetailDrawerAction extends AccessControlled {
   id: string;
   label: ReactNode;
   variant?: ButtonProps["variant"];
@@ -27,6 +28,9 @@ export interface DetailDrawerProps {
 }
 
 export function DetailDrawer({ open, title, subtitle, rows = [], children, actions = [], closeLabel, onClose }: DetailDrawerProps) {
+  const { canAccess } = useAccess();
+  const visibleActions = actions.filter((action) => canAccess(action));
+
   return (
     <Drawer
       open={open}
@@ -37,9 +41,9 @@ export function DetailDrawer({ open, title, subtitle, rows = [], children, actio
         </span>
       }
       footer={
-        actions.length ? (
+        visibleActions.length ? (
           <div className="df-detail-drawer__actions">
-            {actions.map((action) => (
+            {visibleActions.map((action) => (
               <Button key={action.id} size="sm" variant={action.variant ?? "outline"} disabled={action.disabled} onClick={action.onClick}>
                 {action.label}
               </Button>

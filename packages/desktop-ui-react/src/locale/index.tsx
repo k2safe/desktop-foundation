@@ -19,6 +19,8 @@ export interface LocaleProviderProps {
 }
 
 export const zhCNMessages: LocaleDictionary = {
+  "access.deniedDescription": "当前账号没有访问此功能的权限。",
+  "access.deniedTitle": "无权访问",
   "common.apply": "应用",
   "common.cancel": "取消",
   "common.clear": "清空",
@@ -114,6 +116,8 @@ export const zhCNMessages: LocaleDictionary = {
 };
 
 export const enUSMessages: LocaleDictionary = {
+  "access.deniedDescription": "Your account does not have access to this feature.",
+  "access.deniedTitle": "Access denied",
   "common.apply": "Apply",
   "common.cancel": "Cancel",
   "common.clear": "Clear",

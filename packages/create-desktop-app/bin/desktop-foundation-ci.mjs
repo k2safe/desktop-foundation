@@ -626,6 +626,22 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "warn", "product-adapter:usage", "No productAdapter usage was detected; avoid scattering foundation configuration across business pages.");
   }
 
+  const accessControlFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\baccessControl\s*[:=]/,
+    /\bAccessGuard\b/,
+    /\bPermissionGuard\b/,
+    /\bFeatureGuard\b/,
+    /\bpermission\s*:/,
+    /\bpermissions\s*:/,
+    /\bfeature\s*:/,
+    /\bfeatures\s*:/
+  ]);
+  if (accessControlFiles.length) {
+    pushFinding(findings, "pass", "access-control", "Access control surface detected.", { files: accessControlFiles });
+  } else {
+    pushFinding(findings, "warn", "access-control", "No access control surface detected; define permissions/features in product-adapter, menus, commands, or page guards before real business rollout.");
+  }
+
   const copiedFoundationSources = findProjectFiles(files, cwd, [
     /^packages\/desktop-ui-react\/src\//,
     /^packages\/desktop-bridge\/src\//,

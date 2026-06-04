@@ -30,6 +30,7 @@
 - [Package Boundary](docs/package-boundary.md)
 - [UI Theme](docs/ui-theme.md)
 - [I18n](docs/i18n.md)
+- [Access Control](docs/access-control.md)
 - [UI Component Catalog](docs/ui-component-catalog.md)
 - [Scaffolding](docs/scaffolding.md)
 - [Rust Core](docs/rust-core.md)

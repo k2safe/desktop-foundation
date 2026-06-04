@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PermissionGuard } from "@desktop-foundation/app-shell";
 import { Button, DataTable, DateRangePicker, DetailDrawer, Input, SearchInput, Select, useTablePreferences } from "@desktop-foundation/ui-react";
 import type { DesktopClient } from "@desktop-foundation/bridge";
 import { orderColumns, orders, type OrderRow } from "../data";
@@ -62,9 +63,11 @@ export function Orders({ client }: OrdersProps) {
         }
         batchActions={
           <>
-            <Button variant="outline" size="sm" onClick={() => void client.files.exportJson("selected-orders.json", selectedRowKeys, { directory: "/tmp" })}>
-              导出
-            </Button>
+            <PermissionGuard permission="orders:export">
+              <Button variant="outline" size="sm" onClick={() => void client.files.exportJson("selected-orders.json", selectedRowKeys, { directory: "/tmp" })}>
+                导出
+              </Button>
+            </PermissionGuard>
             <Button variant="ghost" size="sm" onClick={() => setSelectedRowKeys([])}>
               清空
             </Button>
@@ -84,7 +87,8 @@ export function Orders({ client }: OrdersProps) {
         ]}
         actions={[
           { id: "copy", label: "复制订单号", onClick: () => void client.desktop.copyText(selectedRow?.id ?? "") },
-          { id: "notify", label: "发送通知", onClick: () => void client.desktop.notify({ title: "订单已选中", body: selectedRow?.id }) }
+          { id: "notify", label: "发送通知", feature: "desktopNotify", onClick: () => void client.desktop.notify({ title: "订单已选中", body: selectedRow?.id }) },
+          { id: "approve", label: "复核通过", permission: "orders:approve", onClick: () => undefined }
         ]}
         onClose={() => setSelectedRow(null)}
       />

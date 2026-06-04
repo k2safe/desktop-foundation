@@ -8,6 +8,7 @@ export interface DemoUser {
   name: string;
   account: string;
   role: string;
+  roles: string[];
   permissions: string[];
 }
 
@@ -26,7 +27,8 @@ export const demoUser: DemoUser = {
   name: "Demo Operator",
   account: "operator",
   role: "Operations",
-  permissions: ["orders:read", "orders:export", "catalog:read", "settings:read"]
+  roles: ["operator"],
+  permissions: ["orders:read", "orders:export", "catalog:read", "settings:read", "diagnostics:read"]
 };
 
 export const orders: OrderRow[] = [
@@ -42,12 +44,12 @@ export function createMenus(active: DemoScreen): DesktopMenuItem[] {
     {
       id: "business",
       label: "业务",
-      children: [{ id: "orders", label: "订单中心", href: "#orders", active: active === "orders" }]
+      children: [{ id: "orders", label: "订单中心", href: "#orders", active: active === "orders", permission: "orders:read" }]
     },
     {
       id: "system",
       label: "系统",
-      children: [{ id: "settings", label: "底座设置", href: "#settings", active: active === "settings" }]
+      children: [{ id: "settings", label: "底座设置", href: "#settings", active: active === "settings", permission: "settings:read" }]
     }
   ];
 }

@@ -43,6 +43,7 @@ export function App({ client }: { client: DesktopClient }) {
       locale={adapter.locale}
       messages={adapter.messages}
       dictionaries={adapter.dictionaries}
+      accessControl={adapter.accessControl}
       session={{ loadUser: async () => adapter.user }}
     >
       <AuthGuard

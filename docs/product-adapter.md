@@ -22,8 +22,10 @@ src/pages/*
 
 ```tsx
 import type { ReactNode } from "react";
+import type { DesktopLoginTemplateSource, DesktopSessionUser } from "@desktop-foundation/app-shell";
 import type { DesktopClientConfig } from "@desktop-foundation/bridge";
 import type {
+  AccessControlConfig,
   DesktopLayoutBrand,
   DesktopLayoutVariant,
   DesktopMenuItem,
@@ -41,10 +43,12 @@ export interface ProductAdapter {
   locale: LocaleCode;
   messages?: LocaleDictionary;
   dictionaries?: Record<string, LocaleDictionary>;
+  accessControl?: AccessControlConfig;
   className: string;
   layout: DesktopLayoutVariant;
+  loginTemplate: DesktopLoginTemplateSource;
   brand: DesktopLayoutBrand;
-  user: DesktopUser;
+  user: DesktopUser & DesktopSessionUser;
   menus: DesktopMenuItem[];
   userMenuItems?: DesktopUserMenuItem[];
   topbarRight?: ReactNode;
@@ -65,8 +69,33 @@ export interface ProductAdapter {
 - `productAdapter.locale`
 - `productAdapter.messages`
 - `productAdapter.dictionaries`
+- `productAdapter.accessControl`
 - `productAdapter.clientDefaults`
 - 业务页面、业务请求、业务状态管理
+
+## 权限和功能开关
+
+产品可以在 adapter 中集中声明本地 feature flag，当前用户的 `permissions` / `roles` 推荐由登录态返回：
+
+```tsx
+export const productAdapter: ProductAdapter = {
+  accessControl: {
+    features: {
+      updates: true,
+      diagnostics: true,
+      reviewWorkbench: false
+    }
+  },
+  user: {
+    name: "Admin",
+    role: "Owner",
+    roles: ["owner"],
+    permissions: ["dashboard:read", "orders:read", "orders:export"]
+  }
+};
+```
+
+`DesktopLayout.menus`、`CommandPalette.items`、`SettingsPage.sections`、`DetailDrawer.actions` 和 `DesktopLayout.userMenuItems` 支持 `permission`、`permissions`、`role`、`roles`、`feature`、`features` 字段，会自动隐藏无权项。页面和按钮使用 `AccessGuard` / `PermissionGuard`。
 
 接入项目不要改：
 

@@ -74,7 +74,7 @@ pnpm smoke:external-ai-demo -- --keep
 To verify an immutable release manifest directly:
 
 ```bash
-pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.22/foundation-packages.json
+pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.23/foundation-packages.json
 ```
 
 Before pushing a new version's tarballs to GitHub raw, use local artifact mode:

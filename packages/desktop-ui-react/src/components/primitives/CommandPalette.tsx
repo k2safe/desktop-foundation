@@ -1,9 +1,10 @@
 import { useMemo, type ReactNode } from "react";
+import { useAccess, type AccessControlled } from "../../access";
 import { cn } from "../../utils/cn";
 import { useLocale } from "../../locale";
 import { Input } from "./Input";
 
-export interface CommandPaletteItem {
+export interface CommandPaletteItem extends AccessControlled {
   id: string;
   label: ReactNode;
   description?: ReactNode;
@@ -45,16 +46,18 @@ export function CommandPalette({
   onClose
 }: CommandPaletteProps) {
   const { t } = useLocale();
+  const { canAccess } = useAccess();
   const resolvedTitle = title === undefined ? t("command.title") : title;
   const resolvedPlaceholder = placeholder ?? t("command.search");
   const resolvedEmptyLabel = emptyLabel === undefined ? t("command.empty") : emptyLabel;
   const resolvedCloseLabel = closeLabel ?? t("command.close");
 
   const filtered = useMemo(() => {
+    const visibleItems = items.filter((item) => canAccess(item));
     const query = value.trim().toLowerCase();
-    if (!query) return items;
-    return items.filter((item) => itemText(item).includes(query));
-  }, [items, value]);
+    if (!query) return visibleItems;
+    return visibleItems.filter((item) => itemText(item).includes(query));
+  }, [canAccess, items, value]);
 
   const groups = useMemo(() => {
     const grouped = new Map<string, CommandPaletteItem[]>();

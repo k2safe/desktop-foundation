@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import type { DesktopLoginTemplateSource } from "@desktop-foundation/app-shell";
+import type { DesktopLoginTemplateSource, DesktopSessionUser } from "@desktop-foundation/app-shell";
 import type { DesktopClientConfig } from "@desktop-foundation/bridge";
 import {
   Button,
+  type AccessControlConfig,
   type DesktopLayoutBrand,
   type DesktopLayoutVariant,
   type DesktopMenuItem,
@@ -22,11 +23,12 @@ export interface ProductAdapter {
   locale: LocaleCode;
   messages?: LocaleDictionary;
   dictionaries?: Record<string, LocaleDictionary>;
+  accessControl?: AccessControlConfig;
   className: string;
   layout: DesktopLayoutVariant;
   loginTemplate: DesktopLoginTemplateSource;
   brand: DesktopLayoutBrand;
-  user: DesktopUser;
+  user: DesktopUser & DesktopSessionUser;
   menus: DesktopMenuItem[];
   userMenuItems?: DesktopUserMenuItem[];
   topbarRight?: ReactNode;
@@ -38,11 +40,17 @@ export const productAdapter: ProductAdapter = {
   appName: "{{APP_NAME}}",
   theme: productTheme,
   locale: "en-US",
+  accessControl: {
+    features: {
+      updates: true,
+      diagnostics: true
+    }
+  },
   className: productTemplate.className,
   layout: productTemplate.layout.appShell,
   loginTemplate: productTemplate.layout.login,
   brand: { name: "{{APP_NAME}}" },
-  user: { name: "Admin", role: "Owner" },
+  user: { name: "Admin", role: "Owner", roles: ["owner"], permissions: ["dashboard:read", "orders:read", "customers:read", "settings:read"] },
   menus,
   topbarRight: <Button size="sm" variant="outline">Settings</Button>,
   clientDefaults: {

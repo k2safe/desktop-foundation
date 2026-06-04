@@ -1,4 +1,5 @@
 import { ConfirmProvider, LocaleProvider, ThemeProvider, ToastProvider } from "@desktop-foundation/ui-react";
+import { DesktopAccessProvider } from "./DesktopAccessProvider";
 import { DesktopClientProvider } from "./DesktopClientProvider";
 import { SessionProvider } from "./SessionProvider";
 import type { DesktopAppShellProps, DesktopSessionUser } from "./types";
@@ -9,6 +10,7 @@ export function DesktopAppShell<TUser extends DesktopSessionUser = DesktopSessio
   locale,
   messages,
   dictionaries,
+  accessControl,
   client,
   session,
   children
@@ -19,7 +21,9 @@ export function DesktopAppShell<TUser extends DesktopSessionUser = DesktopSessio
         <ToastProvider>
           <ConfirmProvider>
             <DesktopClientProvider client={client}>
-              <SessionProvider config={session}>{children}</SessionProvider>
+              <SessionProvider config={session}>
+                <DesktopAccessProvider accessControl={accessControl}>{children}</DesktopAccessProvider>
+              </SessionProvider>
             </DesktopClientProvider>
           </ConfirmProvider>
         </ToastProvider>

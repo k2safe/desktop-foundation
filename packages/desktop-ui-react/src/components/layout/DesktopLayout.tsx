@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useAccess, type AccessControlled } from "../../access";
 import { useLocale } from "../../locale";
 import { cn } from "../../utils/cn";
 
@@ -9,7 +10,7 @@ export interface DesktopUser {
   avatar?: ReactNode;
 }
 
-export interface DesktopMenuItem {
+export interface DesktopMenuItem extends AccessControlled {
   id: string;
   label: ReactNode;
   href?: string;
@@ -27,7 +28,7 @@ export interface DesktopLayoutBrand {
 
 export type DesktopLayoutVariant = "sidebar" | "topnav";
 
-export interface DesktopUserMenuItem {
+export interface DesktopUserMenuItem extends AccessControlled {
   id: string;
   label: ReactNode;
   description?: ReactNode;
@@ -56,6 +57,17 @@ export interface DesktopLayoutProps {
   onEditProfile?: () => void;
   onLogout?: () => void;
   onMenuSelect?: (item: DesktopMenuItem) => void;
+}
+
+function filterMenuItems(items: DesktopMenuItem[], canAccess: (item: AccessControlled) => boolean): DesktopMenuItem[] {
+  return items.flatMap((item) => {
+    if (!canAccess(item)) return [];
+
+    const children = item.children ? filterMenuItems(item.children, canAccess) : undefined;
+    if (item.children?.length && !children?.length && !item.href) return [];
+    if (children && children !== item.children) return [{ ...item, children: children.length ? children : undefined }];
+    return [item];
+  });
 }
 
 function MenuEntry({ item, depth = 0, onSelect }: { item: DesktopMenuItem; depth?: number; onSelect?: (item: DesktopMenuItem) => void }) {
@@ -100,6 +112,8 @@ function MenuEntry({ item, depth = 0, onSelect }: { item: DesktopMenuItem; depth
 
 export function Sidebar({ brand, menus, footer, onMenuSelect }: Pick<DesktopLayoutProps, "brand" | "menus" | "footer" | "onMenuSelect">) {
   const { t } = useLocale();
+  const { canAccess } = useAccess();
+  const visibleMenus = filterMenuItems(menus, canAccess);
 
   return (
     <aside className="df-sidebar">
@@ -109,7 +123,7 @@ export function Sidebar({ brand, menus, footer, onMenuSelect }: Pick<DesktopLayo
       </div>
       <nav className="df-sidebar__nav" aria-label={t("layout.mainMenu")}>
         <ul className="df-sidebar__list">
-          {menus.map((item) => (
+          {visibleMenus.map((item) => (
             <MenuEntry key={item.id} item={item} onSelect={onMenuSelect} />
           ))}
         </ul>
@@ -187,11 +201,13 @@ function TopNavigationEntry({ item, onSelect }: { item: DesktopMenuItem; onSelec
 
 export function TopNavigation({ menus, onMenuSelect }: Pick<DesktopLayoutProps, "menus" | "onMenuSelect">) {
   const { t } = useLocale();
+  const { canAccess } = useAccess();
+  const visibleMenus = filterMenuItems(menus, canAccess);
 
   return (
     <nav className="df-topnav" aria-label={t("layout.topMenu")}>
       <ul className="df-topnav__list">
-        {menus.map((item) => (
+        {visibleMenus.map((item) => (
           <TopNavigationEntry key={item.id} item={item} onSelect={onMenuSelect} />
         ))}
       </ul>
@@ -220,12 +236,14 @@ function UserMenu({
   const resolvedEditProfileLabel = editProfileLabel ?? t("layout.editProfile");
   const resolvedLogoutLabel = logoutLabel ?? t("layout.logout");
   const userLabel = t("layout.user");
+  const { canAccess } = useAccess();
+  const visibleItems = items.filter((item) => canAccess(item));
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const initial = (user.name || user.account || "U").slice(0, 1).toUpperCase();
   const menuItems: DesktopUserMenuItem[] = [
     ...(onEditProfile ? [{ id: "edit-profile", label: resolvedEditProfileLabel, onSelect: onEditProfile }] : []),
-    ...items,
+    ...visibleItems,
     ...(onLogout ? [{ id: "logout", label: resolvedLogoutLabel, danger: true, onSelect: onLogout }] : [])
   ];
 
