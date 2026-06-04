@@ -17,6 +17,7 @@
 ## Docs
 
 - [Product AI Handoff](docs/product-ai-handoff.md)
+- [Foundation Capabilities](docs/capabilities.md)
 - [Login Templates](docs/login-templates.md)
 - [Tauri Updater Adapter](docs/tauri-updater-adapter.md)
 - [Existing Project Migration Case](docs/existing-project-migration-case.md)
@@ -52,6 +53,7 @@
 - secure storage 契约，macOS Keychain、Linux Secret Service、Windows DPAPI、文件 fallback
 - 零依赖组件文档页和可选 Playwright 截图入口
 - 通用 `desktop-foundation doctor` 接入检查命令
+- 机器可读能力清单和 integration-check capability matrix
 - Tauri native plugin 可选适配层，可用官方插件替换部分 Rust command 能力
 - 多语言、访问控制、统一错误处理、默认错误边界和审计/诊断事件流
 - 通用产品接入 DEMO：`examples/demo-product`

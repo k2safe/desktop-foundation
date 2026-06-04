@@ -50,3 +50,5 @@ pnpm exec desktop-foundation-ci --package-desktop --manifest --release-plan --gi
 ```
 
 `--integration-check` validates the required foundation packages, shared stylesheet, app shell, theme template runtime, product adapter, i18n surface, audit events, copied-source risk, table/overlay overflow risk, Tauri core dependency, default capability, update surface, and expected product scripts. `--release-plan --github-repo` writes release metadata with GitHub Release URLs, checksum assets, manifest URL, and `gh release` command arguments without forcing a specific GitHub Actions workflow.
+
+The integration report also includes a capability matrix generated from `foundation-capabilities.json`, so product teams and external AI agents can see which foundation capabilities are pass, warn, or fail without reverse-engineering individual finding ids.

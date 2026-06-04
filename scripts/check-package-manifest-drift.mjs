@@ -103,6 +103,8 @@ async function main() {
   const manifest = await readManifest(options.manifest);
   const manifestByName = new Map((manifest.packages || []).map((entry) => [entry.name, entry]));
   const stale = [];
+  const rootPackage = readJson(join(repoRoot, "package.json"));
+  const capabilityRegistry = readJson(join(repoRoot, "packages/create-desktop-app/foundation-capabilities.json"));
 
   for (const item of packages) {
     const localPackage = readJson(join(repoRoot, item.dir, "package.json"));
@@ -118,6 +120,15 @@ async function main() {
     if (comparison < 0) {
       stale.push(`${item.name}: local ${localPackage.version} < manifest ${manifestPackage.version}`);
     }
+  }
+
+  if (!manifest.capabilities?.file) {
+    stale.push("foundation-capabilities: missing from manifest");
+  } else {
+    console.log(`foundation-capabilities: manifest ${manifest.capabilities.file} (${manifest.capabilities.size || "unknown"} bytes)`);
+  }
+  if (capabilityRegistry.foundationVersion !== rootPackage.version) {
+    stale.push(`foundation-capabilities: registry ${capabilityRegistry.foundationVersion} != root package ${rootPackage.version}`);
   }
 
   if (stale.length) {

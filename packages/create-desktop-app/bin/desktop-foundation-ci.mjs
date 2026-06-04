@@ -3,7 +3,9 @@ import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync,
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { fileURLToPath } from "node:url";
 
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const knownChecks = ["type-check", "build", "lint", "visual:regression"];
 const defaultArtifactDir = "artifacts/desktop";
 const foundationRuntimePackages = [
@@ -33,8 +35,8 @@ function printHelp() {
     "  --no-build            Disable the default build step.",
     "  --strict              Fail when a requested script/package artifact is missing; with --integration-check, also fail on warnings.",
     "  --integration-check   Check whether a product project is wired to the foundation contract.",
-    "  --integration-report <path> Write integration check report JSON.",
-    "  --integration-summary Print grouped fail/warn next actions. Alias: --summary.",
+    "  --integration-report <path> Write integration check report JSON with findings and capability matrix.",
+    "  --integration-summary Print grouped fail/warn next actions and capability matrix. Alias: --summary.",
     "",
     "Desktop packaging:",
     "  --package-desktop     Normalize built desktop artifacts into artifacts/desktop.",
@@ -493,6 +495,76 @@ function reportNextActions(findings) {
     }));
 }
 
+function readCapabilityRegistry() {
+  const registryPath = join(packageRoot, "foundation-capabilities.json");
+  if (!existsSync(registryPath)) return null;
+  try {
+    return JSON.parse(readFileSync(registryPath, "utf8"));
+  } catch (error) {
+    return {
+      schemaVersion: 0,
+      foundationVersion: "unknown",
+      capabilities: [],
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
+
+function findingStatusForCapability(status) {
+  if (status === "pass" || status === "warn" || status === "fail") return status;
+  return "missing";
+}
+
+function buildCapabilityMatrix(registry, findings) {
+  if (!registry || !Array.isArray(registry.capabilities)) return null;
+  const findingById = new Map(findings.map((finding) => [finding.id, finding]));
+  const items = registry.capabilities.map((capability) => {
+    const requiredIds = capability.integrationChecks?.required ?? [];
+    const recommendedIds = capability.integrationChecks?.recommended ?? [];
+    const checks = [
+      ...requiredIds.map((id) => ({ id, required: true })),
+      ...recommendedIds.map((id) => ({ id, required: false }))
+    ].map((check) => {
+      const finding = findingById.get(check.id);
+      return {
+        id: check.id,
+        required: check.required,
+        status: findingStatusForCapability(finding?.status),
+        message: finding?.message ?? "Finding was not emitted by this version of desktop-foundation-ci."
+      };
+    });
+
+    const hasRequiredFail = checks.some((check) => check.required && check.status === "fail");
+    const hasRequiredWarn = checks.some((check) => check.required && (check.status === "warn" || check.status === "missing"));
+    const hasRecommendedIssue = checks.some((check) => !check.required && check.status !== "pass");
+    const status = hasRequiredFail ? "fail" : hasRequiredWarn || hasRecommendedIssue ? "warn" : "pass";
+
+    return {
+      id: capability.id,
+      name: capability.name,
+      status,
+      phase: capability.phase,
+      owner: capability.owner,
+      maturity: capability.status,
+      summary: capability.summary,
+      checks
+    };
+  });
+
+  return {
+    schemaVersion: registry.schemaVersion,
+    foundationVersion: registry.foundationVersion,
+    generatedFrom: "foundation-capabilities.json",
+    summary: {
+      status: items.some((item) => item.status === "fail") ? "fail" : items.some((item) => item.status === "warn") ? "warn" : "pass",
+      pass: items.filter((item) => item.status === "pass").length,
+      warn: items.filter((item) => item.status === "warn").length,
+      fail: items.filter((item) => item.status === "fail").length
+    },
+    items
+  };
+}
+
 function printIntegrationSummary(report) {
   const actionItems = report.findings.filter((finding) => finding.status !== "pass");
   console.log("");
@@ -502,13 +574,32 @@ function printIntegrationSummary(report) {
 
   if (!actionItems.length) {
     console.log("  no action required.");
-    return;
+  } else {
+    for (const finding of actionItems) {
+      console.log(`  - [${finding.status.toUpperCase()}] ${finding.id}: ${finding.message}`);
+      if (Array.isArray(finding.files) && finding.files.length) {
+        console.log(`    files: ${finding.files.join(", ")}`);
+      }
+    }
   }
 
-  for (const finding of actionItems) {
-    console.log(`  - [${finding.status.toUpperCase()}] ${finding.id}: ${finding.message}`);
-    if (Array.isArray(finding.files) && finding.files.length) {
-      console.log(`    files: ${finding.files.join(", ")}`);
+  if (report.capabilities) {
+    const capabilityItems = report.capabilities.items.filter((item) => item.status !== "pass");
+    console.log("");
+    console.log("desktop-foundation-ci: capability matrix");
+    console.log(
+      `  status: ${report.capabilities.summary.status} (${report.capabilities.summary.pass} pass, ${report.capabilities.summary.warn} warn, ${report.capabilities.summary.fail} fail)`
+    );
+    if (!capabilityItems.length) {
+      console.log("  all capabilities are satisfied for this integration stage.");
+      return;
+    }
+    for (const item of capabilityItems) {
+      console.log(`  - [${item.status.toUpperCase()}] ${item.id}: ${item.name}`);
+      const checks = item.checks.filter((check) => check.status !== "pass");
+      if (checks.length) {
+        console.log(`    checks: ${checks.map((check) => `${check.id}=${check.status}`).join(", ")}`);
+      }
     }
   }
 }
@@ -940,6 +1031,7 @@ function runIntegrationCheck(options, packageJson) {
     warn: findings.filter((finding) => finding.status === "warn").length,
     fail: findings.filter((finding) => finding.status === "fail").length
   };
+  const capabilities = buildCapabilityMatrix(readCapabilityRegistry(), findings);
   const report = {
     generatedAt: new Date().toISOString(),
     cwd,
@@ -952,12 +1044,18 @@ function runIntegrationCheck(options, packageJson) {
     nextActions: reportNextActions(findings),
     findings
   };
+  if (capabilities) report.capabilities = capabilities;
 
   for (const finding of findings) {
     const label = finding.status.toUpperCase().padEnd(4);
     console.log(`desktop-foundation-ci: ${label} ${finding.id} - ${finding.message}`);
   }
   console.log(`desktop-foundation-ci: integration ${summary.status} (${summary.pass} pass, ${summary.warn} warn, ${summary.fail} fail)`);
+  if (capabilities) {
+    console.log(
+      `desktop-foundation-ci: capabilities ${capabilities.summary.status} (${capabilities.summary.pass} pass, ${capabilities.summary.warn} warn, ${capabilities.summary.fail} fail)`
+    );
+  }
   if (options.integrationSummary) {
     printIntegrationSummary(report);
   }

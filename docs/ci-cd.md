@@ -30,6 +30,8 @@ pnpm exec desktop-foundation-ci --integration-check --integration-summary --inte
 
 The check verifies package pins, pnpm overrides, shared stylesheet import, `DesktopAppShell`, theme template runtime, product adapter usage, i18n surface, missing-key diagnostics, locale formatters, audit events, copied-source risk, table/overlay overflow risk, login shell usage, Tauri `desktop-core-rs`, capabilities, update configuration, and expected scripts. Missing contract items fail; optional rollout items such as visual baselines or update manifest wiring are reported as warnings.
 
+The JSON report also includes `capabilities`, a matrix derived from [Foundation Capabilities](capabilities.md). `findings` remain the source for exact remediation; `capabilities` groups those findings by product-facing foundation capability so another AI or reviewer can see which areas are ready, warned, or failed.
+
 For a CI gate that should fail on warnings as well, add `--strict` after the product has intentionally resolved or accepted every warning.
 
 ## Desktop Artifact Normalization

@@ -30,7 +30,7 @@ function parseArgs(argv) {
       options.output = resolve(argv[index + 1] || "");
       index += 1;
     } else if (arg === "--help" || arg === "-h") {
-      console.log("write-release-package-manifest --tag v0.1.26 [--repo owner/repo] [--source file] [--output file]");
+      console.log("write-release-package-manifest --tag v0.1.27 [--repo owner/repo] [--source file] [--output file]");
       process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${arg}`);
@@ -54,6 +54,9 @@ function rewriteManifestUrls(manifest, baseUrl) {
   for (const item of nextManifest.packages || []) {
     item.url = `${baseUrl}/${item.file}`;
     packageUrls.set(item.name, item.url);
+  }
+  if (nextManifest.capabilities?.file) {
+    nextManifest.capabilities.url = `${baseUrl}/${nextManifest.capabilities.file}`;
   }
 
   for (const section of ["dependencies", "devDependencies"]) {

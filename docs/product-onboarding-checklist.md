@@ -8,6 +8,8 @@
 
 当前推荐版本以 `artifacts/npm/foundation-packages.json` 为准，消费端直接复制其中的 `consumer` 依赖块。
 
+如果 manifest 里存在 `capabilities.url`，同步读取能力清单。它描述底座提供哪些能力、哪些由产品负责，以及 `desktop-foundation-ci` 的 findings 如何聚合成能力矩阵。
+
 ## 2. 样式入口
 
 在前端入口引入共享样式：
@@ -106,6 +108,7 @@ pnpm package:desktop
 ## 9. 交付标准
 
 - `doctor` 没有 fail。
+- `foundation-integration.json` 里的 `capabilities.summary.fail` 为 0。
 - `pnpm build` 通过。
 - 登录页、主 shell、表单、表格、弹窗、抽屉、用户菜单和更新状态都能打开。
 - 长菜单和长页面互不抢滚动。

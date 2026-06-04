@@ -14,6 +14,7 @@ pnpm exec desktop-foundation ci --integration-check --integration-summary
 - `--report` 输出完整 JSON，适合发给底座维护者或另一个 AI。
 - `--strict` 会在有 fail 或 warn 时退出失败，适合接入收口和 CI gate。
 - `desktop-foundation-ci --integration-check` 默认只在 fail 时退出失败；加 `--summary` 或 `--integration-summary` 才打印分组摘要。
+- 报告里的 `capabilities` 来自 [Foundation Capabilities](capabilities.md)，用于把 findings 聚合成产品能力矩阵。
 
 ## Report 结构
 
@@ -22,11 +23,15 @@ pnpm exec desktop-foundation ci --integration-check --integration-summary
   "summary": { "status": "warn", "pass": 36, "warn": 2, "fail": 0 },
   "stats": { "filesScanned": 16, "sourceFilesScanned": 9 },
   "nextActions": [{ "id": "script:visual:regression", "status": "warn", "action": "..." }],
+  "capabilities": {
+    "summary": { "status": "warn", "pass": 9, "warn": 5, "fail": 0 },
+    "items": [{ "id": "updates", "status": "warn", "checks": [] }]
+  },
   "findings": []
 }
 ```
 
-先看 `summary.fail`。fail 必须修；warn 可以按阶段处理，但接入收口时建议用 `--strict` 清干净。
+先看 `summary.fail`。fail 必须修；warn 可以按阶段处理，但接入收口时建议用 `--strict` 清干净。`capabilities.summary` 用来判断哪一类底座能力还没收口；具体怎么修仍然回到 `findings`。
 
 ## Findings
 

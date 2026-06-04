@@ -7,7 +7,7 @@
 先读取 foundation package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.26/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.27/foundation-packages.json
 ```
 
 如果明确要追 `main` 上的最新底座，再读取 development manifest：
@@ -25,6 +25,8 @@ pnpm build
 ```
 
 不要把某个旧版本号写进接入提示词或产品代码。稳定接入优先使用 release manifest；当前推荐版本、tarball URL、pnpm overrides 和 Cargo dependency 都以选定 manifest 为准。
+
+然后读取 package manifest 里的 `capabilities.url`。它指向同一版本的机器可读能力清单，外部 AI 需要用它理解底座能力边界，再把 `desktop-foundation-ci --integration-report` 里的 `capabilities` 矩阵作为接入状态。
 
 产品入口必须只 import 一次共享样式：
 
@@ -270,6 +272,7 @@ pnpm exec desktop-foundation-ci \
 必须通过：
 
 - `pnpm exec desktop-foundation-ci --integration-check` 没有 fail。
+- `artifacts/foundation-integration.json` 里的 `capabilities.summary.fail = 0`，真实业务上线前需要逐项解释或清掉 `recommended-before-release` 能力的 warn。
 - `pnpm build` 通过。
 - 如果产品有上传链路，增加一个本地 mock server smoke，至少验证 `FormData -> multipart/form-data; boundary=... -> 服务端收到字段和文件`。
 - 桌面包能打开，不白屏，不崩溃。

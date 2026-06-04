@@ -115,6 +115,9 @@ function rewriteManifestUrls(manifest, baseUrl) {
     item.url = `${baseUrl}/${item.file}`;
     packageUrls.set(item.name, item.url);
   }
+  if (nextManifest.capabilities?.file) {
+    nextManifest.capabilities.url = `${baseUrl}/${nextManifest.capabilities.file}`;
+  }
 
   for (const section of ["dependencies", "devDependencies"]) {
     for (const name of Object.keys(nextManifest.consumer?.[section] || {})) {

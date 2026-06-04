@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -59,6 +59,9 @@ function main() {
   const devDependencies = {};
   const pnpmOverrides = {};
   const packageEntries = [];
+  const capabilityRegistryFile = "foundation-capabilities.json";
+  const capabilityRegistrySource = resolve(repoRoot, "packages/create-desktop-app", capabilityRegistryFile);
+  const capabilityRegistryTarget = join(artifactDir, capabilityRegistryFile);
 
   for (const item of packages) {
     const packageDir = resolve(repoRoot, item.dir);
@@ -90,11 +93,21 @@ function main() {
     });
   }
 
+  copyFileSync(capabilityRegistrySource, capabilityRegistryTarget);
+  const capabilityRegistry = {
+    file: capabilityRegistryFile,
+    path: relative(repoRoot, capabilityRegistryTarget),
+    url: `${options.baseUrl}/${capabilityRegistryFile}`,
+    sha256: sha256(capabilityRegistryTarget),
+    size: statSync(capabilityRegistryTarget).size
+  };
+
   const manifest = {
     generatedAt: new Date().toISOString(),
     repository: "git@github.com:k2safe/desktop-foundation.git",
     branch: "main",
     baseUrl: options.baseUrl,
+    capabilities: capabilityRegistry,
     packages: packageEntries,
     consumer: {
       dependencies,

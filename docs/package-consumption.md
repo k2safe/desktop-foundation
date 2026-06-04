@@ -7,13 +7,13 @@ This page is the handoff contract for product repositories that need to consume 
 For a stable product integration, use the immutable manifest attached to a GitHub Release. Current stable release:
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.26/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.27/foundation-packages.json
 ```
 
 The package URLs inside that manifest point to the same release tag, for example:
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.26/desktop-foundation-bridge-0.1.26.tgz
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.27/desktop-foundation-bridge-0.1.27.tgz
 ```
 
 This keeps product installs pinned to a specific foundation release even after `main` moves forward.
@@ -36,6 +36,8 @@ manifest.consumer.devDependencies -> package.json devDependencies
 manifest.consumer.pnpm -> package.json pnpm
 ```
 
+The manifest also includes `capabilities.url`, which points to the machine-readable foundation capability registry for that same package build. External AI agents should read it after installing dependencies, then compare it with `desktop-foundation-ci --integration-check --integration-report`.
+
 Use this Rust dependency in product `src-tauri/Cargo.toml`:
 
 ```toml
@@ -56,14 +58,15 @@ pnpm pack:packages
 
 - `artifacts/npm/*.tgz`
 - `artifacts/npm/foundation-packages.json`
+- `artifacts/npm/foundation-capabilities.json`
 
 To create an immutable release manifest:
 
 ```bash
-pnpm release:package-manifest -- --tag v0.1.26 --output /tmp/foundation-packages.json
+pnpm release:package-manifest -- --tag v0.1.27 --output /tmp/foundation-packages.json
 ```
 
-Upload the output as the release asset named `foundation-packages.json` next to the package tarballs.
+Upload the output as the release asset named `foundation-packages.json` next to the package tarballs and `foundation-capabilities.json`.
 
 ## Later: Registry Publish
 

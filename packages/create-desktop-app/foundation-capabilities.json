@@ -1,0 +1,364 @@
+{
+  "schemaVersion": 1,
+  "foundationVersion": "0.1.27",
+  "updatedAt": "2026-06-04",
+  "name": "desktop-foundation capability registry",
+  "description": "Machine-readable registry for product projects and external AI agents integrating desktop-foundation.",
+  "docs": [
+    "docs/capabilities.md",
+    "docs/product-ai-handoff.md",
+    "docs/ci-cd.md",
+    "docs/doctor.md"
+  ],
+  "capabilities": [
+    {
+      "id": "package-consumption",
+      "name": "Package Consumption",
+      "owner": "foundation",
+      "phase": "required",
+      "status": "stable",
+      "summary": "Install all runtime packages, the CLI package, pnpm overrides, and aligned tarball versions from the selected foundation manifest.",
+      "packages": [
+        "@desktop-foundation/bridge",
+        "@desktop-foundation/ui-react",
+        "@desktop-foundation/app-shell",
+        "@desktop-foundation/theme-presets",
+        "@desktop-foundation/create-desktop-app"
+      ],
+      "docs": [
+        "docs/package-consumption.md",
+        "docs/product-ai-handoff.md"
+      ],
+      "integrationChecks": {
+        "required": [
+          "dependency:@desktop-foundation/bridge",
+          "dependency:@desktop-foundation/ui-react",
+          "dependency:@desktop-foundation/app-shell",
+          "dependency:@desktop-foundation/theme-presets",
+          "foundation-version"
+        ],
+        "recommended": [
+          "dependency:@desktop-foundation/create-desktop-app",
+          "package-manager"
+        ]
+      },
+      "businessBoundary": "Products own their package manager policy after copying the manifest blocks; the foundation only publishes tarballs and the manifest contract."
+    },
+    {
+      "id": "app-shell",
+      "name": "App Shell",
+      "owner": "foundation",
+      "phase": "required",
+      "status": "stable",
+      "summary": "Wrap the product entry in DesktopAppShell and import the shared stylesheet once.",
+      "packages": [
+        "@desktop-foundation/app-shell",
+        "@desktop-foundation/ui-react"
+      ],
+      "docs": [
+        "docs/product-integration.md",
+        "docs/product-ai-handoff.md"
+      ],
+      "integrationChecks": {
+        "required": [
+          "ui-styles",
+          "app-shell"
+        ]
+      },
+      "businessBoundary": "Products own routes, product pages, and API paths; DesktopAppShell only supplies common providers and shell contracts."
+    },
+    {
+      "id": "theme-and-layout",
+      "name": "Theme And Layout",
+      "owner": "foundation",
+      "phase": "required",
+      "status": "stable",
+      "summary": "Use theme presets, DesktopLayout, product adapter settings, and token overrides instead of copying foundation component internals.",
+      "packages": [
+        "@desktop-foundation/theme-presets",
+        "@desktop-foundation/ui-react"
+      ],
+      "docs": [
+        "docs/ui-theme.md",
+        "docs/product-adapter.md"
+      ],
+      "integrationChecks": {
+        "required": [
+          "theme-template",
+          "theme-template:id"
+        ],
+        "recommended": [
+          "product-adapter:file",
+          "product-adapter:usage",
+          "foundation-source-copy",
+          "foundation-internal-import",
+          "foundation-css-overrides"
+        ]
+      },
+      "businessBoundary": "Products own brand, menus, layout choices, and token values; the foundation owns reusable component structure and internal selectors."
+    },
+    {
+      "id": "login",
+      "name": "Login Shell",
+      "owner": "foundation",
+      "phase": "recommended",
+      "status": "stable",
+      "summary": "Use DesktopLoginPage and login templates when the product does not require a fully custom authentication UI.",
+      "packages": [
+        "@desktop-foundation/app-shell"
+      ],
+      "docs": [
+        "docs/login-templates.md",
+        "docs/product-ai-handoff.md"
+      ],
+      "integrationChecks": {
+        "recommended": [
+          "login-shell",
+          "login-template"
+        ]
+      },
+      "businessBoundary": "Products own authentication fields, credentials, MFA, API calls, and error copy."
+    },
+    {
+      "id": "access-control",
+      "name": "Access Control",
+      "owner": "shared",
+      "phase": "recommended",
+      "status": "stable",
+      "summary": "Expose permission and feature flags through DesktopAppShell, menus, commands, AccessGuard, and PermissionGuard.",
+      "packages": [
+        "@desktop-foundation/app-shell",
+        "@desktop-foundation/ui-react"
+      ],
+      "docs": [
+        "docs/access-control.md",
+        "docs/product-ai-handoff.md"
+      ],
+      "integrationChecks": {
+        "recommended": [
+          "access-control"
+        ]
+      },
+      "businessBoundary": "Products own real authorization rules and backend enforcement; the foundation only hides and guards front-end entry points."
+    },
+    {
+      "id": "i18n",
+      "name": "I18n",
+      "owner": "shared",
+      "phase": "recommended",
+      "status": "stable",
+      "summary": "Provide locale, dictionaries, safe missing-key diagnostics, and common number/date/currency formatters.",
+      "packages": [
+        "@desktop-foundation/ui-react",
+        "@desktop-foundation/app-shell"
+      ],
+      "docs": [
+        "docs/i18n.md",
+        "docs/product-ai-handoff.md"
+      ],
+      "integrationChecks": {
+        "recommended": [
+          "i18n",
+          "i18n:missing-key",
+          "i18n:formatters"
+        ]
+      },
+      "businessBoundary": "Products own business copy, field labels, domain dictionaries, currency defaults, and locale rollout policy."
+    },
+    {
+      "id": "errors-and-request-state",
+      "name": "Errors And Request State",
+      "owner": "foundation",
+      "phase": "recommended",
+      "status": "stable",
+      "summary": "Normalize HTTP and runtime errors through DesktopError, DesktopErrorBoundary, useRequest, and useMutation.",
+      "packages": [
+        "@desktop-foundation/bridge",
+        "@desktop-foundation/app-shell"
+      ],
+      "docs": [
+        "docs/error-handling.md",
+        "docs/api-reference.md"
+      ],
+      "integrationChecks": {
+        "recommended": [
+          "app-shell"
+        ]
+      },
+      "businessBoundary": "Products own domain error codes and user-facing business remediation copy."
+    },
+    {
+      "id": "audit-events",
+      "name": "Audit Events",
+      "owner": "shared",
+      "phase": "recommended",
+      "status": "stable",
+      "summary": "Record foundation diagnostics and product action events with safe metadata through onAuditEvent, auditObserver, or client.diagnostics.",
+      "packages": [
+        "@desktop-foundation/bridge",
+        "@desktop-foundation/app-shell"
+      ],
+      "docs": [
+        "docs/audit-events.md",
+        "docs/product-ai-handoff.md"
+      ],
+      "integrationChecks": {
+        "recommended": [
+          "audit-events"
+        ]
+      },
+      "businessBoundary": "Products own log storage, retention, PII policy, and backend audit ingestion."
+    },
+    {
+      "id": "http-and-upload",
+      "name": "HTTP And Upload",
+      "owner": "foundation",
+      "phase": "required-for-networked-products",
+      "status": "stable",
+      "summary": "Use the bridge HTTP client for JSON, raw body, downloads, and multipart upload across Web and Tauri transports.",
+      "packages": [
+        "@desktop-foundation/bridge",
+        "desktop-core-rs"
+      ],
+      "docs": [
+        "docs/api-reference.md",
+        "docs/product-ai-handoff.md",
+        "docs/rust-core.md"
+      ],
+      "integrationChecks": {
+        "required": [
+          "dependency:@desktop-foundation/bridge"
+        ],
+        "recommended": [
+          "tauri-core"
+        ]
+      },
+      "businessBoundary": "Products own endpoint paths, auth behavior, backend multipart parsing, object storage, and upload retention rules."
+    },
+    {
+      "id": "desktop-core",
+      "name": "Desktop Core",
+      "owner": "foundation",
+      "phase": "required-for-tauri",
+      "status": "stable",
+      "summary": "Wire desktop-core-rs and Tauri ACL permissions for HTTP, storage, secure storage, files, windows, clipboard, notifications, and downloads.",
+      "packages": [
+        "desktop-core-rs",
+        "@desktop-foundation/bridge"
+      ],
+      "docs": [
+        "docs/rust-core.md",
+        "docs/api-reference.md"
+      ],
+      "integrationChecks": {
+        "required": [
+          "tauri-core"
+        ],
+        "recommended": [
+          "tauri-capability"
+        ]
+      },
+      "businessBoundary": "Products own platform signing, permissions beyond desktop-core:default, and native plugin choices."
+    },
+    {
+      "id": "updates",
+      "name": "Updates",
+      "owner": "shared",
+      "phase": "recommended-before-release",
+      "status": "stable",
+      "summary": "Use updateConfig, GitHub Releases manifest helpers, checksum verification, and an adapter boundary for real installation.",
+      "packages": [
+        "@desktop-foundation/bridge",
+        "@desktop-foundation/app-shell"
+      ],
+      "docs": [
+        "docs/tauri-updater-adapter.md",
+        "docs/ci-cd.md",
+        "docs/product-ai-handoff.md"
+      ],
+      "integrationChecks": {
+        "recommended": [
+          "updates",
+          "updates:placeholder",
+          "updates:install-boundary",
+          "updates:install-bypass"
+        ]
+      },
+      "businessBoundary": "Products own release hosting, signing, notarization, rollout policy, and final native installer adapter."
+    },
+    {
+      "id": "link-proxy",
+      "name": "Link Proxy",
+      "owner": "shared",
+      "phase": "optional",
+      "status": "stable",
+      "summary": "Route arbitrary third-party URL requests through client.linkProxy with explicit proxy and target origin allowlists.",
+      "packages": [
+        "@desktop-foundation/bridge"
+      ],
+      "docs": [
+        "docs/api-reference.md",
+        "docs/security-policy.md"
+      ],
+      "integrationChecks": {
+        "recommended": [
+          "link-proxy",
+          "link-proxy:gateway-policy",
+          "link-proxy:direct-policy",
+          "link-proxy:bypass"
+        ]
+      },
+      "businessBoundary": "Products own allowed origins and must distinguish product API calls from arbitrary third-party link fetches."
+    },
+    {
+      "id": "ui-overflow",
+      "name": "UI Overflow Guardrails",
+      "owner": "foundation",
+      "phase": "recommended",
+      "status": "stable",
+      "summary": "Use foundation table, drawer, modal, and layout components so long content and wide tables scroll inside the right container.",
+      "packages": [
+        "@desktop-foundation/ui-react"
+      ],
+      "docs": [
+        "docs/ui-component-catalog.md",
+        "docs/product-ai-handoff.md"
+      ],
+      "integrationChecks": {
+        "recommended": [
+          "overflow:table",
+          "overflow:overlay"
+        ]
+      },
+      "businessBoundary": "Products own page composition and column definitions; the foundation provides reusable overflow-safe components."
+    },
+    {
+      "id": "ci-and-release",
+      "name": "CI And Release",
+      "owner": "shared",
+      "phase": "recommended-before-release",
+      "status": "stable",
+      "summary": "Run desktop-foundation-ci for integration checks, package normalization, update manifests, release plans, and local release gates.",
+      "packages": [
+        "@desktop-foundation/create-desktop-app"
+      ],
+      "docs": [
+        "docs/ci-cd.md",
+        "docs/package-consumption.md",
+        "docs/doctor.md"
+      ],
+      "integrationChecks": {
+        "required": [
+          "script:type-check",
+          "script:build"
+        ],
+        "recommended": [
+          "script:visual:regression",
+          "script:package:desktop",
+          "script:release"
+        ]
+      },
+      "businessBoundary": "Products own CI provider, signing secrets, release approvals, and artifact publication."
+    }
+  ]
+}
