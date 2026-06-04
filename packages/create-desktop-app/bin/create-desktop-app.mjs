@@ -7,7 +7,7 @@ const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const templateRoot = join(packageRoot, "templates", "react-tauri");
 const foundationPackageVersion =
   JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8")).version || "0.0.0";
-const themeTemplateIds = new Set(["default", "admin", "command", "topnav-ops", "merchant", "ledger", "studio", "dark"]);
+const themeTemplateIds = new Set(["default", "admin", "ops-admin", "command", "topnav-ops", "merchant", "ledger", "studio", "dark"]);
 
 const textExtensions = new Set([
   ".css",
@@ -32,7 +32,7 @@ Options:
   --product <id>       Product id, used for package names and token keys.
   --app-name <name>    Human readable app name.
   --api-base <url>     Default API base URL.
-  --template <id>      Theme template: default, admin, command, topnav-ops, merchant, ledger, studio, dark.
+  --template <id>      Theme template: default, admin, ops-admin, command, topnav-ops, merchant, ledger, studio, dark.
   --force              Allow generating into a non-empty directory.
   --help               Show this help.
 
@@ -48,7 +48,7 @@ function parseArgs(argv) {
     product: "",
     appName: "",
     apiBase: "http://127.0.0.1:8891",
-    template: "admin",
+    template: "ops-admin",
     force: false
   };
 
@@ -93,7 +93,7 @@ function parseArgs(argv) {
   const fallbackProduct = slugify(options.targetDir.split(/[\\/]/).filter(Boolean).pop() || "desktop-app");
   options.product = slugify(options.product || fallbackProduct);
   options.appName = options.appName || toTitle(options.product);
-  options.template = slugify(options.template || "admin");
+  options.template = slugify(options.template || "ops-admin");
   if (!themeTemplateIds.has(options.template)) {
     throw new Error(`Unknown template: ${options.template}. Use one of: ${[...themeTemplateIds].join(", ")}.`);
   }

@@ -1,10 +1,9 @@
 import type { DesktopTheme } from "@desktop-foundation/ui-react";
+import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
 
-export const demoTheme: DesktopTheme = {
+export const demoTemplate = createThemeTemplateRuntime("ops-admin", {
   id: "demo-admin",
-  brand: {
-    name: "Demo Admin"
-  },
+  brand: { name: "Demo Admin" },
   colors: {
     primary: "#2563eb",
     primaryHover: "#1d4ed8",
@@ -22,13 +21,7 @@ export const demoTheme: DesktopTheme = {
     warning: "#d97706",
     success: "#059669",
     info: "#2563eb"
-  },
-  radius: {
-    xs: "3px",
-    sm: "4px",
-    md: "6px",
-    lg: "8px",
-    xl: "10px"
-  },
-  density: "default"
-};
+  }
+});
+
+export const demoTheme: DesktopTheme = demoTemplate.theme;

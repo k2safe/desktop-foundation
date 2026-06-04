@@ -7,7 +7,7 @@
 先读取 foundation package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.28/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.29/foundation-packages.json
 ```
 
 如果明确要追 `main` 上的最新底座，再读取 development manifest：
@@ -53,14 +53,14 @@ import { DesktopAppShell, DesktopLoginPage } from "@desktop-foundation/app-shell
 import { DesktopLayout } from "@desktop-foundation/ui-react";
 import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
 
-const template = createThemeTemplateRuntime("admin", {
+const template = createThemeTemplateRuntime("ops-admin", {
   brand: { name: "Product Desktop" },
-  colors: { primary: "#3b00f5" }
+  colors: { primary: "#2563eb" }
 });
 
 export function App() {
   return (
-    <DesktopAppShell theme={template.theme} client={clientConfig} locale="zh-CN">
+    <DesktopAppShell theme={template.theme} className={template.className} client={clientConfig} locale="zh-CN">
       <DesktopLayout
         variant={template.layout.appShell}
         brand={{ name: "Product Desktop" }}

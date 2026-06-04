@@ -36,11 +36,11 @@ Use a template first, then override product-specific brand and tokens.
 ```ts
 import { createThemeTemplateRuntime } from "@desktop-foundation/theme-presets";
 
-export const productTemplate = createThemeTemplateRuntime("admin", {
+export const productTemplate = createThemeTemplateRuntime("ops-admin", {
   brand: { name: "Product Desktop" },
   colors: {
-    primary: "#3b00f5",
-    primaryHover: "#2700c7"
+    primary: "#2563eb",
+    primaryHover: "#1d4ed8"
   }
 });
 ```
@@ -58,6 +58,7 @@ export function App() {
   return (
     <DesktopAppShell
       theme={productTemplate.theme}
+      className={productTemplate.className}
       client={{
         product: "product-desktop",
         apiBaseURL: "https://api.example.com"

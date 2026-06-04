@@ -31,7 +31,7 @@ Collect these before editing:
 - current login page component
 - current theme/CSS entry
 - current Tauri `Cargo.toml`, `tauri.conf.json`, and capability files
-- desired template id: `admin`, `command`, `topnav-ops`, `ledger`, `merchant`, `studio`, `dark`, or `default`
+- desired template id: `ops-admin`, `admin`, `command`, `topnav-ops`, `ledger`, `merchant`, `studio`, `dark`, or `default`
 - GitHub release repository for desktop updates, for example `owner/repository`
 
 ## Package Install
@@ -62,14 +62,14 @@ Create a product theme adapter. Keep product-specific colors here instead of edi
 ```ts
 import { createThemeTemplateRuntime, type ThemeTemplateId } from "@desktop-foundation/theme-presets";
 
-export const defaultTemplateId: ThemeTemplateId = "admin";
+export const defaultTemplateId: ThemeTemplateId = "ops-admin";
 
 export function createProductTemplate(templateId: ThemeTemplateId = defaultTemplateId) {
   return createThemeTemplateRuntime(templateId, {
     brand: { name: "Product Desktop" },
     colors: {
-      primary: "#3b00f5",
-      primaryHover: "#2700c7"
+      primary: "#2563eb",
+      primaryHover: "#1d4ed8"
     }
   });
 }
@@ -92,7 +92,7 @@ import { DesktopLayout } from "@desktop-foundation/ui-react";
 import { createProductClient } from "./client";
 import { createProductTemplate } from "./theme";
 
-const template = createProductTemplate("admin");
+const template = createProductTemplate("ops-admin");
 const client = createProductClient();
 
 export function App() {

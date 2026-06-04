@@ -15,7 +15,7 @@ const foundationRuntimePackages = [
   "@desktop-foundation/theme-presets"
 ];
 const foundationDevPackages = ["@desktop-foundation/create-desktop-app"];
-const knownThemeTemplateIds = new Set(["default", "admin", "command", "topnav-ops", "merchant", "ledger", "studio", "dark"]);
+const knownThemeTemplateIds = new Set(["default", "admin", "ops-admin", "command", "topnav-ops", "merchant", "ledger", "studio", "dark"]);
 
 function printHelp() {
   console.log([

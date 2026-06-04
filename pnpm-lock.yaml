@@ -22,6 +22,9 @@ importers:
       '@desktop-foundation/app-shell':
         specifier: workspace:*
         version: link:../../packages/desktop-app-shell
+      '@desktop-foundation/theme-presets':
+        specifier: workspace:*
+        version: link:../../packages/theme-presets
       '@desktop-foundation/ui-react':
         specifier: workspace:*
         version: link:../../packages/desktop-ui-react

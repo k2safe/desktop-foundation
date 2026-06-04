@@ -3662,6 +3662,266 @@ body {
   border-color: color-mix(in srgb, var(--df-color-border-strong), transparent 32%);
 }
 
+.df-template-ops-admin {
+  --df-control-height: 38px;
+  --df-control-padding-x: 12px;
+  --df-layout-gap: 14px;
+  --df-table-row-height: 54px;
+}
+
+.df-template-ops-admin .df-desktop-layout {
+  grid-template-columns: 248px minmax(0, 1fr);
+  background: var(--df-color-dark);
+  padding-top: var(--df-desktop-top-offset);
+}
+
+.df-template-ops-admin .df-desktop-layout__main {
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-left-radius: 0;
+  background: var(--df-color-bg);
+}
+
+.df-template-ops-admin .df-sidebar {
+  background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
+  border-right-color: rgba(255, 255, 255, 0.08);
+}
+
+.df-template-ops-admin .df-sidebar__brand {
+  min-height: 58px;
+  padding-inline: 22px;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.df-template-ops-admin .df-sidebar__nav {
+  padding: 14px 12px;
+}
+
+.df-template-ops-admin .df-sidebar__group-label {
+  min-height: 28px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.df-template-ops-admin .df-sidebar__item {
+  min-height: 38px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.df-template-ops-admin .df-sidebar__item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--df-color-text-inverse);
+}
+
+.df-template-ops-admin .df-sidebar__item.is-active {
+  background: var(--df-color-primary);
+  color: var(--df-color-text-inverse);
+  box-shadow: none;
+}
+
+.df-template-ops-admin .df-sidebar__footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.df-template-ops-admin .df-topbar {
+  min-height: 58px;
+  padding-inline: 24px;
+  border-bottom-color: var(--df-color-border);
+  background: var(--df-color-surface);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+}
+
+.df-template-ops-admin .df-user-menu__trigger:hover,
+.df-template-ops-admin .df-user-menu__trigger.is-open {
+  border-color: var(--df-color-border);
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.df-template-ops-admin .df-desktop-layout__content {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+  padding: 24px 28px 32px;
+  background: var(--df-color-bg);
+}
+
+.df-template-ops-admin .df-page-header {
+  margin-bottom: 16px;
+}
+
+.df-template-ops-admin .df-page-header h1 {
+  font-size: 22px;
+  font-weight: 750;
+}
+
+.df-template-ops-admin .df-page-header p {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.df-template-ops-admin .df-card,
+.df-template-ops-admin .df-content-panel,
+.df-template-ops-admin .df-settings-section__content,
+.df-template-ops-admin .df-table-wrap,
+.df-template-ops-admin .df-filter-bar,
+.df-template-ops-admin .df-form-section__body,
+.df-template-ops-admin .df-metric {
+  border-color: var(--df-color-border);
+  border-radius: 12px;
+  background: var(--df-color-surface);
+  box-shadow: var(--df-shadow-md);
+}
+
+.df-template-ops-admin .df-content-panel__header {
+  min-height: 56px;
+  padding: 14px 20px;
+  background: var(--df-color-surface);
+}
+
+.df-template-ops-admin .df-content-panel__header h2 {
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.df-template-ops-admin .df-content-panel__header p {
+  font-size: 13px;
+}
+
+.df-template-ops-admin .df-content-panel__body,
+.df-template-ops-admin .df-form-section__body {
+  padding: 16px 18px;
+}
+
+.df-template-ops-admin .df-filter-bar {
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--df-color-border);
+}
+
+.df-template-ops-admin .df-filter-bar__fields {
+  align-items: center;
+  gap: 10px;
+}
+
+.df-template-ops-admin .df-filter-bar__fields > .df-field,
+.df-template-ops-admin .df-filter-bar__fields > .df-date-range {
+  min-width: 140px;
+  flex: 0 1 180px;
+}
+
+.df-template-ops-admin .df-filter-bar__fields > .df-field:first-child,
+.df-template-ops-admin .df-filter-bar__fields > .df-date-range {
+  flex-basis: 220px;
+}
+
+.df-template-ops-admin .df-input-wrap,
+.df-template-ops-admin .df-select-wrap,
+.df-template-ops-admin .df-date-range__trigger {
+  min-height: 38px;
+  border-radius: 7px;
+  background: var(--df-color-surface);
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.02);
+}
+
+.df-template-ops-admin .df-input-wrap:focus-within,
+.df-template-ops-admin .df-select-wrap:focus-within,
+.df-template-ops-admin .df-date-range__trigger:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--df-color-primary), transparent 88%);
+}
+
+.df-template-ops-admin .df-table-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.df-template-ops-admin .df-table {
+  font-size: 13px;
+}
+
+.df-template-ops-admin .df-table th {
+  height: 46px;
+  padding-inline: 20px;
+  background: #f8fafc;
+  color: var(--df-color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.df-template-ops-admin .df-table td {
+  height: var(--df-table-row-height);
+  padding: 12px 20px;
+  border-bottom-color: #edf1f5;
+}
+
+.df-template-ops-admin .df-table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.df-template-ops-admin .df-table tr.is-selected td {
+  background: color-mix(in srgb, var(--df-color-primary-soft), transparent 40%);
+}
+
+.df-template-ops-admin .df-table__sort-button {
+  font-weight: 700;
+}
+
+.df-template-ops-admin .df-badge,
+.df-template-ops-admin .df-status-tag {
+  min-height: 22px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.df-template-ops-admin .df-amount__value,
+.df-template-ops-admin .df-copyable__value,
+.df-template-ops-admin .df-secret code,
+.df-template-ops-admin .df-address {
+  font-variant-numeric: tabular-nums;
+}
+
+.df-template-ops-admin .df-modal,
+.df-template-ops-admin .df-drawer {
+  border: 1px solid var(--df-color-border);
+  background: #f8fafc;
+  box-shadow: var(--df-shadow-lg);
+}
+
+.df-template-ops-admin .df-drawer {
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  width: min(640px, calc(100vw - 32px));
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.df-template-ops-admin .df-drawer--left {
+  right: auto;
+  left: 16px;
+}
+
+.df-template-ops-admin .df-modal__header,
+.df-template-ops-admin .df-modal__footer,
+.df-template-ops-admin .df-drawer__header,
+.df-template-ops-admin .df-drawer__footer {
+  background: var(--df-color-surface);
+}
+
+.df-template-ops-admin .df-modal__body,
+.df-template-ops-admin .df-drawer__body {
+  background: #f8fafc;
+}
+
+.df-template-ops-admin .df-desktop-layout--sidebar-collapsed {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
 .df-template-command .df-sidebar {
   background: linear-gradient(180deg, color-mix(in srgb, var(--df-color-dark), white 7%), var(--df-color-dark) 76%);
 }

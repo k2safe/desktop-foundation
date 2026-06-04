@@ -222,6 +222,38 @@ export const adminThemePreset: DesktopTheme = {
   }
 };
 
+export const opsAdminThemePreset: DesktopTheme = {
+  ...defaultThemePreset,
+  id: "ops-admin",
+  brand: { name: "Ops Admin" },
+  colors: {
+    ...defaultThemePreset.colors,
+    primary: "#2563eb",
+    primaryHover: "#1d4ed8",
+    primarySoft: "#eff6ff",
+    dark: "#111827",
+    background: "#f5f7fb",
+    surface: "#ffffff",
+    elevated: "#ffffff",
+    border: "#e8edf4",
+    strongBorder: "#cbd5e1",
+    text: "#111827",
+    mutedText: "#64748b",
+    success: "#16a34a",
+    warning: "#d97706",
+    danger: "#dc2626",
+    info: "#2563eb"
+  },
+  radius: { xs: "3px", sm: "4px", md: "6px", lg: "12px", xl: "14px" },
+  density: "compact",
+  shadow: {
+    sm: "0 1px 2px rgba(15, 23, 42, 0.04)",
+    md: "0 2px 10px -4px rgba(15, 23, 42, 0.16)",
+    lg: "0 20px 48px -28px rgba(15, 23, 42, 0.34)"
+  },
+  typography: { baseSize: "13px" }
+};
+
 export const merchantThemePreset: DesktopTheme = {
   ...defaultThemePreset,
   id: "merchant",
@@ -402,6 +434,26 @@ export const adminThemeTemplate: ThemeTemplate = {
   theme: adminThemePreset
 };
 
+export const opsAdminThemeTemplate: ThemeTemplate = {
+  id: "ops-admin",
+  name: "Operations Admin",
+  description: "Formal sidebar admin shell with restrained cards, compact filters, and production-ready data tables.",
+  category: "admin",
+  preview: {
+    primary: opsAdminThemePreset.colors.primary,
+    chrome: opsAdminThemePreset.colors.dark,
+    background: opsAdminThemePreset.colors.background,
+    surface: opsAdminThemePreset.colors.surface
+  },
+  layout: {
+    appShell: "sidebar",
+    login: "brand-split",
+    surface: "dense"
+  },
+  className: "df-template-ops-admin df-surface-dense",
+  theme: opsAdminThemePreset
+};
+
 export const merchantThemeTemplate: ThemeTemplate = {
   id: "merchant",
   name: "Merchant Ops",
@@ -525,6 +577,7 @@ export const studioThemeTemplate: ThemeTemplate = {
 export const themeTemplateMap = {
   default: defaultThemeTemplate,
   admin: adminThemeTemplate,
+  "ops-admin": opsAdminThemeTemplate,
   command: commandThemeTemplate,
   "topnav-ops": topnavOpsThemeTemplate,
   merchant: merchantThemeTemplate,
@@ -538,6 +591,7 @@ export type ThemeTemplateId = keyof typeof themeTemplateMap;
 export const themeTemplates: ThemeTemplate[] = [
   defaultThemeTemplate,
   adminThemeTemplate,
+  opsAdminThemeTemplate,
   commandThemeTemplate,
   topnavOpsThemeTemplate,
   merchantThemeTemplate,
@@ -549,6 +603,7 @@ export const themeTemplates: ThemeTemplate[] = [
 export const themePresets = {
   default: defaultThemePreset,
   admin: adminThemePreset,
+  "ops-admin": opsAdminThemePreset,
   command: commandThemePreset,
   "topnav-ops": topnavOpsThemePreset,
   merchant: merchantThemePreset,

@@ -21,7 +21,7 @@ import {
   type DesktopMenuItem,
   type TableColumn
 } from "@desktop-foundation/ui-react";
-import { demoTheme } from "./theme";
+import { demoTemplate, demoTheme } from "./theme";
 
 interface OrderRow {
   id: string;
@@ -85,6 +85,7 @@ export function App() {
   return (
     <DesktopAppShell
       theme={demoTheme}
+      className={demoTemplate.className}
       client={{
         product: "demo-admin",
         apiBaseURL: "http://127.0.0.1:8891"

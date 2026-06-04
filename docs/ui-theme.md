@@ -54,7 +54,8 @@ Current built-in template ids:
 | Id | Shell | Login | Surface | Best for |
 | --- | --- | --- | --- | --- |
 | `default` | sidebar | split | crisp | neutral internal desktop apps |
-| `admin` | sidebar | brand-split | dense | admin and operations consoles |
+| `admin` | sidebar | brand-split | dense | branded tech-admin consoles |
+| `ops-admin` | sidebar | brand-split | dense | formal admin products with compact filters, restrained cards, and production data tables |
 | `command` | topnav | workbench | dense | operations and monitoring tools |
 | `topnav-ops` | topnav | workbench | dense | operations products that need a lighter technical palette |
 | `merchant` | topnav | centered | glass | merchant-facing SaaS surfaces |
@@ -75,7 +76,8 @@ Business-only fields such as tenant code, OTP, region, or invite token should be
 
 Recommended starting points:
 
-- `admin`: left navigation, brand-split login, dense admin tables and admin-console spacing.
+- `ops-admin`: left navigation, white toolbar, light-gray workspace, 1440px content width, compact filter bars, and formal admin data tables. Use this first for real merchant/operator/admin desktops.
+- `admin`: left navigation, brand-split login, denser admin spacing, and stronger branded chrome.
 - `command`: top navigation, workbench login, compact telemetry panels, and stronger dark chrome.
 - `topnav-ops`: top navigation, workbench login, compact controls, and a calmer technical palette.
 - `ledger`: top navigation, centered login, financial table emphasis, and tabular numeric rhythm.
