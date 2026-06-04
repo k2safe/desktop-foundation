@@ -7,7 +7,7 @@
 先读取 foundation package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.21/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.22/foundation-packages.json
 ```
 
 如果明确要追 `main` 上的最新底座，再读取 development manifest：
@@ -57,7 +57,7 @@ const template = createThemeTemplateRuntime("admin", {
 
 export function App() {
   return (
-    <DesktopAppShell theme={template.theme} client={clientConfig}>
+    <DesktopAppShell theme={template.theme} client={clientConfig} locale="zh-CN">
       <DesktopLayout
         variant={template.layout.appShell}
         brand={{ name: "Product Desktop" }}
@@ -71,6 +71,22 @@ export function App() {
   );
 }
 ```
+
+多语言入口在 `DesktopAppShell`。底座内置 `zh-CN` 和 `en-US`，产品可以传 `locale`、`messages` 和 `dictionaries` 覆盖通用 UI 文案：
+
+```tsx
+<DesktopAppShell
+  theme={template.theme}
+  client={clientConfig}
+  locale={productAdapter.locale}
+  messages={productAdapter.messages}
+  dictionaries={productAdapter.dictionaries}
+>
+  <Routes />
+</DesktopAppShell>
+```
+
+底座只翻译通用 shell/组件文案；菜单、页面标题、业务字段、接口错误仍由产品项目自己维护。业务显式传入的 `title`、`submitLabel`、`emptyTitle` 等 prop 优先级高于语言包。
 
 登录页保留在底座，产品只传文案、认证逻辑和额外字段：
 

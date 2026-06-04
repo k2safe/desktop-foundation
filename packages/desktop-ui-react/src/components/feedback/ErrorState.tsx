@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { cn } from "../../utils/cn";
 
 export interface ErrorStateProps {
@@ -8,14 +9,17 @@ export interface ErrorStateProps {
   className?: string;
 }
 
-export function ErrorState({ title = "出现错误", description, action, className }: ErrorStateProps) {
+export function ErrorState({ title, description, action, className }: ErrorStateProps) {
+  const { t } = useLocale();
+  const resolvedTitle = title ?? t("error.title");
+
   return (
     <div className={cn("df-error-state", className)} role="alert">
       <div className="df-error-state__mark" aria-hidden="true">
         !
       </div>
       <div className="df-error-state__body">
-        <div className="df-error-state__title">{title}</div>
+        <div className="df-error-state__title">{resolvedTitle}</div>
         {description ? <div className="df-error-state__description">{description}</div> : null}
         {action ? <div className="df-error-state__action">{action}</div> : null}
       </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { cn } from "../../utils/cn";
+import { useLocale } from "../../locale";
 import { Input } from "./Input";
 
 export interface ComboboxOption {
@@ -24,15 +25,18 @@ export function Combobox({
   options,
   value,
   label,
-  placeholder = "Search",
-  emptyLabel = "No options",
+  placeholder,
+  emptyLabel,
   disabled,
   className,
   onValueChange
 }: ComboboxProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const selected = options.find((option) => option.value === value);
+  const resolvedPlaceholder = placeholder ?? t("combobox.search");
+  const resolvedEmptyLabel = emptyLabel === undefined ? t("combobox.empty") : emptyLabel;
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return options;
@@ -48,7 +52,7 @@ export function Combobox({
       <Input
         label={label}
         disabled={disabled}
-        placeholder={selected ? selectedText : placeholder}
+        placeholder={selected ? selectedText : resolvedPlaceholder}
         value={open ? query : selected ? selectedText : query}
         onFocus={() => setOpen(true)}
         onChange={(event) => {
@@ -79,7 +83,7 @@ export function Combobox({
               </button>
             ))
           ) : (
-            <div className="df-combobox__empty">{emptyLabel}</div>
+            <div className="df-combobox__empty">{resolvedEmptyLabel}</div>
           )}
         </div>
       ) : null}

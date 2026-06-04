@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { cn } from "../../utils/cn";
 import { Button } from "./Button";
 
@@ -13,7 +14,8 @@ export interface ModalProps {
   onClose: () => void;
 }
 
-export function Modal({ open, title, description, children, footer, className, closeLabel = "关闭", onClose }: ModalProps) {
+export function Modal({ open, title, description, children, footer, className, closeLabel, onClose }: ModalProps) {
+  const { t } = useLocale();
   if (!open) return null;
 
   return (
@@ -24,7 +26,7 @@ export function Modal({ open, title, description, children, footer, className, c
             {title ? <h2 className="df-modal__title">{title}</h2> : null}
             {description ? <p className="df-modal__description">{description}</p> : null}
           </div>
-          <button className="df-close-button" type="button" onClick={onClose} aria-label={closeLabel}>
+          <button className="df-close-button" type="button" onClick={onClose} aria-label={closeLabel ?? t("modal.close")}>
             ×
           </button>
         </div>
@@ -46,14 +48,18 @@ export interface ConfirmDialogProps extends Omit<ModalProps, "children" | "foote
 
 export function ConfirmDialog({
   message,
-  confirmLabel = "确认",
-  cancelLabel = "取消",
+  confirmLabel,
+  cancelLabel,
   confirming,
   tone = "primary",
   onClose,
   onConfirm,
   ...props
 }: ConfirmDialogProps) {
+  const { t } = useLocale();
+  const resolvedConfirmLabel = confirmLabel ?? t("common.confirm");
+  const resolvedCancelLabel = cancelLabel ?? t("common.cancel");
+
   return (
     <Modal
       {...props}
@@ -61,10 +67,10 @@ export function ConfirmDialog({
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
-            {cancelLabel}
+            {resolvedCancelLabel}
           </Button>
           <Button variant={tone === "danger" ? "danger" : "primary"} loading={confirming} onClick={onConfirm}>
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </Button>
         </>
       }

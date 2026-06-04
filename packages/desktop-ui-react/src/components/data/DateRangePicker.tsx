@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { Button } from "../primitives/Button";
 
 export interface DateRangeValue {
@@ -44,19 +45,24 @@ function monthDays(anchor: Date) {
 export function DateRangePicker({
   label,
   value,
-  startLabel = "开始日期",
-  endLabel = "结束日期",
+  startLabel,
+  endLabel,
   disabled,
-  applyLabel = "Apply",
-  clearLabel = "Clear",
+  applyLabel,
+  clearLabel,
   onChange
 }: DateRangePickerProps) {
+  const { t } = useLocale();
+  const resolvedStartLabel = startLabel ?? t("dateRange.start");
+  const resolvedEndLabel = endLabel ?? t("dateRange.end");
+  const resolvedApplyLabel = applyLabel ?? t("common.apply");
+  const resolvedClearLabel = clearLabel ?? t("common.clear");
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRangeValue>(value);
   const [viewDate, setViewDate] = useState(() => (value.start ? new Date(value.start) : new Date()));
   const anchor = viewDate;
   const days = useMemo(() => monthDays(anchor), [anchor]);
-  const display = value.start || value.end ? `${value.start || "..."} - ${value.end || "..."}` : `${startLabel} - ${endLabel}`;
+  const display = value.start || value.end ? `${value.start || "..."} - ${value.end || "..."}` : `${resolvedStartLabel} - ${resolvedEndLabel}`;
   const activeMonth = anchor.getMonth();
 
   function pick(date: Date) {
@@ -129,7 +135,7 @@ export function DateRangePicker({
                 setOpen(false);
               }}
             >
-              {clearLabel}
+              {resolvedClearLabel}
             </Button>
             <Button
               size="sm"
@@ -138,7 +144,7 @@ export function DateRangePicker({
                 setOpen(false);
               }}
             >
-              {applyLabel}
+              {resolvedApplyLabel}
             </Button>
           </div>
         </div>

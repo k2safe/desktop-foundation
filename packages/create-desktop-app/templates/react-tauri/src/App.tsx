@@ -36,7 +36,15 @@ export function App({ client }: { client: DesktopClient }) {
   const adapter = productAdapter;
 
   return (
-    <DesktopAppShell theme={adapter.theme} className={adapter.className} client={client} session={{ loadUser: async () => adapter.user }}>
+    <DesktopAppShell
+      theme={adapter.theme}
+      className={adapter.className}
+      client={client}
+      locale={adapter.locale}
+      messages={adapter.messages}
+      dictionaries={adapter.dictionaries}
+      session={{ loadUser: async () => adapter.user }}
+    >
       <AuthGuard
         checkingFallback={<LoadingBlock rows={4} />}
         fallback={

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocale } from "../../locale";
 import { Checkbox } from "../primitives/Checkbox";
 import { Button } from "../primitives/Button";
 
@@ -21,12 +22,17 @@ export interface ColumnSettingsProps {
 
 export function ColumnSettings({
   columns,
-  label = "列设置",
-  resetLabel = "全部显示",
-  moveUpLabel = "上移",
-  moveDownLabel = "下移",
+  label,
+  resetLabel,
+  moveUpLabel,
+  moveDownLabel,
   onChange
 }: ColumnSettingsProps) {
+  const { t } = useLocale();
+  const resolvedLabel = label ?? t("columns.settings");
+  const resolvedResetLabel = resetLabel ?? t("columns.reset");
+  const resolvedMoveUpLabel = moveUpLabel ?? t("columns.moveUp");
+  const resolvedMoveDownLabel = moveDownLabel ?? t("columns.moveDown");
   const [open, setOpen] = useState(false);
   const visibleCount = useMemo(() => columns.filter((column) => column.visible).length, [columns]);
 
@@ -54,14 +60,14 @@ export function ColumnSettings({
   return (
     <div className="df-column-settings">
       <Button variant="outline" size="sm" onClick={() => setOpen((value) => !value)}>
-        {label} ({visibleCount}/{columns.length})
+        {resolvedLabel} ({visibleCount}/{columns.length})
       </Button>
       {open ? (
         <div className="df-column-settings__panel">
           <div className="df-column-settings__header">
-            <strong>{label}</strong>
+            <strong>{resolvedLabel}</strong>
             <button type="button" onClick={showAll}>
-              {resetLabel}
+              {resolvedResetLabel}
             </button>
           </div>
           <div className="df-column-settings__list">
@@ -82,10 +88,10 @@ export function ColumnSettings({
                   onChange={(event) => updateWidth(column.key, event.target.value ? Number(event.target.value) : undefined)}
                 />
                 <button type="button" disabled={index === 0} onClick={() => moveColumn(index, -1)}>
-                  {moveUpLabel}
+                  {resolvedMoveUpLabel}
                 </button>
                 <button type="button" disabled={index === columns.length - 1} onClick={() => moveColumn(index, 1)}>
-                  {moveDownLabel}
+                  {resolvedMoveDownLabel}
                 </button>
               </div>
             ))}

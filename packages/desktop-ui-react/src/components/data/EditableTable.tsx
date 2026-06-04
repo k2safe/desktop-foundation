@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { cn } from "../../utils/cn";
 import { EmptyState } from "../primitives/EmptyState";
 import { Input } from "../primitives/Input";
@@ -36,7 +37,10 @@ function getValue<T>(row: T, column: EditableTableColumn<T>) {
   return String(row[column.accessor] ?? "");
 }
 
-export function EditableTable<T>({ columns, rows, rowKey, emptyTitle = "No rows", className, onCellChange }: EditableTableProps<T>) {
+export function EditableTable<T>({ columns, rows, rowKey, emptyTitle, className, onCellChange }: EditableTableProps<T>) {
+  const { t } = useLocale();
+  const resolvedEmptyTitle = emptyTitle === undefined ? t("table.emptyTitle") : emptyTitle;
+
   return (
     <div className={cn("df-table-wrap df-editable-table", className)}>
       <table className="df-table">
@@ -79,7 +83,7 @@ export function EditableTable<T>({ columns, rows, rowKey, emptyTitle = "No rows"
           ) : (
             <tr>
               <td colSpan={columns.length}>
-                <EmptyState title={emptyTitle} />
+                <EmptyState title={resolvedEmptyTitle} />
               </td>
             </tr>
           )}

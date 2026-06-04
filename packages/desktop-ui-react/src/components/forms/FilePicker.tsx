@@ -1,4 +1,5 @@
 import { useRef, type ChangeEvent, type ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { Button } from "../primitives/Button";
 
 export interface FilePickerProps {
@@ -17,11 +18,14 @@ export function FilePicker({
   accept,
   multiple,
   disabled,
-  buttonLabel = "选择文件",
-  emptyLabel = "未选择文件",
+  buttonLabel,
+  emptyLabel,
   files = [],
   onFilesChange
 }: FilePickerProps) {
+  const { t } = useLocale();
+  const resolvedButtonLabel = buttonLabel ?? t("filePicker.choose");
+  const resolvedEmptyLabel = emptyLabel ?? t("filePicker.empty");
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -33,10 +37,10 @@ export function FilePicker({
       {label ? <div className="df-field__label">{label}</div> : null}
       <div className="df-file-picker__control">
         <Button variant="outline" disabled={disabled} onClick={() => inputRef.current?.click()}>
-          {buttonLabel}
+          {resolvedButtonLabel}
         </Button>
         <span className="df-file-picker__summary">
-          {files.length ? files.map((file) => file.name).join(", ") : emptyLabel}
+          {files.length ? files.map((file) => file.name).join(", ") : resolvedEmptyLabel}
         </span>
       </div>
       <input ref={inputRef} className="df-file-picker__input" type="file" accept={accept} multiple={multiple} disabled={disabled} onChange={handleChange} />

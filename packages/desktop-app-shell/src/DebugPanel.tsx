@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, CodeBlock, Drawer, Tabs, type TabItem } from "@desktop-foundation/ui-react";
+import { Badge, Button, CodeBlock, Drawer, Tabs, useLocale, type TabItem } from "@desktop-foundation/ui-react";
 import { useDesktopClient } from "./DesktopClientProvider";
 import { useSession } from "./SessionProvider";
 
@@ -17,6 +17,7 @@ function maskToken(token: string | null) {
 }
 
 export function DebugPanel({ open, appVersion, environment, onClose }: DebugPanelProps) {
+  const { t } = useLocale();
   const client = useDesktopClient();
   const session = useSession();
   const [tab, setTab] = useState("requests");
@@ -30,22 +31,22 @@ export function DebugPanel({ open, appVersion, environment, onClose }: DebugPane
 
   const tabs: TabItem[] = useMemo(
     () => [
-      { value: "requests", label: "Requests" },
-      { value: "session", label: "Session" },
-      { value: "runtime", label: "Runtime" }
+      { value: "requests", label: t("debug.requests") },
+      { value: "session", label: t("debug.session") },
+      { value: "runtime", label: t("debug.runtime") }
     ],
-    []
+    [t]
   );
   const requests = useMemo(() => client.diagnostics.getRecentRequests(), [client, tick]);
 
   return (
     <Drawer
       open={open}
-      title="Debug Panel"
+      title={t("debug.title")}
       onClose={onClose}
       footer={
         <Button variant="outline" onClick={() => client.diagnostics.clearRecentRequests()}>
-          Clear requests
+          {t("debug.clearRequests")}
         </Button>
       }
     >
@@ -65,7 +66,7 @@ export function DebugPanel({ open, appVersion, environment, onClose }: DebugPane
                 </div>
               ))
             ) : (
-              <CodeBlock>No requests recorded.</CodeBlock>
+              <CodeBlock>{t("debug.noRequests")}</CodeBlock>
             )}
           </div>
         ) : null}
@@ -89,7 +90,7 @@ export function DebugPanel({ open, appVersion, environment, onClose }: DebugPane
               {
                 appVersion,
                 environment,
-                userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
+                userAgent: typeof navigator !== "undefined" ? navigator.userAgent : t("debug.unknown"),
                 time: new Date().toISOString()
               },
               null,

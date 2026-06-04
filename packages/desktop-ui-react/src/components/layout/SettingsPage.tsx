@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { cn } from "../../utils/cn";
 import { SettingsSection } from "./SettingsSection";
 
@@ -18,9 +19,11 @@ export interface SettingsPageProps {
 }
 
 export function SettingsPage({ sections, activeSectionId = sections[0]?.id, className, onSectionSelect }: SettingsPageProps) {
+  const { t } = useLocale();
+
   return (
     <div className={cn("df-settings-page", className)}>
-      <nav className="df-settings-page__nav" aria-label="Settings sections">
+      <nav className="df-settings-page__nav" aria-label={t("settings.sections")}>
         {sections.map((section) => (
           <button
             key={section.id}

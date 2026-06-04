@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { ContentPanel } from "../layout/ContentPanel";
 import { FilterBar } from "./FilterBar";
 import { Pagination, type PaginationProps } from "./Pagination";
@@ -20,11 +21,13 @@ export function DataTable<T>({
   filters,
   actions,
   batchActions,
-  selectedLabel = (count) => `已选择 ${count} 项`,
+  selectedLabel,
   pagination,
   ...tableProps
 }: DataTableProps<T>) {
+  const { t } = useLocale();
   const selectedCount = tableProps.selectedRowKeys?.length ?? 0;
+  const resolvedSelectedLabel = selectedLabel ?? ((count: number) => t("dataTable.selected", { count }));
   const resolvedBatchActions = typeof batchActions === "function" ? batchActions(selectedCount) : batchActions;
 
   return (
@@ -32,7 +35,7 @@ export function DataTable<T>({
       {filters ? <FilterBar>{filters}</FilterBar> : null}
       {selectedCount > 0 && resolvedBatchActions ? (
         <div className="df-data-table__batch-bar">
-          <div className="df-data-table__selected-count">{selectedLabel(selectedCount)}</div>
+          <div className="df-data-table__selected-count">{resolvedSelectedLabel(selectedCount)}</div>
           <div className="df-data-table__batch-actions">{resolvedBatchActions}</div>
         </div>
       ) : null}

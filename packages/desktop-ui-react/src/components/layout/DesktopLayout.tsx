@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { cn } from "../../utils/cn";
 
 export interface DesktopUser {
@@ -98,13 +99,15 @@ function MenuEntry({ item, depth = 0, onSelect }: { item: DesktopMenuItem; depth
 }
 
 export function Sidebar({ brand, menus, footer, onMenuSelect }: Pick<DesktopLayoutProps, "brand" | "menus" | "footer" | "onMenuSelect">) {
+  const { t } = useLocale();
+
   return (
     <aside className="df-sidebar">
       <div className="df-sidebar__brand">
         {brand.logo ?? brand.mark ? <span className="df-sidebar__logo">{brand.logo ?? brand.mark}</span> : null}
         {!brand.logo ? <span className="df-sidebar__brand-name">{brand.name}</span> : null}
       </div>
-      <nav className="df-sidebar__nav" aria-label="主菜单">
+      <nav className="df-sidebar__nav" aria-label={t("layout.mainMenu")}>
         <ul className="df-sidebar__list">
           {menus.map((item) => (
             <MenuEntry key={item.id} item={item} onSelect={onMenuSelect} />
@@ -183,8 +186,10 @@ function TopNavigationEntry({ item, onSelect }: { item: DesktopMenuItem; onSelec
 }
 
 export function TopNavigation({ menus, onMenuSelect }: Pick<DesktopLayoutProps, "menus" | "onMenuSelect">) {
+  const { t } = useLocale();
+
   return (
-    <nav className="df-topnav" aria-label="顶部菜单">
+    <nav className="df-topnav" aria-label={t("layout.topMenu")}>
       <ul className="df-topnav__list">
         {menus.map((item) => (
           <TopNavigationEntry key={item.id} item={item} onSelect={onMenuSelect} />
@@ -198,8 +203,8 @@ function UserMenu({
   user,
   items = [],
   showMeta,
-  editProfileLabel = "编辑个人信息",
-  logoutLabel = "退出登录",
+  editProfileLabel,
+  logoutLabel,
   onEditProfile,
   onLogout
 }: {
@@ -211,13 +216,17 @@ function UserMenu({
   onEditProfile?: () => void;
   onLogout?: () => void;
 }) {
+  const { t } = useLocale();
+  const resolvedEditProfileLabel = editProfileLabel ?? t("layout.editProfile");
+  const resolvedLogoutLabel = logoutLabel ?? t("layout.logout");
+  const userLabel = t("layout.user");
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const initial = (user.name || user.account || "U").slice(0, 1).toUpperCase();
   const menuItems: DesktopUserMenuItem[] = [
-    ...(onEditProfile ? [{ id: "edit-profile", label: editProfileLabel, onSelect: onEditProfile }] : []),
+    ...(onEditProfile ? [{ id: "edit-profile", label: resolvedEditProfileLabel, onSelect: onEditProfile }] : []),
     ...items,
-    ...(onLogout ? [{ id: "logout", label: logoutLabel, danger: true, onSelect: onLogout }] : [])
+    ...(onLogout ? [{ id: "logout", label: resolvedLogoutLabel, danger: true, onSelect: onLogout }] : [])
   ];
 
   useEffect(() => {
@@ -251,7 +260,7 @@ function UserMenu({
 
   if (!menuItems.length) {
     return (
-      <span className="df-user-menu__static" aria-label={user.name || user.account || "用户"}>
+      <span className="df-user-menu__static" aria-label={user.name || user.account || userLabel}>
         <span className="df-user-menu__avatar">{user.avatar ?? initial}</span>
       </span>
     );
@@ -279,7 +288,7 @@ function UserMenu({
           <div className="df-user-menu__header">
             <span className="df-user-menu__avatar df-user-menu__avatar--lg">{user.avatar ?? initial}</span>
             <span className="df-user-menu__meta">
-              <span className="df-user-menu__name">{user.name || user.account || "用户"}</span>
+              <span className="df-user-menu__name">{user.name || user.account || userLabel}</span>
               {user.role || user.account ? <span className="df-user-menu__role">{user.role || user.account}</span> : null}
             </span>
           </div>
@@ -342,7 +351,7 @@ export function Topbar({
   menus,
   showUserMeta,
   editProfileLabel,
-  logoutLabel = "退出登录",
+  logoutLabel,
   onEditProfile,
   onLogout,
   onMenuSelect

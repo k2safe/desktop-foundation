@@ -1,4 +1,5 @@
 import { forwardRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { Input } from "./Input";
 
 export interface PasswordInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -10,8 +11,11 @@ export interface PasswordInputProps extends Omit<InputHTMLAttributes<HTMLInputEl
 }
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ showLabel = "显示", hideLabel = "隐藏", ...props }, ref) => {
+  ({ showLabel, hideLabel, ...props }, ref) => {
+    const { t } = useLocale();
     const [visible, setVisible] = useState(false);
+    const resolvedShowLabel = showLabel ?? t("common.show");
+    const resolvedHideLabel = hideLabel ?? t("common.hide");
 
     return (
       <Input
@@ -20,7 +24,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         type={visible ? "text" : "password"}
         suffix={
           <button className="df-password-toggle" type="button" onClick={() => setVisible((value) => !value)}>
-            {visible ? hideLabel : showLabel}
+            {visible ? resolvedHideLabel : resolvedShowLabel}
           </button>
         }
       />

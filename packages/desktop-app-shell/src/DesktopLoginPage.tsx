@@ -1,5 +1,14 @@
 import type { FormEvent, ReactNode } from "react";
-import { Button, Checkbox, Input, LoginShell, PasswordInput, type LoginShellVariant } from "@desktop-foundation/ui-react";
+import {
+  Button,
+  Checkbox,
+  Input,
+  LoginShell,
+  PasswordInput,
+  useLocale,
+  type LocaleContextValue,
+  type LoginShellVariant
+} from "@desktop-foundation/ui-react";
 import { useLogin } from "./useLogin";
 import type { DesktopLoginConfig, DesktopLoginPayload, DesktopSessionUser } from "./types";
 
@@ -83,6 +92,41 @@ function mergeClassName(...values: Array<string | undefined>) {
   return values.filter(Boolean).join(" ") || undefined;
 }
 
+function getLocalizedTemplateCopy(id: string | undefined, t: LocaleContextValue["t"]): Partial<DesktopLoginTemplate> {
+  switch (id) {
+    case "brand-panel":
+      return {
+        title: t("login.brandPanelTitle"),
+        subtitle: t("login.brandPanelSubtitle"),
+        badge: "Desktop",
+        visualTitle: t("login.brandPanelVisualTitle"),
+        visualDescription: t("login.brandPanelVisualDescription")
+      };
+    case "center-card":
+      return {
+        title: t("login.centerCardTitle"),
+        subtitle: t("login.centerCardSubtitle"),
+        submitLabel: t("login.continue")
+      };
+    case "workbench":
+      return {
+        title: t("login.workbenchTitle"),
+        subtitle: t("login.workbenchSubtitle"),
+        badge: t("login.secureDesktop"),
+        visualTitle: t("login.workbenchVisualTitle"),
+        visualDescription: t("login.workbenchVisualDescription")
+      };
+    case "split":
+    default:
+      return {
+        title: t("login.splitTitle"),
+        subtitle: t("login.splitSubtitle"),
+        visualTitle: t("login.splitVisualTitle"),
+        visualDescription: t("login.splitVisualDescription")
+      };
+  }
+}
+
 export interface DesktopLoginPageProps<
   TUser extends DesktopSessionUser = DesktopSessionUser,
   TPayload extends DesktopLoginPayload = DesktopLoginPayload
@@ -136,21 +180,23 @@ export function DesktopLoginPage<
   extraFields,
   login
 }: DesktopLoginPageProps<TUser, TPayload>) {
+  const { t } = useLocale();
   const resolvedTemplate = resolveDesktopLoginTemplate(template ?? variant);
+  const localizedTemplate = typeof template === "string" || !template ? getLocalizedTemplateCopy(resolvedTemplate.id, t) : {};
   const resolvedVariant = variant ?? resolvedTemplate.variant;
-  const resolvedTitle = title ?? resolvedTemplate.title ?? "Sign in";
-  const resolvedSubtitle = subtitle ?? resolvedTemplate.subtitle;
-  const resolvedBadge = badge ?? resolvedTemplate.badge;
-  const resolvedVisualTitle = visualTitle ?? resolvedTemplate.visualTitle;
-  const resolvedVisualDescription = visualDescription ?? resolvedTemplate.visualDescription;
+  const resolvedTitle = title ?? localizedTemplate.title ?? resolvedTemplate.title ?? t("login.signIn");
+  const resolvedSubtitle = subtitle ?? localizedTemplate.subtitle ?? resolvedTemplate.subtitle;
+  const resolvedBadge = badge ?? localizedTemplate.badge ?? resolvedTemplate.badge;
+  const resolvedVisualTitle = visualTitle ?? localizedTemplate.visualTitle ?? resolvedTemplate.visualTitle;
+  const resolvedVisualDescription = visualDescription ?? localizedTemplate.visualDescription ?? resolvedTemplate.visualDescription;
   const resolvedVisual = visual ?? resolvedTemplate.visual;
   const resolvedFooter = footer ?? resolvedTemplate.footer;
-  const resolvedAccountLabel = accountLabel ?? resolvedTemplate.accountLabel ?? "Account";
-  const resolvedAccountPlaceholder = accountPlaceholder ?? resolvedTemplate.accountPlaceholder ?? "Account or email";
-  const resolvedPasswordLabel = passwordLabel ?? resolvedTemplate.passwordLabel ?? "Password";
-  const resolvedPasswordPlaceholder = passwordPlaceholder ?? resolvedTemplate.passwordPlaceholder ?? "Password";
-  const resolvedRememberLabel = rememberLabel ?? resolvedTemplate.rememberLabel ?? "Remember me";
-  const resolvedSubmitLabel = submitLabel ?? resolvedTemplate.submitLabel ?? "Sign in";
+  const resolvedAccountLabel = accountLabel ?? resolvedTemplate.accountLabel ?? t("login.account");
+  const resolvedAccountPlaceholder = accountPlaceholder ?? resolvedTemplate.accountPlaceholder ?? t("login.accountPlaceholder");
+  const resolvedPasswordLabel = passwordLabel ?? resolvedTemplate.passwordLabel ?? t("login.password");
+  const resolvedPasswordPlaceholder = passwordPlaceholder ?? resolvedTemplate.passwordPlaceholder ?? t("login.passwordPlaceholder");
+  const resolvedRememberLabel = rememberLabel ?? resolvedTemplate.rememberLabel ?? t("login.remember");
+  const resolvedSubmitLabel = submitLabel ?? localizedTemplate.submitLabel ?? resolvedTemplate.submitLabel ?? t("login.signIn");
   const resolvedClassName = mergeClassName(resolvedTemplate.className, className);
   const { payload, setField, submit, loading, error } = useLogin(login);
 

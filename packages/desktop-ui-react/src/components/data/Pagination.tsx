@@ -1,3 +1,4 @@
+import { useLocale } from "../../locale";
 import { Button } from "../primitives/Button";
 
 export interface PaginationProps {
@@ -9,7 +10,10 @@ export interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export function Pagination({ page, pageSize, total, previousLabel = "上一页", nextLabel = "下一页", onPageChange }: PaginationProps) {
+export function Pagination({ page, pageSize, total, previousLabel, nextLabel, onPageChange }: PaginationProps) {
+  const { t } = useLocale();
+  const resolvedPreviousLabel = previousLabel ?? t("pagination.previous");
+  const resolvedNextLabel = nextLabel ?? t("pagination.next");
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(total, page * pageSize);
@@ -21,13 +25,13 @@ export function Pagination({ page, pageSize, total, previousLabel = "上一页",
       </div>
       <div className="df-pagination__actions">
         <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
-          {previousLabel}
+          {resolvedPreviousLabel}
         </Button>
         <span className="df-pagination__page">
           {page} / {pageCount}
         </span>
         <Button variant="outline" size="sm" disabled={page >= pageCount} onClick={() => onPageChange(page + 1)}>
-          {nextLabel}
+          {resolvedNextLabel}
         </Button>
       </div>
     </div>

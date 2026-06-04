@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { cn } from "../../utils/cn";
 
 export type ToastTone = "neutral" | "success" | "warning" | "danger" | "info";
@@ -50,17 +51,18 @@ export function useToast() {
 }
 
 export function ToastViewport({ toasts, onDismiss }: { toasts: ToastMessage[]; onDismiss: (id: string) => void }) {
+  const { t } = useLocale();
   if (!toasts.length) return null;
 
   return (
-    <div className="df-toast-viewport" role="region" aria-label="通知">
+    <div className="df-toast-viewport" role="region" aria-label={t("toast.region")}>
       {toasts.map((toast) => (
         <div key={toast.id} className={cn("df-toast", `df-toast--${toast.tone ?? "neutral"}`)} role="status">
           <div className="df-toast__body">
             <div className="df-toast__title">{toast.title}</div>
             {toast.description ? <div className="df-toast__description">{toast.description}</div> : null}
           </div>
-          <button className="df-close-button" type="button" onClick={() => onDismiss(toast.id)} aria-label="关闭通知">
+          <button className="df-close-button" type="button" onClick={() => onDismiss(toast.id)} aria-label={t("toast.close")}>
             ×
           </button>
         </div>

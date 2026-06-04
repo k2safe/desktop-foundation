@@ -8,7 +8,9 @@ import {
   type DesktopMenuItem,
   type DesktopTheme,
   type DesktopUser,
-  type DesktopUserMenuItem
+  type DesktopUserMenuItem,
+  type LocaleCode,
+  type LocaleDictionary
 } from "@desktop-foundation/ui-react";
 import { menus } from "./menus";
 import { productTemplate, productTheme } from "./theme";
@@ -17,6 +19,9 @@ export interface ProductAdapter {
   productId: string;
   appName: string;
   theme: DesktopTheme;
+  locale: LocaleCode;
+  messages?: LocaleDictionary;
+  dictionaries?: Record<string, LocaleDictionary>;
   className: string;
   layout: DesktopLayoutVariant;
   loginTemplate: DesktopLoginTemplateSource;
@@ -32,6 +37,7 @@ export const productAdapter: ProductAdapter = {
   productId: "{{PRODUCT_ID}}",
   appName: "{{APP_NAME}}",
   theme: productTheme,
+  locale: "en-US",
   className: productTemplate.className,
   layout: productTemplate.layout.appShell,
   loginTemplate: productTemplate.layout.login,

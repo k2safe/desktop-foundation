@@ -97,6 +97,7 @@ export function App() {
     <DesktopAppShell
       theme={demoProductTheme}
       client={client}
+      locale="zh-CN"
       session={{
         loadUser: async () => demoUser
       }}

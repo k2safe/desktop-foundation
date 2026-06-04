@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { cn } from "../../utils/cn";
+import { useLocale } from "../../locale";
 import { Input } from "./Input";
 
 export interface CommandPaletteItem {
@@ -34,15 +35,21 @@ export function CommandPalette({
   open,
   items,
   value = "",
-  title = "Command",
-  placeholder = "Search",
-  emptyLabel = "No commands",
-  closeLabel = "Close",
+  title,
+  placeholder,
+  emptyLabel,
+  closeLabel,
   className,
   onValueChange,
   onSelect,
   onClose
 }: CommandPaletteProps) {
+  const { t } = useLocale();
+  const resolvedTitle = title === undefined ? t("command.title") : title;
+  const resolvedPlaceholder = placeholder ?? t("command.search");
+  const resolvedEmptyLabel = emptyLabel === undefined ? t("command.empty") : emptyLabel;
+  const resolvedCloseLabel = closeLabel ?? t("command.close");
+
   const filtered = useMemo(() => {
     const query = value.trim().toLowerCase();
     if (!query) return items;
@@ -52,11 +59,11 @@ export function CommandPalette({
   const groups = useMemo(() => {
     const grouped = new Map<string, CommandPaletteItem[]>();
     filtered.forEach((item) => {
-      const key = item.group ?? "Commands";
+      const key = item.group ?? t("command.group");
       grouped.set(key, [...(grouped.get(key) ?? []), item]);
     });
     return Array.from(grouped.entries());
-  }, [filtered]);
+  }, [filtered, t]);
 
   if (!open) return null;
 
@@ -64,12 +71,12 @@ export function CommandPalette({
     <div className="df-overlay" role="presentation">
       <section className={cn("df-command-palette", className)} role="dialog" aria-modal="true">
         <div className="df-command-palette__header">
-          <h2 className="df-command-palette__title">{title}</h2>
-          <button className="df-close-button" type="button" aria-label={closeLabel} onClick={onClose}>
+          <h2 className="df-command-palette__title">{resolvedTitle}</h2>
+          <button className="df-close-button" type="button" aria-label={resolvedCloseLabel} onClick={onClose}>
             x
           </button>
         </div>
-        <Input autoFocus value={value} placeholder={placeholder} onChange={(event) => onValueChange?.(event.target.value)} />
+        <Input autoFocus value={value} placeholder={resolvedPlaceholder} onChange={(event) => onValueChange?.(event.target.value)} />
         <div className="df-command-palette__list">
           {groups.length ? (
             groups.map(([group, groupItems]) => (
@@ -93,7 +100,7 @@ export function CommandPalette({
               </div>
             ))
           ) : (
-            <div className="df-command-palette__empty">{emptyLabel}</div>
+            <div className="df-command-palette__empty">{resolvedEmptyLabel}</div>
           )}
         </div>
       </section>

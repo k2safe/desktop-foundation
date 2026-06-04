@@ -29,13 +29,18 @@ import type {
   DesktopMenuItem,
   DesktopTheme,
   DesktopUser,
-  DesktopUserMenuItem
+  DesktopUserMenuItem,
+  LocaleCode,
+  LocaleDictionary
 } from "@desktop-foundation/ui-react";
 
 export interface ProductAdapter {
   productId: string;
   appName: string;
   theme: DesktopTheme;
+  locale: LocaleCode;
+  messages?: LocaleDictionary;
+  dictionaries?: Record<string, LocaleDictionary>;
   className: string;
   layout: DesktopLayoutVariant;
   brand: DesktopLayoutBrand;
@@ -57,6 +62,9 @@ export interface ProductAdapter {
 - `productAdapter.userMenuItems`
 - `productAdapter.layout`
 - `productAdapter.theme`
+- `productAdapter.locale`
+- `productAdapter.messages`
+- `productAdapter.dictionaries`
 - `productAdapter.clientDefaults`
 - 业务页面、业务请求、业务状态管理
 

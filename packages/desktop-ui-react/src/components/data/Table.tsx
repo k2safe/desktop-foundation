@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { cn } from "../../utils/cn";
+import { useLocale } from "../../locale";
 import { EmptyState } from "../primitives/EmptyState";
 import { LoadingBlock } from "../primitives/LoadingBlock";
 
@@ -86,10 +87,10 @@ export function Table<T>({
   selectable,
   selectedRowKeys = [],
   loading,
-  emptyTitle = "暂无数据",
+  emptyTitle,
   emptyDescription,
   className,
-  selectAllLabel = "选择全部",
+  selectAllLabel,
   onRowClick,
   onSortChange,
   onSelectedRowKeysChange,
@@ -97,6 +98,9 @@ export function Table<T>({
   rowClassName,
   density = "default"
 }: TableProps<T>) {
+  const { t } = useLocale();
+  const resolvedEmptyTitle = emptyTitle ?? t("table.emptyTitle");
+  const resolvedSelectAllLabel = selectAllLabel ?? t("table.selectAll");
   const sortedRows = useMemo(() => {
     if (sortMode !== "client" || !sort) return rows;
     const column = columns.find((item) => item.key === sort.key);
@@ -152,7 +156,7 @@ export function Table<T>({
             {selectable ? (
               <th className="df-table__selection-cell">
                 <input
-                  aria-label={selectAllLabel}
+                  aria-label={resolvedSelectAllLabel}
                   checked={allSelected}
                   ref={(node) => {
                     if (node) node.indeterminate = partiallySelected;
@@ -197,7 +201,7 @@ export function Table<T>({
                 {selectable ? (
                   <td className="df-table__selection-cell" onClick={(event) => event.stopPropagation()}>
                     <input
-                      aria-label={`选择行 ${key}`}
+                      aria-label={t("table.selectRow", { key }, `Select row ${key}`)}
                       checked={selectedKeySet.has(key)}
                       disabled={disabled}
                       type="checkbox"
@@ -219,7 +223,7 @@ export function Table<T>({
           ) : (
             <tr>
               <td colSpan={colSpan}>
-                <EmptyState title={emptyTitle} description={emptyDescription} />
+                <EmptyState title={resolvedEmptyTitle} description={emptyDescription} />
               </td>
             </tr>
           )}

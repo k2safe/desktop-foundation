@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocale } from "../../locale";
 
 export interface CopyableTextProps {
   value: string;
@@ -8,8 +9,11 @@ export interface CopyableTextProps {
   onCopy?: (value: string) => Promise<void> | void;
 }
 
-export function CopyableText({ value, children, copiedLabel = "已复制", copyLabel = "复制", onCopy }: CopyableTextProps) {
+export function CopyableText({ value, children, copiedLabel, copyLabel, onCopy }: CopyableTextProps) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
+  const resolvedCopiedLabel = copiedLabel ?? t("common.copied");
+  const resolvedCopyLabel = copyLabel ?? t("common.copy");
 
   async function copy() {
     if (onCopy) {
@@ -25,7 +29,7 @@ export function CopyableText({ value, children, copiedLabel = "已复制", copyL
     <span className="df-copyable">
       <span className="df-copyable__value">{children ?? value}</span>
       <button className="df-copyable__button" type="button" onClick={copy}>
-        {copied ? copiedLabel : copyLabel}
+        {copied ? resolvedCopiedLabel : resolvedCopyLabel}
       </button>
     </span>
   );

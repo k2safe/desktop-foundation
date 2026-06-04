@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLocale } from "../../locale";
 import { cn } from "../../utils/cn";
 
 export interface DrawerProps {
@@ -12,7 +13,8 @@ export interface DrawerProps {
   onClose: () => void;
 }
 
-export function Drawer({ open, title, children, footer, side = "right", className, closeLabel = "关闭", onClose }: DrawerProps) {
+export function Drawer({ open, title, children, footer, side = "right", className, closeLabel, onClose }: DrawerProps) {
+  const { t } = useLocale();
   if (!open) return null;
 
   return (
@@ -20,7 +22,7 @@ export function Drawer({ open, title, children, footer, side = "right", classNam
       <aside className={cn("df-drawer", `df-drawer--${side}`, className)} role="dialog" aria-modal="true">
         <div className="df-drawer__header">
           {title ? <h2 className="df-drawer__title">{title}</h2> : null}
-          <button className="df-close-button" type="button" onClick={onClose} aria-label={closeLabel}>
+          <button className="df-close-button" type="button" onClick={onClose} aria-label={closeLabel ?? t("common.close")}>
             ×
           </button>
         </div>
