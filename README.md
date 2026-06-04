@@ -18,6 +18,7 @@
 
 - [Product AI Handoff](docs/product-ai-handoff.md)
 - [Foundation Capabilities](docs/capabilities.md)
+- [External AI Acceptance](docs/external-ai-acceptance.md)
 - [Login Templates](docs/login-templates.md)
 - [Tauri Updater Adapter](docs/tauri-updater-adapter.md)
 - [Existing Project Migration Case](docs/existing-project-migration-case.md)

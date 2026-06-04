@@ -25,13 +25,21 @@ pnpm exec desktop-foundation ci --integration-check --integration-summary
   "nextActions": [{ "id": "script:visual:regression", "status": "warn", "action": "..." }],
   "capabilities": {
     "summary": { "status": "warn", "pass": 9, "warn": 5, "fail": 0 },
-    "items": [{ "id": "updates", "status": "warn", "checks": [] }]
+    "items": [
+      {
+        "id": "updates",
+        "status": "warn",
+        "disposition": "fix-before-release",
+        "recommendation": "Resolve before publishing a desktop release or explicitly record the product-owned release plan.",
+        "checks": []
+      }
+    ]
   },
   "findings": []
 }
 ```
 
-先看 `summary.fail`。fail 必须修；warn 可以按阶段处理，但接入收口时建议用 `--strict` 清干净。`capabilities.summary` 用来判断哪一类底座能力还没收口；具体怎么修仍然回到 `findings`。
+先看 `summary.fail`。fail 必须修；warn 可以按阶段处理，但接入收口时建议用 `--strict` 清干净。`capabilities.summary` 用来判断哪一类底座能力还没收口；`disposition` 和 `recommendation` 说明处理时机，具体怎么修仍然回到 `findings`。
 
 ## Findings
 

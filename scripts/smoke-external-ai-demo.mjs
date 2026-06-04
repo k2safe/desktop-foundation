@@ -106,6 +106,25 @@ async function readManifest(manifestPath) {
   return manifest;
 }
 
+async function readCapabilityRegistry(manifest) {
+  const capabilityUrl = manifest.capabilities?.url;
+  if (!capabilityUrl) {
+    throw new Error("Manifest is missing capabilities.url");
+  }
+
+  const source = /^https?:\/\//.test(capabilityUrl)
+    ? await fetch(capabilityUrl).then((response) => {
+        if (!response.ok) throw new Error(`Failed to fetch capability registry: ${response.status} ${response.statusText}`);
+        return response.text();
+      })
+    : await readFile(resolve(repoRoot, capabilityUrl), "utf8");
+  const registry = JSON.parse(source);
+  if (!Array.isArray(registry.capabilities) || registry.capabilities.length === 0) {
+    throw new Error("Capability registry has no capabilities");
+  }
+  return registry;
+}
+
 function rewriteManifestUrls(manifest, baseUrl) {
   const nextManifest = JSON.parse(JSON.stringify(manifest));
   nextManifest.baseUrl = baseUrl;
@@ -173,6 +192,19 @@ function getManifestVersion(manifest) {
     throw new Error(`Expected one aligned foundation package version, got: ${versions.join(", ") || "(none)"}`);
   }
   return versions[0];
+}
+
+function assertCapabilityRegistry(manifest, registry) {
+  const manifestVersion = getManifestVersion(manifest);
+  if (registry.foundationVersion !== manifestVersion) {
+    throw new Error(`Capability registry version ${registry.foundationVersion} does not match manifest version ${manifestVersion}`);
+  }
+  const capabilityIds = new Set(registry.capabilities.map((item) => item.id));
+  for (const id of ["package-consumption", "app-shell", "ci-and-release"]) {
+    if (!capabilityIds.has(id)) {
+      throw new Error(`Capability registry is missing ${id}`);
+    }
+  }
 }
 
 function getCargoDependency(manifest) {
@@ -704,6 +736,8 @@ async function main() {
   }
   const artifactServer = options.localArtifacts ? await startArtifactServer(dirname(options.manifestPath)) : null;
   if (artifactServer) manifest = rewriteManifestUrls(manifest, artifactServer.baseUrl);
+  const capabilityRegistry = await readCapabilityRegistry(manifest);
+  assertCapabilityRegistry(manifest, capabilityRegistry);
   const demoDir = options.dir || (await mkdtemp(resolve(tmpdir(), "df-external-ai-demo-")));
   let succeeded = false;
 
@@ -718,6 +752,7 @@ async function main() {
   if (artifactServer) console.log(`external-ai-demo: local artifact server ${artifactServer.baseUrl}`);
   console.log(`external-ai-demo: workspace ${demoDir}`);
   console.log(`external-ai-demo: foundation ${getManifestVersion(manifest)}`);
+  console.log(`external-ai-demo: capabilities ${capabilityRegistry.capabilities.length}`);
 
   try {
     await writeProject(demoDir, manifest);

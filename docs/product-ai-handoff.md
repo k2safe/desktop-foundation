@@ -7,7 +7,7 @@
 先读取 foundation package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.27/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.28/foundation-packages.json
 ```
 
 如果明确要追 `main` 上的最新底座，再读取 development manifest：

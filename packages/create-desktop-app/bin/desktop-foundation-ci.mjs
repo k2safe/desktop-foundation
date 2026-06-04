@@ -515,6 +515,57 @@ function findingStatusForCapability(status) {
   return "missing";
 }
 
+function capabilityDisposition(capability, status) {
+  if (status === "pass") {
+    return {
+      disposition: "ready",
+      recommendation: "Capability checks are satisfied for the current integration stage."
+    };
+  }
+  if (status === "fail") {
+    return {
+      disposition: "must-fix",
+      recommendation: "Fix failing required checks before migrating business pages or handing the project to another team."
+    };
+  }
+
+  const phase = capability.phase || "recommended";
+  if (phase === "required") {
+    return {
+      disposition: "fix-or-explain-before-handoff",
+      recommendation: "Resolve the warning or document why it is acceptable before handing the integration to another AI or product team."
+    };
+  }
+  if (phase === "required-for-tauri") {
+    return {
+      disposition: "required-for-tauri",
+      recommendation: "Fix before desktop packaging if this product ships through Tauri; otherwise document that the target is web/headless only."
+    };
+  }
+  if (phase === "required-for-networked-products") {
+    return {
+      disposition: "required-for-networked-products",
+      recommendation: "Fix before connecting real APIs or upload/download flows; demo-only projects may document the boundary."
+    };
+  }
+  if (phase === "recommended-before-release") {
+    return {
+      disposition: "fix-before-release",
+      recommendation: "Resolve before publishing a desktop release or explicitly record the product-owned release plan."
+    };
+  }
+  if (phase === "optional") {
+    return {
+      disposition: "document-if-used",
+      recommendation: "No action is required unless the product uses this capability; if it does, document the product-owned policy."
+    };
+  }
+  return {
+    disposition: "fix-before-real-business",
+    recommendation: "Resolve before real business rollout or document why the product owns a custom implementation."
+  };
+}
+
 function buildCapabilityMatrix(registry, findings) {
   if (!registry || !Array.isArray(registry.capabilities)) return null;
   const findingById = new Map(findings.map((finding) => [finding.id, finding]));
@@ -538,11 +589,13 @@ function buildCapabilityMatrix(registry, findings) {
     const hasRequiredWarn = checks.some((check) => check.required && (check.status === "warn" || check.status === "missing"));
     const hasRecommendedIssue = checks.some((check) => !check.required && check.status !== "pass");
     const status = hasRequiredFail ? "fail" : hasRequiredWarn || hasRecommendedIssue ? "warn" : "pass";
+    const disposition = capabilityDisposition(capability, status);
 
     return {
       id: capability.id,
       name: capability.name,
       status,
+      ...disposition,
       phase: capability.phase,
       owner: capability.owner,
       maturity: capability.status,
@@ -595,7 +648,8 @@ function printIntegrationSummary(report) {
       return;
     }
     for (const item of capabilityItems) {
-      console.log(`  - [${item.status.toUpperCase()}] ${item.id}: ${item.name}`);
+      console.log(`  - [${item.status.toUpperCase()}] ${item.id}: ${item.name} (${item.disposition})`);
+      console.log(`    recommendation: ${item.recommendation}`);
       const checks = item.checks.filter((check) => check.status !== "pass");
       if (checks.length) {
         console.log(`    checks: ${checks.map((check) => `${check.id}=${check.status}`).join(", ")}`);

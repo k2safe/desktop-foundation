@@ -21,7 +21,7 @@ artifacts/npm/foundation-capabilities.json
 ```json
 {
   "schemaVersion": 1,
-  "foundationVersion": "0.1.27",
+  "foundationVersion": "0.1.28",
   "capabilities": [
     {
       "id": "i18n",
@@ -74,6 +74,8 @@ artifacts/npm/foundation-capabilities.json
       {
         "id": "updates",
         "status": "warn",
+        "disposition": "fix-before-release",
+        "recommendation": "Resolve before publishing a desktop release or explicitly record the product-owned release plan.",
         "checks": [
           { "id": "updates", "required": false, "status": "warn" }
         ]
@@ -87,8 +89,9 @@ artifacts/npm/foundation-capabilities.json
 
 1. 先看 `summary.fail` 和 `findings`，修所有 fail。
 2. 再看 `capabilities.summary`，确认哪些底座能力还处在 warn。
-3. 对每个 warn 能力，按 `checks` 回到 finding id 和 docs 修复。
-4. 真业务上线前，对 `recommended-before-release` 能力逐项确认。
+3. 对每个 warn 能力，按 `disposition` 和 `recommendation` 决定现在修、发版前修，还是记录产品边界。
+4. 按 `checks` 回到 finding id 和 docs 修复。
+5. 真业务上线前，对 `recommended-before-release` 能力逐项确认。
 
 ## Demo Boundary
 
