@@ -4,19 +4,25 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmit",
+    "dev": "vite --host=127.0.0.1",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
     "type-check": "tsc -p tsconfig.json --noEmit",
-    "lint": "tsc -p tsconfig.json --noEmit"
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "preview": "vite preview --host=127.0.0.1"
   },
   "dependencies": {
     "@desktop-foundation/app-shell": "workspace:*",
     "@desktop-foundation/bridge": "workspace:*",
     "@desktop-foundation/theme-presets": "workspace:*",
     "@desktop-foundation/ui-react": "workspace:*",
-    "react": "^19.0.1"
+    "@vitejs/plugin-react": "^5.0.4",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "vite": "^6.2.3"
   },
   "devDependencies": {
     "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
     "typescript": "~5.8.2"
   }
 }
