@@ -213,6 +213,8 @@ Products can keep release publishing in CI/CD or a local release script while re
 
 `client.updates.installUpdate(update)` is adapter-backed. In Tauri clients created with `createTauriDesktopClient`, the manifest updater automatically uses `plugin:desktop-core|df_update_install` after a package is downloaded and verified. On macOS, `.zip` packages that contain a `.app` bundle and direct `.app` bundles are staged for replacement after the current app quits, with optional relaunch. `.pkg`, `.dmg`, and unsupported platform packages are opened with the system installer. Product UI can safely show check, release notes, download, checksum, and install status without implementing `.app` replacement or relaunch behavior in business pages.
 
+`createTauriUpdateInstallAdapter` is exported from `@desktop-foundation/bridge` for products that assemble capabilities manually. It maps manifest metadata keys such as `targetPath`, `appName`, `relaunch`, and `backup` into the `df_update_install` request.
+
 For custom installers or non-Tauri clients, wire an installer adapter at the client boundary, not inside a page component:
 
 ```ts

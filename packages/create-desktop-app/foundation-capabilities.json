@@ -284,7 +284,7 @@
           "updates:install-bypass"
         ]
       },
-      "businessBoundary": "Products own release hosting, signing, notarization, and rollout policy; they may override the built-in installer for custom native updater flows."
+      "businessBoundary": "Products own release hosting, signing, notarization, and rollout policy; the foundation provides df_update_install by default, and products may override the adapter for official signed updater or custom native flows."
     },
     {
       "id": "link-proxy",

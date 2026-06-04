@@ -56,7 +56,7 @@ artifacts/npm/foundation-capabilities.json
 | Audit Events | recommended | shared | 产品维护日志存储、保留周期、PII 策略和审计上报服务。 |
 | HTTP And Upload | required-for-networked-products | foundation | 产品维护 endpoint、auth、后端 multipart 解析、对象存储和上传留存规则。 |
 | Desktop Core | required-for-tauri | foundation | 产品维护平台签名、额外权限、图标、bundle id 和 native plugin 选择。 |
-| Updates | recommended-before-release | shared | 产品维护 release hosting、签名、公证、灰度策略和最终安装 adapter。 |
+| Updates | recommended-before-release | shared | 产品维护 release hosting、签名、公证和灰度策略；底座提供默认 `df_update_install`，产品可在需要官方 signed updater 或定制流程时覆盖 adapter。 |
 | Link Proxy | optional | shared | 产品维护允许访问的 proxy/target origin，并区分业务 API 和第三方链接请求。 |
 | UI Overflow Guardrails | recommended | foundation | 产品维护页面组合和表格列定义；底座提供可复用的滚动安全组件。 |
 | CI And Release | recommended-before-release | shared | 产品维护 CI provider、签名密钥、发布审批和 artifact 上传。 |

@@ -21,10 +21,11 @@ export {
   createTauriHttpTransport,
   createTauriKeyValueStore,
   createTauriSecureStorage,
-  createTauriSessionStore
+  createTauriSessionStore,
+  createTauriUpdateInstallAdapter
 } from "./tauri";
 export { createWebTransport } from "./webTransport";
-export type { TauriInvoke } from "./tauri";
+export type { CoreUpdateInstallRequest, TauriInvoke, TauriSessionState, TauriUpdateInstallAdapterOptions } from "./tauri";
 export type {
   TauriNativePluginAdapters,
   TauriNativeUpdate,
@@ -83,4 +84,3 @@ export type {
   StorageScope,
   WindowState
 } from "./types";
-export type { TauriSessionState } from "./tauri";

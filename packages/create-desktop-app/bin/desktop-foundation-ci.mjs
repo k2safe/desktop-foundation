@@ -1422,6 +1422,58 @@ function createCapabilitySmokeChecks({ bridge, client, bridgeSource }) {
       }
     },
     {
+      id: "tauri-update-install-adapter",
+      group: "Release",
+      name: "Tauri update install adapter",
+      run: async () => {
+        assertSmoke(
+          typeof bridge.createTauriUpdateInstallAdapter === "function",
+          "createTauriUpdateInstallAdapter export is missing."
+        );
+
+        const invocations = [];
+        const adapter = bridge.createTauriUpdateInstallAdapter(
+          async (command, args) => {
+            invocations.push({ command, args });
+            return {
+              status: "installing",
+              message: "Native installer dry-run reached desktop-core.",
+              path: args?.request?.path,
+              targetPath: args?.request?.targetPath,
+              relaunchRequired: Boolean(args?.request?.relaunch)
+            };
+          },
+          { appName: "desktop-foundation-smoke", relaunch: false, backup: true }
+        );
+        const result = await adapter({
+          update: {
+            version: "1.0.1",
+            metadata: {
+              targetPath: "/Applications/Desktop Foundation Smoke.app",
+              appName: "Desktop Foundation Smoke",
+              relaunch: true,
+              backup: false
+            }
+          },
+          downloadedPath: "/tmp/desktop-foundation-smoke/DesktopFoundation-1.0.1-macos.zip",
+          downloadedBytes: 128,
+          downloadedSha256: smokeUpdateSha256
+        });
+        const invocation = invocations[0];
+        const request = invocation?.args?.request ?? {};
+
+        assertSmoke(invocation?.command === "plugin:desktop-core|df_update_install", "Tauri update install adapter used the wrong command.", invocation);
+        assertSmoke(request.path?.endsWith("DesktopFoundation-1.0.1-macos.zip"), "Tauri update install adapter did not pass the downloaded path.", request);
+        assertSmoke(request.targetPath === "/Applications/Desktop Foundation Smoke.app", "Tauri update install adapter did not pass targetPath metadata.", request);
+        assertSmoke(request.appName === "Desktop Foundation Smoke", "Tauri update install adapter did not pass appName metadata.", request);
+        assertSmoke(request.relaunch === true, "Tauri update install adapter did not pass relaunch metadata.", request);
+        assertSmoke(request.backup === false, "Tauri update install adapter did not pass backup metadata.", request);
+        assertSmoke(result?.status === "installing", "Tauri update install adapter did not return the native installer result.", result ?? {});
+
+        return { command: invocation.command, request, result };
+      }
+    },
+    {
       id: "http-json",
       group: "Network",
       name: "HTTP JSON",

@@ -136,6 +136,14 @@ impl DesktopCore {
         self
     }
 
+    pub fn with_update_installer_adapter(
+        mut self,
+        update_installer_adapter: Arc<dyn UpdateInstallerAdapter>,
+    ) -> Self {
+        self.update_installer_adapter = update_installer_adapter;
+        self
+    }
+
     pub fn persistent(app_id: &str) -> DesktopResult<Self> {
         Self::with_persistence_path(FilePersistence::default_path(app_id)?)
     }
@@ -651,6 +659,10 @@ mod tests {
         seen_token: Mutex<Option<String>>,
     }
 
+    struct RecordingUpdateInstaller {
+        seen: Mutex<Vec<UpdateInstallRequest>>,
+    }
+
     impl HttpAdapter for EchoHttpAdapter {
         fn request(
             &self,
@@ -664,6 +676,22 @@ mod tests {
                 body: Some(json!({ "ok": true })),
                 body_base64: None,
                 request_id: None,
+            })
+        }
+    }
+
+    impl UpdateInstallerAdapter for RecordingUpdateInstaller {
+        fn install_update(
+            &self,
+            request: UpdateInstallRequest,
+        ) -> DesktopResult<UpdateInstallReply> {
+            self.seen.lock().unwrap().push(request.clone());
+            Ok(UpdateInstallReply {
+                status: "installing".to_string(),
+                message: "Update installer test adapter reached.".to_string(),
+                path: Some(request.path),
+                target_path: request.target_path,
+                relaunch_required: request.relaunch,
             })
         }
     }
@@ -899,5 +927,74 @@ mod tests {
 
         assert_eq!(error.code, "EXTERNAL_HOST_BLOCKED");
         assert!(core.recorded_actions().unwrap().is_empty());
+    }
+
+    #[test]
+    fn update_install_delegates_to_configured_adapter() {
+        let path = std::env::temp_dir().join(format!(
+            "desktop-foundation-test-{}-update.zip",
+            std::process::id()
+        ));
+        std::fs::write(&path, "update").unwrap();
+        let adapter = Arc::new(RecordingUpdateInstaller {
+            seen: Mutex::new(Vec::new()),
+        });
+        let core = DesktopCore::new().with_update_installer_adapter(adapter.clone());
+
+        let reply = core
+            .install_update(UpdateInstallRequest {
+                path: path.to_string_lossy().to_string(),
+                target_path: Some("/Applications/Desktop Foundation Test.app".to_string()),
+                app_name: Some("Desktop Foundation Test".to_string()),
+                relaunch: true,
+                backup: false,
+            })
+            .unwrap();
+
+        assert_eq!(reply.status, "installing");
+        assert_eq!(reply.path, Some(path.to_string_lossy().to_string()));
+        let seen = adapter.seen.lock().unwrap();
+        assert_eq!(seen.len(), 1);
+        assert_eq!(seen[0].app_name, Some("Desktop Foundation Test".to_string()));
+        assert!(!seen[0].backup);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn update_install_blocks_unallowed_paths_before_adapter() {
+        let root = std::env::temp_dir().join(format!(
+            "desktop-foundation-test-{}-allowed",
+            std::process::id()
+        ));
+        let outside = std::env::temp_dir().join(format!(
+            "desktop-foundation-test-{}-blocked-update.zip",
+            std::process::id()
+        ));
+        let _ = std::fs::create_dir_all(&root);
+        std::fs::write(&outside, "update").unwrap();
+        let adapter = Arc::new(RecordingUpdateInstaller {
+            seen: Mutex::new(Vec::new()),
+        });
+        let core = DesktopCore::new()
+            .with_update_installer_adapter(adapter.clone())
+            .with_security_policy(SecurityPolicy {
+                allowed_file_roots: vec![root.to_string_lossy().to_string()],
+                ..SecurityPolicy::default()
+            });
+
+        let error = core
+            .install_update(UpdateInstallRequest {
+                path: outside.to_string_lossy().to_string(),
+                target_path: None,
+                app_name: None,
+                relaunch: false,
+                backup: true,
+            })
+            .unwrap_err();
+
+        assert_eq!(error.code, "FILE_PATH_BLOCKED");
+        assert!(adapter.seen.lock().unwrap().is_empty());
+        let _ = std::fs::remove_file(&outside);
+        let _ = std::fs::remove_dir_all(&root);
     }
 }
