@@ -5,7 +5,7 @@
 ```text
 请把当前产品项目接入 desktop-foundation。
 不要写死旧版本号；稳定接入优先读取 release package manifest，并以 manifest 里的 consumer 依赖块为准：
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.28/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.32/foundation-packages.json
 
 如果明确要追 main 上的最新底座，才使用 development manifest：
 https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json
@@ -18,6 +18,7 @@ https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/f
 - docs/doctor.md
 - docs/package-consumption.md
 - docs/api-reference.md
+- docs/update-center-integration.md
 
 只改产品项目，不要改 desktop-foundation 底座源码。
 不要复制 packages/desktop-ui-react/src、packages/desktop-bridge/src、packages/desktop-app-shell/src、packages/theme-presets/src、desktop-core-rs/src。

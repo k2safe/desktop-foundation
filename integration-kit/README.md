@@ -9,7 +9,8 @@
 3. 按 `file-map.md` 找到产品项目里应该新增或迁移的文件。
 4. 用 `minimal-migration-diff.md` 作为最小改造骨架。
 5. 对照 `acceptance-checklist.md` 验收。
-6. 遇到边界不清时看 `boundaries.md`，先判断应该在产品侧做，还是需要回到底座新增通用能力。
+6. 需要接真实更新中心时看 `docs/update-center-integration.md`，不要在业务页面里直接替换 `.app` 或重启。
+7. 遇到边界不清时看 `boundaries.md`，先判断应该在产品侧做，还是需要回到底座新增通用能力。
 
 ## 接入原则
 

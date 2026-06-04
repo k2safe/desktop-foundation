@@ -3,6 +3,7 @@
 This guide is the handoff checklist for product repositories that consume `desktop-foundation`.
 
 For an AI-ready implementation checklist, start with [Product AI Handoff](product-ai-handoff.md).
+For a concrete product update-center handoff, use [Update Center Integration](update-center-integration.md).
 
 The foundation owns reusable desktop infrastructure: UI shell, layout templates, theme tokens, common components, request/session bridge, Tauri command contracts, release/update helpers, and CI wrappers.
 

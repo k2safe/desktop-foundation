@@ -17,6 +17,7 @@
 ## Docs
 
 - [Product AI Handoff](docs/product-ai-handoff.md)
+- [Update Center Integration](docs/update-center-integration.md)
 - [Foundation Capabilities](docs/capabilities.md)
 - [External AI Acceptance](docs/external-ai-acceptance.md)
 - [Login Templates](docs/login-templates.md)
