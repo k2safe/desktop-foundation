@@ -7,7 +7,7 @@
 稳定接入先读 release package manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.34/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.35/foundation-packages.json
 ```
 
 然后读取 manifest 里的：
@@ -34,7 +34,7 @@ pnpm upload:smoke
 底座仓库自带等价 smoke：
 
 ```bash
-pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.34/foundation-packages.json
+pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.35/foundation-packages.json
 ```
 
 发版前还可以用本地 artifacts 验证尚未上传的 tarball：
