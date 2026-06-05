@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "foundationVersion": "0.1.35",
+  "foundationVersion": "0.1.36",
   "updatedAt": "2026-06-05",
   "name": "desktop-foundation capability registry",
   "description": "Machine-readable registry for product projects and external AI agents integrating desktop-foundation.",

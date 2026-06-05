@@ -7,13 +7,13 @@ This page is the handoff contract for product repositories that need to consume 
 For a stable product integration, use the immutable manifest attached to a GitHub Release. Current stable release:
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.35/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.36/foundation-packages.json
 ```
 
 The package URLs inside that manifest point to the same release tag, for example:
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.35/desktop-foundation-bridge-0.1.35.tgz
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.36/desktop-foundation-bridge-0.1.36.tgz
 ```
 
 This keeps product installs pinned to a specific foundation release even after `main` moves forward.
@@ -63,7 +63,7 @@ pnpm pack:packages
 To create an immutable release manifest:
 
 ```bash
-pnpm release:package-manifest -- --tag v0.1.35 --output /tmp/foundation-packages.json
+pnpm release:package-manifest -- --tag v0.1.36 --output /tmp/foundation-packages.json
 ```
 
 Upload the output as the release asset named `foundation-packages.json` next to the package tarballs and `foundation-capabilities.json`.

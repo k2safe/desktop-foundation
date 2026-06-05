@@ -97,6 +97,7 @@ function replaceReleaseReferences(path, version, repo) {
   text = text.replace(/desktop-foundation-(bridge|ui-react|app-shell|theme-presets|create-desktop-app)-\d+\.\d+\.\d+(?:[-._A-Za-z0-9]+)?\.tgz/g, (match, name) => {
     return `desktop-foundation-${name}-${version}.tgz`;
   });
+  text = text.replace(/make smoke-external-release VERSION=\d+\.\d+\.\d+(?:[-._A-Za-z0-9]+)?/g, `make smoke-external-release VERSION=${version}`);
   text = text.replace(/release:package-manifest -- --tag v[-._A-Za-z0-9]+/g, `release:package-manifest -- --tag ${tag}`);
   text = text.replace(/"foundationVersion": "\d+\.\d+\.\d+(?:[-._A-Za-z0-9]+)?"/g, `"foundationVersion": "${version}"`);
   writeText(path, text);

@@ -8,4 +8,5 @@ target
 examples/component-docs/__screenshots__/.actual
 artifacts/foundation-smoke.json
 artifacts/external-ai-demo-smoke.json
+artifacts/npm/*.tgz
 artifacts/npm/foundation-packages.release.json
