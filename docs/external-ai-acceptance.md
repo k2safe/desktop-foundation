@@ -34,7 +34,7 @@ pnpm upload:smoke
 底座仓库自带等价 smoke：
 
 ```bash
-pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.35/foundation-packages.json
+make smoke-external-release VERSION=0.1.35
 ```
 
 发版前还可以用本地 artifacts 验证尚未上传的 tarball：

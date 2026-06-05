@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createServer } from "node:http";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -15,7 +15,9 @@ function parseArgs(argv) {
     keep: false,
     manifestPath: defaultManifestPath,
     dir: null,
-    localArtifacts: false
+    localArtifacts: false,
+    proxy: process.env.PROXY || process.env.HTTPS_PROXY || process.env.HTTP_PROXY || "",
+    reportPath: ""
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -34,12 +36,72 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--local-artifacts") {
       options.localArtifacts = true;
+    } else if (arg === "--proxy") {
+      options.proxy = argv[index + 1] || "";
+      index += 1;
+    } else if (arg === "--report") {
+      options.reportPath = resolve(argv[index + 1] || "");
+      index += 1;
+    } else if (arg === "--help" || arg === "-h") {
+      console.log(
+        "smoke-external-ai-demo [--manifest URL_OR_PATH] [--local-artifacts] [--keep] [--dir PATH] [--proxy URL] [--report PATH]"
+      );
+      process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }
   }
 
   return options;
+}
+
+function createReport(options) {
+  return {
+    ok: false,
+    manifest: options.manifestPath,
+    workspace: null,
+    foundationVersion: null,
+    capabilities: {
+      count: 0,
+      required: [],
+      missing: []
+    },
+    steps: [],
+    error: null,
+    startedAt: new Date().toISOString(),
+    finishedAt: null,
+    durationMs: null
+  };
+}
+
+async function writeReport(reportPath, report) {
+  if (!reportPath) return;
+  await mkdir(dirname(reportPath), { recursive: true });
+  await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+}
+
+function markStep(report, name, status, details = {}) {
+  report.steps.push({
+    name,
+    status,
+    at: new Date().toISOString(),
+    ...details
+  });
+}
+
+async function runReported(report, name, action) {
+  const startedAt = Date.now();
+  try {
+    const result = await action();
+    markStep(report, name, "ok", { durationMs: Date.now() - startedAt });
+    return result;
+  } catch (error) {
+    markStep(report, name, "failed", {
+      durationMs: Date.now() - startedAt,
+      message: error instanceof Error ? error.message : String(error)
+    });
+    throw error;
+  }
 }
 
 function unique(values) {
@@ -70,10 +132,37 @@ async function assertFileDoesNotContain(filePath, forbiddenValues) {
   }
 }
 
-async function run(command, args, cwd) {
+function shouldBypassProxy(url) {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
+function proxyEnv(options) {
+  const env = { ...process.env };
+  for (const key of ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]) {
+    delete env[key];
+  }
+  if (options.proxy) {
+    env.HTTPS_PROXY = options.proxy;
+    env.HTTP_PROXY = options.proxy;
+    env.https_proxy = options.proxy;
+    env.http_proxy = options.proxy;
+  }
+  const noProxyValues = unique([env.NO_PROXY, env.no_proxy, "127.0.0.1", "localhost", "::1"]);
+  env.NO_PROXY = noProxyValues.join(",");
+  env.no_proxy = env.NO_PROXY;
+  return env;
+}
+
+async function run(command, args, cwd, options = {}) {
   console.log(`\nexternal-ai-demo $ ${command} ${args.join(" ")}`);
+  const env = proxyEnv(options);
   await new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn(command, args, { cwd, stdio: "inherit" });
+    const child = spawn(command, args, { cwd, env, stdio: "inherit" });
     child.on("error", rejectPromise);
     child.on("exit", (code, signal) => {
       if (code === 0) {
@@ -85,18 +174,27 @@ async function run(command, args, cwd) {
   });
 }
 
+function readUrl(url, options) {
+  const args = ["-fsSL", "--retry", "3", "--retry-connrefused", "--retry-delay", "2", "--max-time", "90"];
+  if (options.proxy && !shouldBypassProxy(url)) args.push("--proxy", options.proxy);
+  args.push(url);
+
+  const result = spawnSync("curl", args, { encoding: "utf8", cwd: repoRoot, env: proxyEnv(options), shell: false });
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || `Failed to fetch URL: ${url}`);
+  }
+  return result.stdout;
+}
+
 async function writeText(baseDir, relativePath, content) {
   const target = resolve(baseDir, relativePath);
   await mkdir(dirname(target), { recursive: true });
   await writeFile(target, content.trimStart(), "utf8");
 }
 
-async function readManifest(manifestPath) {
+async function readManifest(manifestPath, options) {
   const source = /^https?:\/\//.test(manifestPath)
-    ? await fetch(manifestPath).then((response) => {
-        if (!response.ok) throw new Error(`Failed to fetch manifest: ${response.status} ${response.statusText}`);
-        return response.text();
-      })
+    ? readUrl(manifestPath, options)
     : await readFile(manifestPath, "utf8");
   const manifest = JSON.parse(source);
   const consumer = manifest.consumer || {};
@@ -106,17 +204,14 @@ async function readManifest(manifestPath) {
   return manifest;
 }
 
-async function readCapabilityRegistry(manifest) {
+async function readCapabilityRegistry(manifest, options) {
   const capabilityUrl = manifest.capabilities?.url;
   if (!capabilityUrl) {
     throw new Error("Manifest is missing capabilities.url");
   }
 
   const source = /^https?:\/\//.test(capabilityUrl)
-    ? await fetch(capabilityUrl).then((response) => {
-        if (!response.ok) throw new Error(`Failed to fetch capability registry: ${response.status} ${response.statusText}`);
-        return response.text();
-      })
+    ? readUrl(capabilityUrl, options)
     : await readFile(resolve(repoRoot, capabilityUrl), "utf8");
   const registry = JSON.parse(source);
   if (!Array.isArray(registry.capabilities) || registry.capabilities.length === 0) {
@@ -200,10 +295,47 @@ function assertCapabilityRegistry(manifest, registry) {
     throw new Error(`Capability registry version ${registry.foundationVersion} does not match manifest version ${manifestVersion}`);
   }
   const capabilityIds = new Set(registry.capabilities.map((item) => item.id));
-  for (const id of ["package-consumption", "app-shell", "ci-and-release"]) {
-    if (!capabilityIds.has(id)) {
-      throw new Error(`Capability registry is missing ${id}`);
+  const requiredCapabilities = ["package-consumption", "app-shell", "http-and-upload", "desktop-core", "ci-and-release"];
+  const missing = requiredCapabilities.filter((id) => !capabilityIds.has(id));
+  if (missing.length) {
+    throw new Error(`Capability registry is missing ${missing.join(", ")}`);
+  }
+  return {
+    required: requiredCapabilities,
+    missing,
+    count: registry.capabilities.length
+  };
+}
+
+function assertReleaseManifest(manifest, manifestPath) {
+  if (!/^https?:\/\/github\.com\/.+\/releases\/download\/v/.test(manifestPath)) {
+    return;
+  }
+  if (manifest.immutable !== true) {
+    throw new Error("Release manifest must set immutable=true");
+  }
+  if (!manifest.releaseTag || !String(manifest.baseUrl || "").endsWith(`/${manifest.releaseTag}`)) {
+    throw new Error("Release manifest must include releaseTag and a matching baseUrl");
+  }
+  for (const item of manifest.packages || []) {
+    if (!String(item.url || "").startsWith(manifest.baseUrl)) {
+      throw new Error(`Release manifest package URL must point at baseUrl: ${item.name}`);
     }
+  }
+  for (const section of ["dependencies", "devDependencies"]) {
+    for (const [name, url] of Object.entries(manifest.consumer?.[section] || {})) {
+      if (!String(url).startsWith(manifest.baseUrl)) {
+        throw new Error(`Release manifest ${section}.${name} must point at ${manifest.baseUrl}`);
+      }
+    }
+  }
+  for (const [name, url] of Object.entries(manifest.consumer?.pnpm?.overrides || {})) {
+    if (!String(url).startsWith(manifest.baseUrl)) {
+      throw new Error(`Release manifest pnpm.overrides.${name} must point at ${manifest.baseUrl}`);
+    }
+  }
+  if (!String(manifest.capabilities?.url || "").startsWith(manifest.baseUrl)) {
+    throw new Error("Release manifest capabilities.url must point at release baseUrl");
   }
 }
 
@@ -730,50 +862,83 @@ ${cargoDependency}
 async function main() {
   const startedAt = Date.now();
   const options = parseArgs(process.argv.slice(2));
-  let manifest = await readManifest(options.manifestPath);
-  if (options.localArtifacts && /^https?:\/\//.test(options.manifestPath)) {
-    throw new Error("--local-artifacts requires a local manifest path");
-  }
-  const artifactServer = options.localArtifacts ? await startArtifactServer(dirname(options.manifestPath)) : null;
-  if (artifactServer) manifest = rewriteManifestUrls(manifest, artifactServer.baseUrl);
-  const capabilityRegistry = await readCapabilityRegistry(manifest);
-  assertCapabilityRegistry(manifest, capabilityRegistry);
-  const demoDir = options.dir || (await mkdtemp(resolve(tmpdir(), "df-external-ai-demo-")));
+  const report = createReport(options);
+  report.proxy = options.proxy || null;
+  let artifactServer = null;
+  let demoDir = null;
   let succeeded = false;
 
-  if (options.dir) {
-    if (existsSync(demoDir)) {
-      throw new Error(`--dir target already exists; choose a new empty path: ${demoDir}`);
-    }
-    await mkdir(demoDir, { recursive: true });
-  }
-
-  console.log(`external-ai-demo: manifest ${options.manifestPath}`);
-  if (artifactServer) console.log(`external-ai-demo: local artifact server ${artifactServer.baseUrl}`);
-  console.log(`external-ai-demo: workspace ${demoDir}`);
-  console.log(`external-ai-demo: foundation ${getManifestVersion(manifest)}`);
-  console.log(`external-ai-demo: capabilities ${capabilityRegistry.capabilities.length}`);
-
   try {
-    await writeProject(demoDir, manifest);
-    await assertFileDoesNotContain(resolve(demoDir, "package.json"), ["workspace:", "link:", "file:"]);
-    await run("pnpm", ["install", "--fetch-timeout=120000", "--fetch-retries=5"], demoDir);
-    await assertFileDoesNotContain(resolve(demoDir, "pnpm-lock.yaml"), ["workspace:", "link:", repoRoot]);
-    await run("pnpm", ["integration-check"], demoDir);
-    await run("pnpm", ["build"], demoDir);
-    await run("pnpm", ["upload:smoke"], demoDir);
+    let manifest = await runReported(report, "manifest", async () => {
+      const nextManifest = await readManifest(options.manifestPath, options);
+      assertReleaseManifest(nextManifest, options.manifestPath);
+      report.foundationVersion = getManifestVersion(nextManifest);
+      return nextManifest;
+    });
+
+    if (options.localArtifacts && /^https?:\/\//.test(options.manifestPath)) {
+      throw new Error("--local-artifacts requires a local manifest path");
+    }
+    artifactServer = options.localArtifacts
+      ? await runReported(report, "local-artifact-server", async () => startArtifactServer(dirname(options.manifestPath)))
+      : null;
+    if (artifactServer) manifest = rewriteManifestUrls(manifest, artifactServer.baseUrl);
+
+    const capabilityRegistry = await runReported(report, "capability-registry", async () => readCapabilityRegistry(manifest, options));
+    report.capabilities = assertCapabilityRegistry(manifest, capabilityRegistry);
+
+    demoDir = options.dir || (await mkdtemp(resolve(tmpdir(), "df-external-ai-demo-")));
+    report.workspace = demoDir;
+
+    if (options.dir) {
+      if (existsSync(demoDir)) {
+        throw new Error(`--dir target already exists; choose a new empty path: ${demoDir}`);
+      }
+      await mkdir(demoDir, { recursive: true });
+    }
+
+    console.log(`external-ai-demo: manifest ${options.manifestPath}`);
+    if (artifactServer) console.log(`external-ai-demo: local artifact server ${artifactServer.baseUrl}`);
+    console.log(`external-ai-demo: workspace ${demoDir}`);
+    console.log(`external-ai-demo: foundation ${report.foundationVersion}`);
+    console.log(`external-ai-demo: capabilities ${capabilityRegistry.capabilities.length}`);
+
+    await runReported(report, "write-project", async () => writeProject(demoDir, manifest));
+    await runReported(report, "package-reference-scan", async () =>
+      assertFileDoesNotContain(resolve(demoDir, "package.json"), ["workspace:", "link:", "file:"])
+    );
+    await runReported(report, "pnpm-install", async () =>
+      run("pnpm", ["install", "--fetch-timeout=120000", "--fetch-retries=5"], demoDir, options)
+    );
+    await runReported(report, "lockfile-reference-scan", async () =>
+      assertFileDoesNotContain(resolve(demoDir, "pnpm-lock.yaml"), ["workspace:", "link:", repoRoot])
+    );
+    await runReported(report, "integration-check", async () => run("pnpm", ["integration-check"], demoDir, options));
+    await runReported(report, "build", async () => run("pnpm", ["build"], demoDir, options));
+    await runReported(report, "upload-smoke", async () => run("pnpm", ["upload:smoke"], demoDir, options));
     succeeded = true;
+    report.ok = true;
     const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
     console.log(`\nexternal-ai-demo smoke: ok (${seconds}s)`);
+  } catch (error) {
+    report.error = error instanceof Error ? error.message : String(error);
+    throw error;
   } finally {
-    if (!options.keep && succeeded) {
+    if (demoDir && !options.keep && succeeded) {
       await rm(demoDir, { recursive: true, force: true });
       console.log(`external-ai-demo: cleaned ${demoDir}`);
-    } else {
+    } else if (demoDir) {
       console.log(`external-ai-demo: kept ${demoDir}`);
     }
     await artifactServer?.close();
+    report.finishedAt = new Date().toISOString();
+    report.durationMs = Date.now() - startedAt;
+    await writeReport(options.reportPath, report);
+    if (options.reportPath) console.log(`external-ai-demo: report ${options.reportPath}`);
   }
 }
 
-await main();
+await main().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});

@@ -15,6 +15,7 @@
     "smoke:capabilities": "pnpm --filter @desktop-foundation/bridge build && node packages/create-desktop-app/bin/desktop-foundation.mjs smoke --report artifacts/foundation-smoke.json",
     "smoke:multipart": "pnpm --filter @desktop-foundation/bridge build && node scripts/smoke-multipart-upload.mjs",
     "smoke:external-ai-demo": "node scripts/smoke-external-ai-demo.mjs",
+    "smoke:external-release": "node scripts/smoke-external-ai-demo.mjs",
     "pack:packages": "node scripts/pack-foundation-packages.mjs",
     "release:prepare": "node scripts/release-prepare.mjs",
     "release:check-package-drift": "node scripts/check-package-manifest-drift.mjs",
