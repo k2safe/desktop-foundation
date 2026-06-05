@@ -30,9 +30,7 @@ fi
 export GH_TOKEN
 
 release_manifest="$repo_root/artifacts/npm/foundation-packages.release.json"
-if [[ ! -f "$release_manifest" ]]; then
-  (cd "$repo_root" && pnpm release:package-manifest -- --tag "$tag")
-fi
+(cd "$repo_root" && pnpm release:package-manifest -- --tag "$tag" --repo "$github_repo")
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
@@ -59,6 +57,7 @@ title="${RELEASE_TITLE:-Release desktop foundation ${version}}"
 notes="${RELEASE_NOTES:-Adds the product demo desktop shell, Rust-owned desktop HTTP cache, refreshed bridge/UI packages, and updated foundation manifests.}"
 
 if gh release view "$tag" --repo "$github_repo" >/dev/null 2>&1; then
+  gh release edit "$tag" --repo "$github_repo" --title "$title" --notes "$notes"
   gh release upload "$tag" --repo "$github_repo" --clobber "${assets[@]}"
 else
   gh release create "$tag" \
@@ -68,4 +67,4 @@ else
     "${assets[@]}"
 fi
 
-gh release view "$tag" --repo "$github_repo" --web=false
+(cd "$repo_root" && pnpm release:verify -- --version "$version" --repo "$github_repo" --proxy "$proxy")

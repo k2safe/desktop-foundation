@@ -16,9 +16,11 @@
     "smoke:multipart": "pnpm --filter @desktop-foundation/bridge build && node scripts/smoke-multipart-upload.mjs",
     "smoke:external-ai-demo": "node scripts/smoke-external-ai-demo.mjs",
     "pack:packages": "node scripts/pack-foundation-packages.mjs",
+    "release:prepare": "node scripts/release-prepare.mjs",
     "release:check-package-drift": "node scripts/check-package-manifest-drift.mjs",
     "release:local-check": "node scripts/release-local-check.mjs",
-    "release:package-manifest": "node scripts/write-release-package-manifest.mjs"
+    "release:package-manifest": "node scripts/write-release-package-manifest.mjs",
+    "release:verify": "node scripts/release-verify.mjs"
   },
   "devDependencies": {
     "playwright": "^1.60.0",
