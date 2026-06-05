@@ -73,6 +73,13 @@ function demoTransport(): HttpTransport {
 
   return {
     async request<T>(request: HttpTransportRequest) {
+      const bodyKind = () => {
+        if (request.multipart) return "multipart";
+        if (typeof FormData !== "undefined" && request.body instanceof FormData) return "FormData";
+        if (request.bodyBase64) return "bodyBase64";
+        if (request.body === undefined) return "empty";
+        return typeof request.body;
+      };
       const reply = <T,>(payload: T, cacheKey?: string) => {
         const now = Date.now();
         const hit = Boolean(cacheKey && cacheKeys.has(cacheKey));
@@ -111,6 +118,18 @@ function demoTransport(): HttpTransport {
           { rows: [{ code: "zh-CN", name: "简体中文" }, { code: "en-US", name: "English" }], source: "web-demo" } as T,
           request.cache?.key ?? "demo-product:languages:web"
         );
+      }
+      if (request.url.endsWith("/capabilities/health")) {
+        return reply({ ok: true, runtime: "web-demo", requestId: request.requestId } as T, request.cache?.key);
+      }
+      if (request.url.endsWith("/capabilities/upload")) {
+        return reply({
+          ok: true,
+          runtime: "web-demo",
+          bodyKind: bodyKind(),
+          requestId: request.requestId,
+          namespace: request.namespace
+        } as T);
       }
       if (request.url.includes("/link-proxy")) {
         const payload = request.body as { url?: string; method?: string; query?: unknown };

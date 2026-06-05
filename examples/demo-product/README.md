@@ -10,6 +10,7 @@ specific payments/order domain.
 - `data.ts`: product-owned data models and fixture data.
 - `screens/*`: product screens composed from foundation UI.
 - `App.tsx`: app shell, session, login, layout, navigation, command palette, and debug panel.
+- `vite.config.ts`: local demo API middleware for desktop HTTP/multipart self-checks during Tauri dev.
 - `src-tauri/*`: a runnable Tauri shell that wires `desktop-core-rs` and the bridge plugin.
 
 ## Run
@@ -60,6 +61,7 @@ examples/demo-product/src-tauri/target/release/bundle/macos/Product Demo.app
 - Theme templates: product-owned template switching through foundation theme presets.
 - I18n: shared language keys and runtime locale switching for Chinese and English.
 - Bridge HTTP: JSON requests, response metadata, request audit logs, and desktop-only Rust cache options.
+- Foundation QA console: one-click checks for HTTP cache, multipart upload, update install boundary, session/storage/secure storage, notifications, and diagnostics.
 - Desktop native bridge: notifications, file export/open, window state, update check/install abstraction, diagnostics, and audit events.
 - Product boundary: product data and routes stay mocked; foundation APIs stay reusable.
 
