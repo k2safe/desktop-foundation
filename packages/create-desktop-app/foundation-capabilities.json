@@ -216,7 +216,7 @@
       "owner": "foundation",
       "phase": "required-for-networked-products",
       "status": "stable",
-      "summary": "Use the bridge HTTP client for JSON, raw body, downloads, and multipart upload across Web and Tauri transports.",
+      "summary": "Use the bridge HTTP client for JSON, raw body, downloads, multipart upload, and Rust-owned desktop HTTP cache across Web and Tauri transports.",
       "packages": [
         "@desktop-foundation/bridge",
         "desktop-core-rs"
@@ -234,7 +234,7 @@
           "tauri-core"
         ]
       },
-      "businessBoundary": "Products own endpoint paths, auth behavior, backend multipart parsing, object storage, and upload retention rules."
+      "businessBoundary": "Products own endpoint paths, auth behavior, backend multipart parsing, object storage, and upload retention rules. Desktop HTTP cache must be requested through client.http.*({ cache }) so Tauri apps keep cache state in desktop-core-rs rather than browser localStorage."
     },
     {
       "id": "desktop-core",

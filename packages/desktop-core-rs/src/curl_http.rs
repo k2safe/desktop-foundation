@@ -17,7 +17,11 @@ use crate::session::SessionState;
 pub struct CurlHttpAdapter;
 
 impl HttpAdapter for CurlHttpAdapter {
-    fn request(&self, request: HttpRequest, session: Option<SessionState>) -> DesktopResult<HttpResponse> {
+    fn request(
+        &self,
+        request: HttpRequest,
+        session: Option<SessionState>,
+    ) -> DesktopResult<HttpResponse> {
         let request_id = request.request_id.clone();
         let temp = CurlTempFiles::new();
         let url = append_query(&request.url, &request.query);
@@ -30,8 +34,14 @@ impl HttpAdapter for CurlHttpAdapter {
             command.args(["--max-time", &format!("{:.3}", timeout_ms as f64 / 1000.0)]);
         }
 
-        let is_multipart = request.multipart.as_ref().is_some_and(|multipart| !multipart.is_empty());
-        let mut has_authorization = request.headers.keys().any(|key| key.eq_ignore_ascii_case("authorization"));
+        let is_multipart = request
+            .multipart
+            .as_ref()
+            .is_some_and(|multipart| !multipart.is_empty());
+        let mut has_authorization = request
+            .headers
+            .keys()
+            .any(|key| key.eq_ignore_ascii_case("authorization"));
         for (key, value) in &request.headers {
             if is_multipart && key.eq_ignore_ascii_case("content-type") {
                 continue;
@@ -54,9 +64,19 @@ impl HttpAdapter for CurlHttpAdapter {
         } else if let Some(body_base64) = request.body_base64 {
             let bytes = general_purpose::STANDARD
                 .decode(body_base64)
-                .map_err(|error| DesktopError::new("HTTP_BODY_BASE64_DECODE_FAILED", "Failed to decode HTTP request body").with_details(Value::String(error.to_string())))?;
+                .map_err(|error| {
+                    DesktopError::new(
+                        "HTTP_BODY_BASE64_DECODE_FAILED",
+                        "Failed to decode HTTP request body",
+                    )
+                    .with_details(Value::String(error.to_string()))
+                })?;
             fs::write(&temp.request_body, bytes).map_err(|error| {
-                DesktopError::new("HTTP_BODY_WRITE_FAILED", "Failed to write temporary HTTP body").with_details(Value::String(error.to_string()))
+                DesktopError::new(
+                    "HTTP_BODY_WRITE_FAILED",
+                    "Failed to write temporary HTTP body",
+                )
+                .with_details(Value::String(error.to_string()))
             })?;
             if let Some(content_type) = request.body_content_type {
                 command.args(["-H", &format!("Content-Type: {content_type}")]);
@@ -65,10 +85,18 @@ impl HttpAdapter for CurlHttpAdapter {
             command.arg(format!("@{}", temp.request_body.to_string_lossy()));
         } else if let Some(body) = request.body {
             let text = serde_json::to_string(&body).map_err(|error| {
-                DesktopError::new("HTTP_BODY_SERIALIZE_FAILED", "Failed to serialize HTTP request body").with_details(Value::String(error.to_string()))
+                DesktopError::new(
+                    "HTTP_BODY_SERIALIZE_FAILED",
+                    "Failed to serialize HTTP request body",
+                )
+                .with_details(Value::String(error.to_string()))
             })?;
             fs::write(&temp.request_body, text).map_err(|error| {
-                DesktopError::new("HTTP_BODY_WRITE_FAILED", "Failed to write temporary HTTP body").with_details(Value::String(error.to_string()))
+                DesktopError::new(
+                    "HTTP_BODY_WRITE_FAILED",
+                    "Failed to write temporary HTTP body",
+                )
+                .with_details(Value::String(error.to_string()))
             })?;
             command.args(["-H", "Content-Type: application/json"]);
             command.arg("--data-binary");
@@ -78,24 +106,34 @@ impl HttpAdapter for CurlHttpAdapter {
         command.arg(url);
         let output = command.output().map_err(|error| {
             if error.kind() == std::io::ErrorKind::NotFound {
-                DesktopError::new("HTTP_CURL_UNAVAILABLE", "curl is not available for HTTPS transport")
+                DesktopError::new(
+                    "HTTP_CURL_UNAVAILABLE",
+                    "curl is not available for HTTPS transport",
+                )
             } else {
-                DesktopError::new("HTTP_CURL_FAILED", "Failed to execute curl").with_details(Value::String(error.to_string()))
+                DesktopError::new("HTTP_CURL_FAILED", "Failed to execute curl")
+                    .with_details(Value::String(error.to_string()))
             }
         })?;
         if !output.status.success() {
-            let mut error =
-                DesktopError::new("HTTP_CURL_FAILED", "curl request failed").with_details(Value::String(String::from_utf8_lossy(&output.stderr).to_string()));
+            let mut error = DesktopError::new("HTTP_CURL_FAILED", "curl request failed")
+                .with_details(Value::String(
+                    String::from_utf8_lossy(&output.stderr).to_string(),
+                ));
             if let Some(request_id) = request_id {
                 error = error.with_request_id(request_id);
             }
             return Err(error);
         }
 
-        let header_text = fs::read_to_string(&temp.headers)
-            .map_err(|error| DesktopError::new("HTTP_HEADER_READ_FAILED", "Failed to read HTTP headers").with_details(Value::String(error.to_string())))?;
-        let body_bytes = fs::read(&temp.body)
-            .map_err(|error| DesktopError::new("HTTP_BODY_READ_FAILED", "Failed to read HTTP body").with_details(Value::String(error.to_string())))?;
+        let header_text = fs::read_to_string(&temp.headers).map_err(|error| {
+            DesktopError::new("HTTP_HEADER_READ_FAILED", "Failed to read HTTP headers")
+                .with_details(Value::String(error.to_string()))
+        })?;
+        let body_bytes = fs::read(&temp.body).map_err(|error| {
+            DesktopError::new("HTTP_BODY_READ_FAILED", "Failed to read HTTP body")
+                .with_details(Value::String(error.to_string()))
+        })?;
         let (status, headers) = parse_headers(&header_text)?;
         let response_request_id = headers
             .iter()
@@ -106,7 +144,8 @@ impl HttpAdapter for CurlHttpAdapter {
         let (body, body_base64) = parse_body(body_bytes, &response_type);
 
         if !(200..300).contains(&status) {
-            let mut error = DesktopError::new("HTTP_ERROR", format!("HTTP {status}")).with_status(status);
+            let mut error =
+                DesktopError::new("HTTP_ERROR", format!("HTTP {status}")).with_status(status);
             if let Some(request_id) = response_request_id {
                 error = error.with_request_id(request_id);
             }
@@ -122,6 +161,7 @@ impl HttpAdapter for CurlHttpAdapter {
             body,
             body_base64,
             request_id: response_request_id,
+            cache: None,
         })
     }
 }
@@ -139,7 +179,10 @@ impl CurlTempFiles {
             .duration_since(UNIX_EPOCH)
             .map(|value| value.as_nanos())
             .unwrap_or_default();
-        let base = std::env::temp_dir().join(format!("desktop-foundation-curl-{}-{stamp}", std::process::id()));
+        let base = std::env::temp_dir().join(format!(
+            "desktop-foundation-curl-{}-{stamp}",
+            std::process::id()
+        ));
         Self {
             headers: base.with_extension("headers"),
             body: base.with_extension("body"),
@@ -190,7 +233,11 @@ fn append_query(url: &str, query: &BTreeMap<String, Value>) -> String {
             if value.is_empty() {
                 None
             } else {
-                Some(format!("{}={}", percent_encode(key), percent_encode(&value)))
+                Some(format!(
+                    "{}={}",
+                    percent_encode(key),
+                    percent_encode(&value)
+                ))
             }
         })
         .collect::<Vec<_>>()
@@ -217,7 +264,12 @@ fn parse_headers(text: &str) -> DesktopResult<(u16, BTreeMap<String, String>)> {
             headers.insert(key.trim().to_string(), value.trim().to_string());
         }
     }
-    let status = status.ok_or_else(|| DesktopError::new("HTTP_STATUS_PARSE_FAILED", "Failed to parse HTTP response status"))?;
+    let status = status.ok_or_else(|| {
+        DesktopError::new(
+            "HTTP_STATUS_PARSE_FAILED",
+            "Failed to parse HTTP response status",
+        )
+    })?;
     Ok((status, headers))
 }
 
@@ -227,10 +279,16 @@ fn parse_body(bytes: Vec<u8>, response_type: &HttpResponseType) -> (Option<Value
     }
     match response_type {
         HttpResponseType::Base64 => (None, Some(general_purpose::STANDARD.encode(bytes))),
-        HttpResponseType::Text => (Some(Value::String(String::from_utf8_lossy(&bytes).to_string())), None),
+        HttpResponseType::Text => (
+            Some(Value::String(String::from_utf8_lossy(&bytes).to_string())),
+            None,
+        ),
         HttpResponseType::Json => {
             let text = String::from_utf8_lossy(&bytes).to_string();
-            (Some(serde_json::from_str::<Value>(&text).unwrap_or(Value::String(text))), None)
+            (
+                Some(serde_json::from_str::<Value>(&text).unwrap_or(Value::String(text))),
+                None,
+            )
         }
     }
 }
@@ -249,7 +307,9 @@ fn percent_encode(value: &str) -> String {
     value
         .bytes()
         .map(|byte| match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => (byte as char).to_string(),
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                (byte as char).to_string()
+            }
             _ => format!("%{byte:02X}"),
         })
         .collect::<String>()
@@ -257,12 +317,19 @@ fn percent_encode(value: &str) -> String {
 
 fn validate_multipart_name(value: &str) -> DesktopResult<&str> {
     if value.is_empty() || value.contains(['=', '\r', '\n']) {
-        return Err(DesktopError::new("HTTP_MULTIPART_NAME_INVALID", "Invalid multipart field name").with_details(Value::String(value.to_string())));
+        return Err(DesktopError::new(
+            "HTTP_MULTIPART_NAME_INVALID",
+            "Invalid multipart field name",
+        )
+        .with_details(Value::String(value.to_string())));
     }
     Ok(value)
 }
 
-fn multipart_args(multipart: HttpMultipartForm, temp: &CurlTempFiles) -> DesktopResult<Vec<String>> {
+fn multipart_args(
+    multipart: HttpMultipartForm,
+    temp: &CurlTempFiles,
+) -> DesktopResult<Vec<String>> {
     let mut args = Vec::new();
     for field in multipart.fields {
         let name = validate_multipart_name(&field.name)?;
@@ -271,13 +338,22 @@ fn multipart_args(multipart: HttpMultipartForm, temp: &CurlTempFiles) -> Desktop
     }
     for (index, file) in multipart.files.into_iter().enumerate() {
         let name = validate_multipart_name(&file.name)?;
-        let bytes = general_purpose::STANDARD.decode(&file.body_base64).map_err(|error| {
-            DesktopError::new("HTTP_MULTIPART_FILE_BASE64_DECODE_FAILED", "Failed to decode multipart file body")
+        let bytes = general_purpose::STANDARD
+            .decode(&file.body_base64)
+            .map_err(|error| {
+                DesktopError::new(
+                    "HTTP_MULTIPART_FILE_BASE64_DECODE_FAILED",
+                    "Failed to decode multipart file body",
+                )
                 .with_details(Value::String(error.to_string()))
-        })?;
+            })?;
         let file_path = temp.multipart_file(index);
         fs::write(&file_path, bytes).map_err(|error| {
-            DesktopError::new("HTTP_MULTIPART_FILE_WRITE_FAILED", "Failed to write temporary multipart file").with_details(Value::String(error.to_string()))
+            DesktopError::new(
+                "HTTP_MULTIPART_FILE_WRITE_FAILED",
+                "Failed to write temporary multipart file",
+            )
+            .with_details(Value::String(error.to_string()))
         })?;
         args.push("--form".to_string());
         let mut form = format!(
@@ -285,7 +361,11 @@ fn multipart_args(multipart: HttpMultipartForm, temp: &CurlTempFiles) -> Desktop
             file_path.to_string_lossy(),
             sanitize_curl_form_attribute(&file.file_name)
         );
-        if let Some(content_type) = file.content_type.as_deref().filter(|value| !value.trim().is_empty()) {
+        if let Some(content_type) = file
+            .content_type
+            .as_deref()
+            .filter(|value| !value.trim().is_empty())
+        {
             form.push_str(";type=");
             form.push_str(&sanitize_curl_form_attribute(content_type));
         }
@@ -317,7 +397,9 @@ mod tests {
     use serde_json::Value;
 
     use crate::adapters::HttpAdapter;
-    use crate::http::{HttpMethod, HttpMultipartField, HttpMultipartFile, HttpMultipartForm, HttpRequest};
+    use crate::http::{
+        HttpMethod, HttpMultipartField, HttpMultipartFile, HttpMultipartForm, HttpRequest,
+    };
 
     use super::{multipart_args, CurlHttpAdapter, CurlTempFiles};
 
@@ -371,7 +453,10 @@ mod tests {
                 bytes.extend_from_slice(&buffer[..read]);
 
                 if header_end.is_none() {
-                    header_end = bytes.windows(4).position(|window| window == b"\r\n\r\n").map(|index| index + 4);
+                    header_end = bytes
+                        .windows(4)
+                        .position(|window| window == b"\r\n\r\n")
+                        .map(|index| index + 4);
                     if let Some(end) = header_end {
                         let headers = String::from_utf8_lossy(&bytes[..end]);
                         content_length = headers.lines().find_map(|line| {
@@ -425,7 +510,8 @@ mod tests {
                             name: "package".to_string(),
                             file_name: "desktop-release.zip".to_string(),
                             content_type: Some("application/zip".to_string()),
-                            body_base64: general_purpose::STANDARD.encode("zip bytes from curl adapter"),
+                            body_base64: general_purpose::STANDARD
+                                .encode("zip bytes from curl adapter"),
                         }],
                     }),
                     response_type: None,
@@ -433,6 +519,7 @@ mod tests {
                     auth: Some(false),
                     request_id: Some("curl-multipart-smoke".to_string()),
                     namespace: Some("multipart-demo".to_string()),
+                    cache: None,
                 },
                 None,
             )
@@ -442,7 +529,14 @@ mod tests {
         let request = String::from_utf8_lossy(&receiver.recv().unwrap()).to_string();
 
         assert_eq!(response.status, 200);
-        assert_eq!(response.body.and_then(|body| body.get("data").cloned()), Some(Value::Object([("ok".to_string(), Value::Bool(true))].into_iter().collect())));
+        assert_eq!(
+            response.body.and_then(|body| body.get("data").cloned()),
+            Some(Value::Object(
+                [("ok".to_string(), Value::Bool(true))]
+                    .into_iter()
+                    .collect()
+            ))
+        );
         assert!(request.contains("POST /upload HTTP/1.1"));
         assert!(request.contains("Content-Type: multipart/form-data; boundary="));
         assert!(request.contains("name=\"release\""));

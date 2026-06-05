@@ -4,6 +4,7 @@ dist
 .DS_Store
 *.tsbuildinfo
 target
+**/src-tauri/gen/schemas/
 examples/component-docs/__screenshots__/.actual
 artifacts/foundation-smoke.json
 artifacts/npm/foundation-packages.release.json

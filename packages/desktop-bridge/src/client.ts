@@ -11,6 +11,7 @@ import type {
   DesktopClient,
   DesktopClientConfig,
   FileCapability,
+  HttpResponseMeta,
   HttpMethod,
   HttpRequestOptions,
   LinkProxyMode,
@@ -432,6 +433,9 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
     rememberRequest(entry);
     config.requestObserver?.onRequestStart?.(entry);
 
+    let responseMeta: HttpResponseMeta | undefined;
+    const onResponse = options?.onResponse;
+
     try {
       const result = await transport.request<T>({
         ...options,
@@ -444,10 +448,22 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
           ...options?.headers
         },
         body,
-        token
+        token,
+        onResponse: (metadata) => {
+          responseMeta = metadata;
+          onResponse?.(metadata);
+        }
       });
       const endedAt = Date.now();
-      const nextEntry = { ...entry, endedAt, durationMs: endedAt - startedAt, ok: true };
+      const nextEntry = {
+        ...entry,
+        requestId: responseMeta?.requestId ?? entry.requestId,
+        endedAt,
+        durationMs: endedAt - startedAt,
+        status: responseMeta?.status,
+        cache: responseMeta?.cache,
+        ok: true
+      };
       rememberRequest(nextEntry);
       config.requestObserver?.onRequestEnd?.(nextEntry);
       return result;
@@ -557,9 +573,11 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
               bodyBase64: options.bodyBase64,
               bodyContentType: options.bodyContentType,
               multipart: options.multipart,
-              responseType: options.responseType
+              responseType: options.responseType,
+              cache: options.cache
             },
             responseType: options.responseType,
+            cache: options.cache,
             timeoutMs: options.timeoutMs,
             signal: options.signal,
             requestId: entry.id,
@@ -576,6 +594,7 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
             bodyContentType: options.bodyContentType,
             multipart: options.multipart,
             responseType: options.responseType,
+            cache: options.cache,
             timeoutMs: options.timeoutMs,
             signal: options.signal,
             requestId: entry.id,

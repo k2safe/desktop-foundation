@@ -1,0 +1,7 @@
+{
+  "rows": [
+    { "code": "zh-CN", "name": "简体中文", "enabled": true },
+    { "code": "en-US", "name": "English", "enabled": true }
+  ],
+  "source": "desktop-foundation-demo"
+}

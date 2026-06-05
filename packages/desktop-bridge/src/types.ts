@@ -2,6 +2,31 @@ export type QueryValue = string | number | boolean | null | undefined;
 export type QueryParams = Record<string, QueryValue>;
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type HttpResponseType = "json" | "text" | "base64";
+export type HttpCacheStorage = "memory" | "persistent";
+
+export interface HttpCacheOptions {
+  key?: string;
+  ttlMs: number;
+  storage?: HttpCacheStorage;
+  refresh?: boolean;
+  staleIfError?: boolean;
+}
+
+export interface HttpCacheMetadata {
+  hit: boolean;
+  stale: boolean;
+  key: string;
+  storage: HttpCacheStorage;
+  storedAt: number;
+  expiresAt: number;
+}
+
+export interface HttpResponseMeta {
+  status: number;
+  headers?: Record<string, string>;
+  requestId?: string;
+  cache?: HttpCacheMetadata;
+}
 
 export interface HttpMultipartField {
   name: string;
@@ -33,6 +58,8 @@ export interface HttpRequestOptions {
   auth?: boolean;
   requestId?: string;
   namespace?: string;
+  cache?: HttpCacheOptions;
+  onResponse?: (metadata: HttpResponseMeta) => void;
 }
 
 export interface HttpTransportRequest extends HttpRequestOptions {
@@ -290,6 +317,7 @@ export interface RequestLogEntry {
   endedAt?: number;
   durationMs?: number;
   status?: number;
+  cache?: HttpCacheMetadata;
   ok?: boolean;
   error?: {
     name?: string;

@@ -48,6 +48,29 @@ pub struct HttpRequest {
     pub request_id: Option<String>,
     #[serde(default)]
     pub namespace: Option<String>,
+    #[serde(default)]
+    pub cache: Option<HttpCacheOptions>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum HttpCacheStorage {
+    Memory,
+    Persistent,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct HttpCacheOptions {
+    #[serde(default)]
+    pub key: Option<String>,
+    pub ttl_ms: u64,
+    #[serde(default)]
+    pub storage: Option<HttpCacheStorage>,
+    #[serde(default)]
+    pub refresh: Option<bool>,
+    #[serde(default)]
+    pub stale_if_error: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -94,4 +117,34 @@ pub struct HttpResponse {
     pub body_base64: Option<String>,
     #[serde(default)]
     pub request_id: Option<String>,
+    #[serde(default)]
+    pub cache: Option<HttpCacheMetadata>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct HttpCacheMetadata {
+    pub hit: bool,
+    pub stale: bool,
+    pub key: String,
+    pub storage: HttpCacheStorage,
+    pub stored_at: u64,
+    pub expires_at: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct HttpCacheEntry {
+    pub status: u16,
+    #[serde(default)]
+    pub headers: BTreeMap<String, String>,
+    #[serde(default)]
+    pub body: Option<Value>,
+    #[serde(default)]
+    pub body_base64: Option<String>,
+    #[serde(default)]
+    pub request_id: Option<String>,
+    pub storage: HttpCacheStorage,
+    pub stored_at: u64,
+    pub expires_at: u64,
 }

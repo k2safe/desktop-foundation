@@ -1,0 +1,14 @@
+[package]
+name = "demo-product-desktop"
+version = "0.1.0"
+description = "Desktop Foundation Product Demo"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+desktop-core-rs = { path = "../../../packages/desktop-core-rs", features = ["tauri"] }
+tauri = { version = "2", features = [] }
+
+[workspace]

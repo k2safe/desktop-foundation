@@ -25,12 +25,19 @@ impl SecurityPolicy {
         }
         let parts = UrlParts::parse(url)?;
         if parts.scheme != "http" && parts.scheme != "https" {
-            return Err(DesktopError::new("HTTP_SCHEME_BLOCKED", "HTTP request scheme is not allowed").with_details(Value::String(url.to_string())));
+            return Err(DesktopError::new(
+                "HTTP_SCHEME_BLOCKED",
+                "HTTP request scheme is not allowed",
+            )
+            .with_details(Value::String(url.to_string())));
         }
         if host_allowed(&parts.host, &self.allowed_http_hosts) {
             Ok(())
         } else {
-            Err(DesktopError::new("HTTP_HOST_BLOCKED", "HTTP request host is not allowed").with_details(Value::String(parts.host)))
+            Err(
+                DesktopError::new("HTTP_HOST_BLOCKED", "HTTP request host is not allowed")
+                    .with_details(Value::String(parts.host)),
+            )
         }
     }
 
@@ -39,13 +46,27 @@ impl SecurityPolicy {
             return Ok(());
         }
         let parts = UrlParts::parse(url)?;
-        if !self.allowed_external_schemes.is_empty() && !self.allowed_external_schemes.iter().any(|scheme| scheme.eq_ignore_ascii_case(&parts.scheme)) {
-            return Err(DesktopError::new("EXTERNAL_SCHEME_BLOCKED", "External URL scheme is not allowed").with_details(Value::String(parts.scheme)));
+        if !self.allowed_external_schemes.is_empty()
+            && !self
+                .allowed_external_schemes
+                .iter()
+                .any(|scheme| scheme.eq_ignore_ascii_case(&parts.scheme))
+        {
+            return Err(DesktopError::new(
+                "EXTERNAL_SCHEME_BLOCKED",
+                "External URL scheme is not allowed",
+            )
+            .with_details(Value::String(parts.scheme)));
         }
-        if self.allowed_external_hosts.is_empty() || host_allowed(&parts.host, &self.allowed_external_hosts) {
+        if self.allowed_external_hosts.is_empty()
+            || host_allowed(&parts.host, &self.allowed_external_hosts)
+        {
             Ok(())
         } else {
-            Err(DesktopError::new("EXTERNAL_HOST_BLOCKED", "External URL host is not allowed").with_details(Value::String(parts.host)))
+            Err(
+                DesktopError::new("EXTERNAL_HOST_BLOCKED", "External URL host is not allowed")
+                    .with_details(Value::String(parts.host)),
+            )
         }
     }
 
@@ -63,7 +84,11 @@ impl SecurityPolicy {
         if allowed {
             Ok(())
         } else {
-            Err(DesktopError::new("FILE_PATH_BLOCKED", "File path is outside the allowed roots").with_details(Value::String(path.to_string_lossy().to_string())))
+            Err(DesktopError::new(
+                "FILE_PATH_BLOCKED",
+                "File path is outside the allowed roots",
+            )
+            .with_details(Value::String(path.to_string_lossy().to_string())))
         }
     }
 }
@@ -91,7 +116,10 @@ impl UrlParts {
             .unwrap_or_default()
             .to_ascii_lowercase();
         if scheme.is_empty() || host.is_empty() {
-            return Err(DesktopError::new("INVALID_URL", "URL must include a scheme and host"));
+            return Err(DesktopError::new(
+                "INVALID_URL",
+                "URL must include a scheme and host",
+            ));
         }
         Ok(Self {
             scheme: scheme.to_ascii_lowercase(),
@@ -103,20 +131,33 @@ impl UrlParts {
 fn host_allowed(host: &str, patterns: &[String]) -> bool {
     patterns.iter().any(|pattern| {
         let pattern = pattern.to_ascii_lowercase();
-        pattern == "*" || pattern == host || pattern.strip_prefix("*.").is_some_and(|suffix| host == suffix || host.ends_with(&format!(".{suffix}")))
+        pattern == "*"
+            || pattern == host
+            || pattern
+                .strip_prefix("*.")
+                .is_some_and(|suffix| host == suffix || host.ends_with(&format!(".{suffix}")))
     })
 }
 
 fn resolve_path_for_policy(path: &Path) -> DesktopResult<PathBuf> {
     if path.exists() {
         return path.canonicalize().map_err(|error| {
-            DesktopError::new("FILE_PATH_RESOLVE_FAILED", "Failed to resolve file path").with_details(Value::String(error.to_string()))
+            DesktopError::new("FILE_PATH_RESOLVE_FAILED", "Failed to resolve file path")
+                .with_details(Value::String(error.to_string()))
         });
     }
     if let Some(parent) = path.parent() {
-        let parent = if parent.as_os_str().is_empty() { Path::new(".") } else { parent };
+        let parent = if parent.as_os_str().is_empty() {
+            Path::new(".")
+        } else {
+            parent
+        };
         let resolved_parent = parent.canonicalize().map_err(|error| {
-            DesktopError::new("FILE_PATH_RESOLVE_FAILED", "Failed to resolve file path parent").with_details(Value::String(error.to_string()))
+            DesktopError::new(
+                "FILE_PATH_RESOLVE_FAILED",
+                "Failed to resolve file path parent",
+            )
+            .with_details(Value::String(error.to_string()))
         })?;
         if let Some(name) = path.file_name() {
             return Ok(resolved_parent.join(name));
@@ -124,7 +165,10 @@ fn resolve_path_for_policy(path: &Path) -> DesktopResult<PathBuf> {
     }
     std::env::current_dir()
         .map(|current| current.join(path))
-        .map_err(|error| DesktopError::new("FILE_PATH_RESOLVE_FAILED", "Failed to resolve file path").with_details(Value::String(error.to_string())))
+        .map_err(|error| {
+            DesktopError::new("FILE_PATH_RESOLVE_FAILED", "Failed to resolve file path")
+                .with_details(Value::String(error.to_string()))
+        })
 }
 
 #[cfg(test)]
@@ -133,7 +177,10 @@ mod tests {
 
     #[test]
     fn host_allowlist_supports_wildcards() {
-        assert!(host_allowed("api.example.com", &["*.example.com".to_string()]));
+        assert!(host_allowed(
+            "api.example.com",
+            &["*.example.com".to_string()]
+        ));
         assert!(host_allowed("example.com", &["*.example.com".to_string()]));
         assert!(!host_allowed("example.net", &["*.example.com".to_string()]));
     }
@@ -144,7 +191,11 @@ mod tests {
             allowed_http_hosts: vec!["api.example.com".to_string()],
             ..SecurityPolicy::default()
         };
-        assert!(policy.validate_http_url("https://api.example.com/orders").is_ok());
-        assert!(policy.validate_http_url("https://evil.example.com/orders").is_err());
+        assert!(policy
+            .validate_http_url("https://api.example.com/orders")
+            .is_ok());
+        assert!(policy
+            .validate_http_url("https://evil.example.com/orders")
+            .is_err());
     }
 }

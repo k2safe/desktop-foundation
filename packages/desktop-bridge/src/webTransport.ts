@@ -56,9 +56,31 @@ function multipartToFormData(multipart?: HttpMultipartForm) {
   return formData;
 }
 
+function headersToRecord(headers: Headers) {
+  const values: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    values[key] = value;
+  });
+  return values;
+}
+
 export function createWebTransport(): HttpTransport {
   return {
-    async request<T>({ method, url, headers, query, body, bodyBase64, bodyContentType, multipart, responseType = "json", timeoutMs, token, signal }: HttpTransportRequest) {
+    async request<T>({
+      method,
+      url,
+      headers,
+      query,
+      body,
+      bodyBase64,
+      bodyContentType,
+      multipart,
+      responseType = "json",
+      timeoutMs,
+      token,
+      signal,
+      onResponse
+    }: HttpTransportRequest) {
       const requestHeaders = new Headers(headers);
       const multipartBody = multipartToFormData(multipart);
       const formBody = multipartBody ?? (isFormData(body) ? body : undefined);
@@ -105,6 +127,11 @@ export function createWebTransport(): HttpTransport {
             ? await response.text()
             : await parseBody(response);
       const requestId = response.headers.get("x-request-id") ?? undefined;
+      onResponse?.({
+        status: response.status,
+        headers: headersToRecord(response.headers),
+        requestId
+      });
 
       if (response.status === 401) {
         throw new UnauthorizedError(typeof payload === "object" && payload ? payload.message || "Unauthorized" : "Unauthorized", requestId);

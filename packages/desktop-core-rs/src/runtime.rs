@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::engine::general_purpose;
 use base64::Engine as _;
@@ -19,7 +20,10 @@ use crate::file::{
     OpenFileDialogRequest, ReadTextFileRequest, SaveFileDialogReply, SaveFileDialogRequest,
     TextFileReply, WriteBinaryFileRequest, WriteTextFileRequest,
 };
-use crate::http::{HttpMethod, HttpRequest, HttpResponse, HttpResponseType};
+use crate::http::{
+    HttpCacheEntry, HttpCacheMetadata, HttpCacheOptions, HttpCacheStorage, HttpMethod, HttpRequest,
+    HttpResponse, HttpResponseType,
+};
 use crate::persistence::{
     storage_entries_to_map, storage_map_to_entries, FilePersistence, PersistedState,
 };
@@ -46,6 +50,7 @@ pub enum DesktopAction {
 pub struct DesktopCore {
     sessions: Arc<Mutex<BTreeMap<String, SessionState>>>,
     storage: Arc<Mutex<BTreeMap<StorageKey, Value>>>,
+    http_cache: Arc<Mutex<BTreeMap<String, HttpCacheEntry>>>,
     actions: Arc<Mutex<Vec<DesktopAction>>>,
     http_adapter: Arc<dyn HttpAdapter>,
     desktop_adapter: Arc<dyn DesktopAdapter>,
@@ -56,11 +61,24 @@ pub struct DesktopCore {
     persistence: Option<Arc<FilePersistence>>,
 }
 
+fn empty_http_cache() -> Arc<Mutex<BTreeMap<String, HttpCacheEntry>>> {
+    Arc::new(Mutex::new(BTreeMap::new()))
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct StorageKey {
     pub namespace: String,
     pub scope: StorageScope,
     pub key: String,
+}
+
+#[derive(Debug, Clone)]
+struct HttpCacheContext {
+    key: String,
+    ttl_ms: u64,
+    storage: HttpCacheStorage,
+    refresh: bool,
+    stale_if_error: bool,
 }
 
 impl DesktopCore {
@@ -73,6 +91,7 @@ impl DesktopCore {
         Self {
             sessions: Arc::new(Mutex::new(BTreeMap::new())),
             storage: Arc::new(Mutex::new(BTreeMap::new())),
+            http_cache: empty_http_cache(),
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
@@ -88,6 +107,7 @@ impl DesktopCore {
         Self {
             sessions: Arc::new(Mutex::new(BTreeMap::new())),
             storage: Arc::new(Mutex::new(BTreeMap::new())),
+            http_cache: empty_http_cache(),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter: Arc::new(NoopHttpAdapter),
             desktop_adapter,
@@ -120,6 +140,7 @@ impl DesktopCore {
         Self {
             sessions: Arc::new(Mutex::new(BTreeMap::new())),
             storage: Arc::new(Mutex::new(BTreeMap::new())),
+            http_cache: empty_http_cache(),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter,
             desktop_adapter,
@@ -184,6 +205,7 @@ impl DesktopCore {
         Ok(Self {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
+            http_cache: Arc::new(Mutex::new(state.http_cache)),
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
@@ -205,6 +227,7 @@ impl DesktopCore {
         Ok(Self {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
+            http_cache: Arc::new(Mutex::new(state.http_cache)),
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
@@ -226,6 +249,7 @@ impl DesktopCore {
         Ok(Self {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
+            http_cache: Arc::new(Mutex::new(state.http_cache)),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter,
             desktop_adapter,
@@ -249,6 +273,7 @@ impl DesktopCore {
         Ok(Self {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
+            http_cache: Arc::new(Mutex::new(state.http_cache)),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter,
             desktop_adapter,
@@ -270,6 +295,7 @@ impl DesktopCore {
         Ok(Self {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
+            http_cache: Arc::new(Mutex::new(state.http_cache)),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter,
             desktop_adapter: Arc::new(SystemDesktopAdapter),
@@ -294,14 +320,30 @@ impl DesktopCore {
             .storage
             .lock()
             .map_err(|_| DesktopError::new("STORAGE_LOCK_FAILED", "Failed to lock storage"))?;
+        let http_cache = self.http_cache.lock().map_err(|_| {
+            DesktopError::new("HTTP_CACHE_LOCK_FAILED", "Failed to lock HTTP cache")
+        })?;
         persistence.save(&PersistedState {
             sessions,
             storage: storage_map_to_entries(&storage),
+            http_cache: http_cache
+                .iter()
+                .filter(|(_key, entry)| entry.storage == HttpCacheStorage::Persistent)
+                .map(|(key, entry)| (key.clone(), entry.clone()))
+                .collect(),
         })
     }
 
     pub fn http_request(&self, request: HttpRequest) -> DesktopResult<HttpResponse> {
         self.security_policy.validate_http_url(&request.url)?;
+        let cache_context = self.resolve_http_cache(&request)?;
+        if let Some(context) = cache_context.as_ref().filter(|context| !context.refresh) {
+            if let Some(response) =
+                self.read_cached_http_response(context, request.request_id.clone(), false)?
+            {
+                return Ok(response);
+            }
+        }
         let session = if request.auth == Some(false) {
             None
         } else {
@@ -312,7 +354,121 @@ impl DesktopCore {
                 .ok()
             })
         };
-        self.http_adapter.request(request, session)
+        match self.http_adapter.request(request.clone(), session) {
+            Ok(mut response) => {
+                if let Some(context) = cache_context {
+                    self.write_http_cache(&context, &response)?;
+                    if let Some(entry) = self
+                        .http_cache
+                        .lock()
+                        .map_err(|_| {
+                            DesktopError::new("HTTP_CACHE_LOCK_FAILED", "Failed to lock HTTP cache")
+                        })?
+                        .get(&context.key)
+                        .cloned()
+                    {
+                        response.cache =
+                            Some(http_cache_metadata(&context.key, &entry, false, false));
+                    }
+                }
+                Ok(response)
+            }
+            Err(error) => {
+                if let Some(context) = cache_context
+                    .as_ref()
+                    .filter(|context| context.stale_if_error)
+                {
+                    if let Some(response) =
+                        self.read_cached_http_response(context, request.request_id.clone(), true)?
+                    {
+                        return Ok(response);
+                    }
+                }
+                Err(error)
+            }
+        }
+    }
+
+    fn resolve_http_cache(&self, request: &HttpRequest) -> DesktopResult<Option<HttpCacheContext>> {
+        let Some(cache) = request.cache.as_ref().filter(|cache| cache.ttl_ms > 0) else {
+            return Ok(None);
+        };
+        let requested_storage = cache
+            .storage
+            .clone()
+            .unwrap_or(HttpCacheStorage::Persistent);
+        let storage =
+            if requested_storage == HttpCacheStorage::Persistent && self.persistence.is_none() {
+                HttpCacheStorage::Memory
+            } else {
+                requested_storage
+            };
+        Ok(Some(HttpCacheContext {
+            key: http_cache_key(request, cache)?,
+            ttl_ms: cache.ttl_ms,
+            storage,
+            refresh: cache.refresh.unwrap_or(false),
+            stale_if_error: cache.stale_if_error.unwrap_or(false),
+        }))
+    }
+
+    fn read_cached_http_response(
+        &self,
+        context: &HttpCacheContext,
+        request_id: Option<String>,
+        allow_stale: bool,
+    ) -> DesktopResult<Option<HttpResponse>> {
+        let now = current_time_ms();
+        let entry = self
+            .http_cache
+            .lock()
+            .map_err(|_| DesktopError::new("HTTP_CACHE_LOCK_FAILED", "Failed to lock HTTP cache"))?
+            .get(&context.key)
+            .cloned();
+        let Some(entry) = entry else {
+            return Ok(None);
+        };
+        let stale = now > entry.expires_at;
+        if stale && !allow_stale {
+            return Ok(None);
+        }
+        Ok(Some(http_response_from_cache_entry(
+            &context.key,
+            &entry,
+            request_id,
+            stale,
+        )))
+    }
+
+    fn write_http_cache(
+        &self,
+        context: &HttpCacheContext,
+        response: &HttpResponse,
+    ) -> DesktopResult<()> {
+        let stored_at = current_time_ms();
+        let expires_at = stored_at.saturating_add(context.ttl_ms);
+        let entry = HttpCacheEntry {
+            status: response.status,
+            headers: response.headers.clone(),
+            body: response.body.clone(),
+            body_base64: response.body_base64.clone(),
+            request_id: response.request_id.clone(),
+            storage: context.storage.clone(),
+            stored_at,
+            expires_at,
+        };
+        {
+            self.http_cache
+                .lock()
+                .map_err(|_| {
+                    DesktopError::new("HTTP_CACHE_LOCK_FAILED", "Failed to lock HTTP cache")
+                })?
+                .insert(context.key.clone(), entry);
+        }
+        if context.storage == HttpCacheStorage::Persistent {
+            self.persist_state()?;
+        }
+        Ok(())
     }
 
     pub fn session_get(&self, request: SessionGetRequest) -> DesktopResult<SessionState> {
@@ -494,6 +650,7 @@ impl DesktopCore {
             auth: request.auth,
             request_id: request.request_id,
             namespace: request.namespace,
+            cache: None,
         })?;
         let body_base64 = response.body_base64.ok_or_else(|| {
             DesktopError::new(
@@ -577,6 +734,84 @@ impl DesktopCore {
     }
 }
 
+fn current_time_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|value| value.as_millis().min(u128::from(u64::MAX)) as u64)
+        .unwrap_or_default()
+}
+
+fn http_cache_key(request: &HttpRequest, cache: &HttpCacheOptions) -> DesktopResult<String> {
+    if let Some(key) = cache
+        .key
+        .as_deref()
+        .map(str::trim)
+        .filter(|key| !key.is_empty())
+    {
+        return Ok(key.to_string());
+    }
+    let canonical = serde_json::json!({
+        "method": &request.method,
+        "url": &request.url,
+        "headers": request.headers.iter().filter(|(key, _value)| !key.eq_ignore_ascii_case("authorization")).collect::<BTreeMap<_, _>>(),
+        "query": &request.query,
+        "body": &request.body,
+        "bodyBase64Sha256": request.body_base64.as_ref().map(|value| sha256_hex(value.as_bytes())),
+        "bodyContentType": &request.body_content_type,
+        "multipart": &request.multipart,
+        "responseType": &request.response_type,
+        "auth": &request.auth,
+        "namespace": &request.namespace,
+    });
+    let text = serde_json::to_string(&canonical).map_err(|error| {
+        DesktopError::new(
+            "HTTP_CACHE_KEY_SERIALIZE_FAILED",
+            "Failed to serialize HTTP cache key",
+        )
+        .with_details(Value::String(error.to_string()))
+    })?;
+    Ok(format!("http:{}", sha256_hex(text.as_bytes())))
+}
+
+fn http_response_from_cache_entry(
+    key: &str,
+    entry: &HttpCacheEntry,
+    request_id: Option<String>,
+    stale: bool,
+) -> HttpResponse {
+    HttpResponse {
+        status: entry.status,
+        headers: entry.headers.clone(),
+        body: entry.body.clone(),
+        body_base64: entry.body_base64.clone(),
+        request_id: request_id.or_else(|| entry.request_id.clone()),
+        cache: Some(http_cache_metadata(key, entry, true, stale)),
+    }
+}
+
+fn http_cache_metadata(
+    key: &str,
+    entry: &HttpCacheEntry,
+    hit: bool,
+    stale: bool,
+) -> HttpCacheMetadata {
+    HttpCacheMetadata {
+        hit,
+        stale,
+        key: key.to_string(),
+        storage: entry.storage.clone(),
+        stored_at: entry.stored_at,
+        expires_at: entry.expires_at,
+    }
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    Sha256::digest(bytes)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
+}
+
 fn download_target_path(request: &DownloadFileRequest) -> DesktopResult<PathBuf> {
     if let Some(path) = request.path.as_ref() {
         return Ok(PathBuf::from(path));
@@ -633,6 +868,7 @@ impl Default for DesktopCore {
         Self {
             sessions: Arc::new(Mutex::new(BTreeMap::new())),
             storage: Arc::new(Mutex::new(BTreeMap::new())),
+            http_cache: empty_http_cache(),
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
@@ -647,16 +883,23 @@ impl Default for DesktopCore {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
     use std::sync::Mutex;
+    use std::time::Duration;
 
     use serde_json::json;
 
-    use crate::http::{HttpMethod, HttpRequest, HttpResponse};
+    use crate::http::{HttpCacheOptions, HttpCacheStorage, HttpMethod, HttpRequest, HttpResponse};
 
     use super::*;
 
     struct EchoHttpAdapter {
         seen_token: Mutex<Option<String>>,
+    }
+
+    struct CountingHttpAdapter {
+        calls: Mutex<u32>,
+        fail_after_first: bool,
     }
 
     struct RecordingUpdateInstaller {
@@ -676,6 +919,32 @@ mod tests {
                 body: Some(json!({ "ok": true })),
                 body_base64: None,
                 request_id: None,
+                cache: None,
+            })
+        }
+    }
+
+    impl HttpAdapter for CountingHttpAdapter {
+        fn request(
+            &self,
+            _request: HttpRequest,
+            _session: Option<SessionState>,
+        ) -> DesktopResult<HttpResponse> {
+            let mut calls = self.calls.lock().unwrap();
+            *calls += 1;
+            if self.fail_after_first && *calls > 1 {
+                return Err(DesktopError::new(
+                    "TEST_HTTP_DOWN",
+                    "test adapter unavailable",
+                ));
+            }
+            Ok(HttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                body: Some(json!({ "count": *calls })),
+                body_base64: None,
+                request_id: None,
+                cache: None,
             })
         }
     }
@@ -794,6 +1063,7 @@ mod tests {
                 auth: None,
                 request_id: None,
                 namespace: Some("admin".to_string()),
+                cache: None,
             })
             .unwrap();
 
@@ -802,6 +1072,124 @@ mod tests {
             *adapter.seen_token.lock().unwrap(),
             Some("admin-token".to_string())
         );
+    }
+
+    #[test]
+    fn http_request_cache_hits_inside_desktop_core() {
+        let adapter = Arc::new(CountingHttpAdapter {
+            calls: Mutex::new(0),
+            fail_after_first: false,
+        });
+        let core = DesktopCore::with_http_adapter(adapter.clone());
+        let cache = Some(HttpCacheOptions {
+            key: Some("demo:languages".to_string()),
+            ttl_ms: 60_000,
+            storage: Some(HttpCacheStorage::Memory),
+            refresh: None,
+            stale_if_error: None,
+        });
+
+        let first = core
+            .http_request(HttpRequest {
+                method: HttpMethod::Get,
+                url: "https://example.test/languages".to_string(),
+                headers: BTreeMap::new(),
+                query: BTreeMap::new(),
+                body: None,
+                body_base64: None,
+                body_content_type: None,
+                multipart: None,
+                response_type: None,
+                timeout_ms: None,
+                auth: Some(false),
+                request_id: Some("first".to_string()),
+                namespace: Some("demo".to_string()),
+                cache: cache.clone(),
+            })
+            .unwrap();
+        let second = core
+            .http_request(HttpRequest {
+                method: HttpMethod::Get,
+                url: "https://example.test/languages".to_string(),
+                headers: BTreeMap::new(),
+                query: BTreeMap::new(),
+                body: None,
+                body_base64: None,
+                body_content_type: None,
+                multipart: None,
+                response_type: None,
+                timeout_ms: None,
+                auth: Some(false),
+                request_id: Some("second".to_string()),
+                namespace: Some("demo".to_string()),
+                cache,
+            })
+            .unwrap();
+
+        assert_eq!(first.body, Some(json!({ "count": 1 })));
+        assert_eq!(second.body, Some(json!({ "count": 1 })));
+        assert_eq!(second.request_id, Some("second".to_string()));
+        assert_eq!(second.cache.as_ref().map(|cache| cache.hit), Some(true));
+        assert_eq!(*adapter.calls.lock().unwrap(), 1);
+    }
+
+    #[test]
+    fn http_request_cache_can_return_stale_response_after_transport_error() {
+        let adapter = Arc::new(CountingHttpAdapter {
+            calls: Mutex::new(0),
+            fail_after_first: true,
+        });
+        let core = DesktopCore::with_http_adapter(adapter.clone());
+        let mut cache = HttpCacheOptions {
+            key: Some("demo:stale".to_string()),
+            ttl_ms: 1,
+            storage: Some(HttpCacheStorage::Memory),
+            refresh: None,
+            stale_if_error: Some(true),
+        };
+
+        core.http_request(HttpRequest {
+            method: HttpMethod::Get,
+            url: "https://example.test/stale".to_string(),
+            headers: BTreeMap::new(),
+            query: BTreeMap::new(),
+            body: None,
+            body_base64: None,
+            body_content_type: None,
+            multipart: None,
+            response_type: None,
+            timeout_ms: None,
+            auth: Some(false),
+            request_id: Some("prime".to_string()),
+            namespace: Some("demo".to_string()),
+            cache: Some(cache.clone()),
+        })
+        .unwrap();
+        std::thread::sleep(Duration::from_millis(2));
+        cache.refresh = Some(true);
+        let stale = core
+            .http_request(HttpRequest {
+                method: HttpMethod::Get,
+                url: "https://example.test/stale".to_string(),
+                headers: BTreeMap::new(),
+                query: BTreeMap::new(),
+                body: None,
+                body_base64: None,
+                body_content_type: None,
+                multipart: None,
+                response_type: None,
+                timeout_ms: None,
+                auth: Some(false),
+                request_id: Some("stale".to_string()),
+                namespace: Some("demo".to_string()),
+                cache: Some(cache),
+            })
+            .unwrap();
+
+        assert_eq!(stale.body, Some(json!({ "count": 1 })));
+        assert_eq!(stale.cache.as_ref().map(|cache| cache.hit), Some(true));
+        assert_eq!(stale.cache.as_ref().map(|cache| cache.stale), Some(true));
+        assert_eq!(*adapter.calls.lock().unwrap(), 2);
     }
 
     #[test]
@@ -904,6 +1292,7 @@ mod tests {
                 auth: None,
                 request_id: None,
                 namespace: Some("admin".to_string()),
+                cache: None,
             })
             .unwrap_err();
 
@@ -955,7 +1344,10 @@ mod tests {
         assert_eq!(reply.path, Some(path.to_string_lossy().to_string()));
         let seen = adapter.seen.lock().unwrap();
         assert_eq!(seen.len(), 1);
-        assert_eq!(seen[0].app_name, Some("Desktop Foundation Test".to_string()));
+        assert_eq!(
+            seen[0].app_name,
+            Some("Desktop Foundation Test".to_string())
+        );
         assert!(!seen[0].backup);
         let _ = std::fs::remove_file(&path);
     }

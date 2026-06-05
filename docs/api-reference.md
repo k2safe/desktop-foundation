@@ -65,6 +65,8 @@ Options:
 - `auth`
 - `requestId`
 - `namespace`
+- `cache`
+- `onResponse`
 
 Desktop HTTP supports browser `FormData` for multipart upload. In a Tauri client, the bridge serializes `FormData` into the Rust command contract and the default `CurlHttpAdapter` generates the multipart boundary:
 
@@ -77,6 +79,24 @@ await client.http.post("/releases", form);
 ```
 
 Do not set `Content-Type: multipart/form-data` manually for `FormData` uploads; the transport owns the boundary. For non-browser callers, use `multipart.fields` and `multipart.files` with file `bodyBase64`.
+
+Desktop HTTP cache is requested from the normal bridge API and is owned by the Rust core in Tauri:
+
+```ts
+await client.http.get("/settings/languages", {
+  cache: {
+    key: "settings:languages",
+    ttlMs: 60000,
+    storage: "persistent",
+    staleIfError: true
+  },
+  onResponse: (metadata) => {
+    console.log(metadata.cache?.hit, metadata.cache?.storage);
+  }
+});
+```
+
+`storage: "persistent"` survives app restart in the Rust persistence file; `storage: "memory"` is process-local. `refresh: true` bypasses a fresh cache entry and rewrites it after a successful response. `staleIfError: true` lets Rust return an expired entry if the adapter fails. The business response body is unchanged; cache metadata is available through `onResponse` and `client.diagnostics.getRecentRequests()`.
 
 When a Node or headless smoke test calls `createDesktopClient` directly, provide explicit adapters for browser-backed capabilities. The default web client uses `window.localStorage` for storage, so a plain Node process should pass memory/noop implementations for `session`, `storage`, `secureStorage`, `desktop`, and `files`:
 

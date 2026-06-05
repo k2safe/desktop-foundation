@@ -54,7 +54,7 @@ artifacts/npm/foundation-capabilities.json
 | I18n | recommended | shared | 产品维护业务文案、字段字典、币种、时区和语言 rollout。 |
 | Errors And Request State | recommended | foundation | 产品维护业务错误码和业务补救文案。 |
 | Audit Events | recommended | shared | 产品维护日志存储、保留周期、PII 策略和审计上报服务。 |
-| HTTP And Upload | required-for-networked-products | foundation | 产品维护 endpoint、auth、后端 multipart 解析、对象存储和上传留存规则。 |
+| HTTP And Upload | required-for-networked-products | foundation | 产品维护 endpoint、auth、后端 multipart 解析、对象存储和上传留存规则；桌面端 HTTP cache 放在 Rust 层，通过 `client.http.*({ cache })` 使用。 |
 | Desktop Core | required-for-tauri | foundation | 产品维护平台签名、额外权限、图标、bundle id 和 native plugin 选择。 |
 | Updates | recommended-before-release | shared | 产品维护 release hosting、签名、公证和灰度策略；底座提供默认 `df_update_install`，产品可在需要官方 signed updater 或定制流程时覆盖 adapter。 |
 | Link Proxy | optional | shared | 产品维护允许访问的 proxy/target origin，并区分业务 API 和第三方链接请求。 |
@@ -97,7 +97,7 @@ artifacts/npm/foundation-capabilities.json
 
 当前底座只能用 demo 验证“接入形状”和“本地能力链路”：
 
-- `examples/demo-product` 验证 AppShell、theme、login、access、i18n、audit、updates UI、table/overlay、HTTP mock。
+- `examples/demo-product` 验证 AppShell、theme、login、access、i18n、audit、updates UI、table/overlay、HTTP mock 和桌面端 Rust HTTP cache 接入形状。
 - `pnpm smoke:capabilities` 或 `pnpm exec desktop-foundation smoke --report artifacts/foundation-smoke.json` 验证 bridge public API、adapter 边界、安全白名单、更新安装 dry-run 和 diagnostics。
 - `pnpm smoke:multipart` 验证 FormData 和 Tauri bridge multipart 序列化。
 - `pnpm smoke:external-ai-demo` 验证干净项目只通过 manifest 消费 tarball 后仍能 install、integration-check、build 和 mock upload。

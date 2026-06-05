@@ -4,20 +4,29 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmit",
+    "dev": "vite --host=127.0.0.1",
+    "dev:desktop": "tauri dev",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "build:desktop": "tauri build",
     "type-check": "tsc -p tsconfig.json --noEmit",
-    "lint": "tsc -p tsconfig.json --noEmit"
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "preview": "vite preview --host=127.0.0.1"
   },
   "dependencies": {
     "@desktop-foundation/app-shell": "workspace:*",
     "@desktop-foundation/bridge": "workspace:*",
     "@desktop-foundation/theme-presets": "workspace:*",
     "@desktop-foundation/ui-react": "workspace:*",
+    "@tauri-apps/api": "^2.0.0",
+    "@vitejs/plugin-react": "^5.0.4",
     "react": "^19.0.1",
-    "react-dom": "^19.0.1"
+    "react-dom": "^19.0.1",
+    "vite": "^6.2.3"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
     "@types/react": "^19.2.15",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "typescript": "~5.8.2"
   }
 }

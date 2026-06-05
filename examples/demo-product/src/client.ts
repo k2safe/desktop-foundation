@@ -1,5 +1,6 @@
 import {
   createDesktopClient,
+  createTauriDesktopClient,
   type AppUpdateConfig,
   type AsyncKeyValueStore,
   type DesktopCapability,
@@ -10,6 +11,7 @@ import {
   type KeyValueStore,
   type SessionStore
 } from "@desktop-foundation/bridge";
+import { invoke } from "@tauri-apps/api/core";
 import { demoUser, orders, type DemoUser } from "./data";
 
 const demoVersion = "0.1.0";
@@ -67,24 +69,54 @@ function demoSessionStore(): SessionStore {
 }
 
 function demoTransport(): HttpTransport {
+  const cacheKeys = new Set<string>();
+
   return {
     async request<T>(request: HttpTransportRequest) {
+      const reply = <T,>(payload: T, cacheKey?: string) => {
+        const now = Date.now();
+        const hit = Boolean(cacheKey && cacheKeys.has(cacheKey));
+        if (cacheKey) cacheKeys.add(cacheKey);
+        request.onResponse?.({
+          status: 200,
+          headers: {},
+          requestId: request.requestId,
+          cache: cacheKey
+            ? {
+                hit,
+                stale: false,
+                key: cacheKey,
+                storage: request.cache?.storage ?? "memory",
+                storedAt: now,
+                expiresAt: now + (request.cache?.ttlMs ?? 0)
+              }
+            : undefined
+        });
+        return payload;
+      };
+
       if (request.url.endsWith("/auth/login")) {
         const payload = request.body as { account?: string; password?: string; remember?: boolean };
         if (!payload.account || !payload.password) throw new Error("Account and password are required");
-        return { token: "demo-token", remember: payload.remember, user: demoUser } as T;
+        return reply({ token: "demo-token", remember: payload.remember, user: demoUser } as T);
       }
       if (request.url.endsWith("/me")) {
-        return demoUser as T;
+        return reply(demoUser as T);
       }
       if (request.url.endsWith("/orders")) {
-        return { rows: orders, total: orders.length } as T;
+        return reply({ rows: orders, total: orders.length } as T);
+      }
+      if (request.url.endsWith("/demo-api/languages.json")) {
+        return reply(
+          { rows: [{ code: "zh-CN", name: "简体中文" }, { code: "en-US", name: "English" }], source: "web-demo" } as T,
+          request.cache?.key ?? "demo-product:languages:web"
+        );
       }
       if (request.url.includes("/link-proxy")) {
         const payload = request.body as { url?: string; method?: string; query?: unknown };
-        return { ok: true, via: "local-vpn-proxy", target: payload.url, method: payload.method, query: payload.query, requestId: request.requestId } as T;
+        return reply({ ok: true, via: "local-vpn-proxy", target: payload.url, method: payload.method, query: payload.query, requestId: request.requestId } as T);
       }
-      return { ok: true, method: request.method, url: request.url, requestId: request.requestId } as T;
+      return reply({ ok: true, method: request.method, url: request.url, requestId: request.requestId } as T);
     }
   };
 }
@@ -165,7 +197,7 @@ export function createDemoProductClient(pushLog: (value: string) => void): Deskt
   return createDesktopClient({
     product: "product-demo",
     version: demoVersion,
-    apiBaseURL: "https://api.product-demo.local",
+    apiBaseURL: "http://127.0.0.1:3000",
     session: demoSessionStore(),
     storage: memoryStore({ "orders.density": "default" }),
     secureStorage: memorySecureStore(),
@@ -191,6 +223,44 @@ export function createDemoProductClient(pushLog: (value: string) => void): Deskt
   });
 }
 
+export async function createRuntimeDemoProductClient(pushLog: (value: string) => void): Promise<DesktopClient> {
+  if (!("__TAURI_INTERNALS__" in window)) return createDemoProductClient(pushLog);
+
+  return createTauriDesktopClient(invoke, {
+    product: "product-demo",
+    version: demoVersion,
+    apiBaseURL: "http://127.0.0.1:3000",
+    initialStorageValues: { "orders.density": "default" },
+    updateConfig: demoUpdateConfig(),
+    onAuditEvent: (event) => {
+      pushLog(`audit ${event.level} ${event.action}${event.message ? ` ${event.message}` : ""}`);
+    },
+    linkProxy: {
+      mode: "gateway",
+      proxyBaseURL: "http://127.0.0.1:17890/link-proxy",
+      headers: { "x-demo-proxy": "local-vpn" }
+    },
+    security: {
+      allowedRequestOrigins: [
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "[::1]",
+        "github.com",
+        "raw.githubusercontent.com",
+        "objects.githubusercontent.com",
+        "github-releases.githubusercontent.com"
+      ],
+      allowedLinkProxyOrigins: ["localhost", "127.0.0.1", "::1", "[::1]", "*.corp.local"],
+      allowedExternalOrigins: ["github.com", "docs.example.com"],
+      allowedExternalSchemes: ["https"],
+      allowedDownloadDirectories: ["/tmp"]
+    }
+  });
+}
+
 export async function loginDemoUser(client: DesktopClient, payload: { account: string; password: string; remember?: boolean }) {
-  return client.http.post<{ token: string; user: DemoUser; remember?: boolean }>("/auth/login", payload, { auth: false });
+  if (!payload.account || !payload.password) throw new Error("Account and password are required");
+  client.session.setToken("demo-token", payload.remember);
+  return { token: "demo-token", user: demoUser, remember: payload.remember };
 }

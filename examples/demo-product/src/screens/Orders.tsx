@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PermissionGuard } from "@desktop-foundation/app-shell";
 import {
   AdminDataTable,
@@ -6,77 +6,138 @@ import {
   AdminDrawer,
   AdminFilterBar,
   AdminFormActions,
+  AdminMetricCard,
   AdminPageShell,
   Button,
+  ContentPanel,
   DateRangePicker,
   Input,
   SearchInput,
   Select,
+  useLocale,
   useTablePreferences
 } from "@desktop-foundation/ui-react";
 import type { DesktopClient } from "@desktop-foundation/bridge";
-import { orderColumns, orders, type OrderRow } from "../data";
+import { createOrderColumns, orders, type OrderRow } from "../data";
 
 export interface OrdersProps {
   client: DesktopClient;
 }
 
 export function Orders({ client }: OrdersProps) {
+  const { t, format } = useLocale();
   const [range, setRange] = useState({});
+  const [lastAction, setLastAction] = useState(t("product.orders.action.idle"));
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [selectedRow, setSelectedRow] = useState<OrderRow | null>(null);
+  const orderColumns = useMemo(() => createOrderColumns(t), [t]);
+  const selectedOrders = useMemo(() => orders.filter((order) => selectedRowKeys.includes(order.id)), [selectedRowKeys]);
+  const totalAmount = orders.reduce((sum, order) => sum + order.amount, 0);
+  const pendingCount = orders.filter((order) => order.status === "pending").length;
+  const riskCount = orders.filter((order) => order.status === "warning" || order.status === "danger").length;
+  const selectedAmount = selectedOrders.reduce((sum, order) => sum + order.amount, 0);
   const { visibleColumns, sort, density, setSort, setDensity } = useTablePreferences({
     key: "product-demo:orders-table",
     columns: orderColumns,
     defaultSort: { key: "createdAt", direction: "desc" }
   });
 
+  async function refreshOrders() {
+    setLastAction(t("product.orders.action.refreshing"));
+    await client.desktop.notify({ title: t("product.orders.title"), body: t("product.orders.action.refreshed") });
+    setLastAction(t("product.orders.action.refreshed"));
+  }
+
+  async function exportRows(fileName: string, rows: unknown) {
+    const path = await client.files.exportJson(fileName, rows, { directory: "/tmp" });
+    setLastAction(t("product.orders.action.exported", { path }));
+  }
+
+  async function notifySelection() {
+    const count = selectedRowKeys.length;
+    await client.desktop.notify({ title: t("product.orders.title"), body: t("product.orders.action.notified", { count }) });
+    setLastAction(t("product.orders.action.notified", { count }));
+  }
+
   return (
     <AdminPageShell
-      title="订单中心"
-      description="产品项目只负责订单字段和交互；管理端页面密度、表格、筛选和抽屉来自底座 AdminKit。"
+      className="demo-orders-page"
+      title={t("product.orders.title")}
+      description={t("product.orders.description")}
       actions={
         <Select
           value={density}
           options={[
-            { value: "compact", label: "紧凑" },
-            { value: "default", label: "默认" },
-            { value: "comfortable", label: "宽松" }
+            { value: "compact", label: t("product.orders.density.compact") },
+            { value: "default", label: t("product.orders.density.default") },
+            { value: "comfortable", label: t("product.orders.density.comfortable") }
           ]}
           onChange={(event) => setDensity(event.target.value as typeof density)}
         />
       }
     >
+      <div className="demo-orders-metrics">
+        <AdminMetricCard label={t("product.orders.metric.total")} value={orders.length} hint={t("product.orders.metric.totalHint")} icon={<span>O</span>} tone="primary" />
+        <AdminMetricCard label={t("product.orders.metric.amount")} value={format.currency(totalAmount, "USD")} hint="USD" icon={<span>$</span>} tone="success" />
+        <AdminMetricCard label={t("product.orders.metric.pending")} value={pendingCount} hint={t("product.orders.metric.pendingHint")} icon={<span>P</span>} tone="warning" />
+        <AdminMetricCard label={t("product.orders.metric.risk")} value={riskCount} hint={t("product.orders.metric.riskHint")} icon={<span>R</span>} tone="danger" />
+      </div>
+      <ContentPanel
+        className="demo-orders-workbench"
+        title={t("product.orders.workbenchTitle")}
+        description={t("product.orders.workbenchDescription")}
+        actions={
+          <Button variant="outline" size="sm" onClick={() => void notifySelection()} disabled={!selectedRowKeys.length}>
+            {t("product.orders.notifySelected")}
+          </Button>
+        }
+      >
+        <div className="demo-orders-workbench-grid">
+          <div>
+            <span>{t("product.orders.selectedCount")}</span>
+            <strong>{selectedRowKeys.length}</strong>
+          </div>
+          <div>
+            <span>{t("product.orders.selectedAmount")}</span>
+            <strong>{format.currency(selectedAmount, "USD")}</strong>
+          </div>
+          <div>
+            <span>{t("product.orders.lastAction")}</span>
+            <strong>{lastAction}</strong>
+          </div>
+        </div>
+      </ContentPanel>
       <AdminFilterBar
+        className="demo-orders-filter"
         actions={
           <>
-            <Button variant="outline" size="sm">
-              刷新
+            <Button variant="outline" size="sm" onClick={() => void refreshOrders()}>
+              {t("product.orders.refresh")}
             </Button>
             <PermissionGuard permission="orders:export">
-              <Button size="sm" onClick={() => void client.files.exportJson("orders.json", orders, { directory: "/tmp" })}>
-                导出
+              <Button size="sm" onClick={() => void exportRows("orders.json", orders)}>
+                {t("product.orders.export")}
               </Button>
             </PermissionGuard>
           </>
         }
       >
-        <SearchInput placeholder="搜索订单号 / 客户" />
-        <Input placeholder="客户名称" />
+        <SearchInput placeholder={t("product.orders.search")} />
+        <Input placeholder={t("product.orders.customer")} />
         <Select
-          placeholder="状态"
+          placeholder={t("product.orders.status")}
           options={[
-            { value: "success", label: "成功" },
-            { value: "pending", label: "处理中" },
-            { value: "warning", label: "需复核" },
-            { value: "danger", label: "失败" }
+            { value: "success", label: t("status.success") },
+            { value: "pending", label: t("status.pending") },
+            { value: "warning", label: t("status.warning") },
+            { value: "danger", label: t("status.danger") }
           ]}
         />
         <DateRangePicker value={range} onChange={setRange} />
       </AdminFilterBar>
       <AdminDataTable
-        title="订单列表"
-        description="紧凑行高、横向滚动、批量操作和分页是管理端默认形态。"
+        title={t("product.orders.tableTitle")}
+        description={t("product.orders.tableDescription")}
         columns={visibleColumns}
         rows={orders}
         rowKey="id"
@@ -91,12 +152,22 @@ export function Orders({ client }: OrdersProps) {
         batchActions={
           <>
             <PermissionGuard permission="orders:export">
-              <Button variant="outline" size="sm" onClick={() => void client.files.exportJson("selected-orders.json", selectedRowKeys, { directory: "/tmp" })}>
-                导出
+              <Button variant="outline" size="sm" onClick={() => void exportRows("selected-orders.json", selectedOrders)}>
+                {t("product.orders.export")}
               </Button>
             </PermissionGuard>
-            <Button variant="ghost" size="sm" onClick={() => setSelectedRowKeys([])}>
-              清空
+            <Button variant="outline" size="sm" onClick={() => void notifySelection()}>
+              {t("product.orders.notifySelected")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedRowKeys([]);
+                setLastAction(t("product.orders.action.cleared"));
+              }}
+            >
+              {t("product.orders.clear")}
             </Button>
           </>
         }
@@ -108,10 +179,10 @@ export function Orders({ client }: OrdersProps) {
         width={620}
         footer={
           <AdminFormActions
-            submitLabel="发送通知"
-            cancelLabel="关闭"
+            submitLabel={t("product.orders.notify")}
+            cancelLabel={t("product.orders.close")}
             onCancel={() => setSelectedRow(null)}
-            onSubmit={() => void client.desktop.notify({ title: "订单已选中", body: selectedRow?.id })}
+            onSubmit={() => void client.desktop.notify({ title: t("product.orders.title"), body: selectedRow?.id })}
             submitVariant="outline"
           />
         }
@@ -119,19 +190,19 @@ export function Orders({ client }: OrdersProps) {
       >
         <AdminDetailGrid
           rows={[
-            { label: "订单号", value: selectedRow?.id },
-            { label: "来源", value: selectedRow?.channel },
-            { label: "状态", value: selectedRow?.status },
-            { label: "金额", value: selectedRow ? `$${selectedRow.amount.toFixed(2)} ${selectedRow.currency}` : null },
-            { label: "创建时间", value: selectedRow?.createdAt }
+            { label: t("product.orders.column.id"), value: selectedRow?.id },
+            { label: t("product.orders.column.source"), value: selectedRow?.channel },
+            { label: t("product.orders.column.status"), value: selectedRow?.status },
+            { label: t("product.orders.column.amount"), value: selectedRow ? `$${selectedRow.amount.toFixed(2)} ${selectedRow.currency}` : null },
+            { label: t("product.orders.column.createdAt"), value: selectedRow?.createdAt }
           ]}
         />
         <div className="df-admin-inline-actions">
           <Button variant="outline" size="sm" onClick={() => void client.desktop.copyText(selectedRow?.id ?? "")}>
-            复制订单号
+            {t("product.orders.copyId")}
           </Button>
-          <Button size="sm" onClick={() => void client.desktop.notify({ title: "订单已选中", body: selectedRow?.id })}>
-            桌面通知
+          <Button size="sm" onClick={() => void client.desktop.notify({ title: t("product.orders.title"), body: selectedRow?.id })}>
+            {t("product.orders.desktopNotify")}
           </Button>
         </div>
       </AdminDrawer>

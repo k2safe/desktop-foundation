@@ -34,6 +34,14 @@ interface CoreHttpResponse<T> {
   body?: T;
   bodyBase64?: string;
   requestId?: string;
+  cache?: {
+    hit: boolean;
+    stale: boolean;
+    key: string;
+    storage: "memory" | "persistent";
+    storedAt: number;
+    expiresAt: number;
+  };
 }
 
 export interface CoreUpdateInstallRequest {
@@ -163,7 +171,17 @@ export function createTauriHttpTransport(invoke: TauriInvoke, command = "plugin:
   return {
     async request<T>(request: HttpTransportRequest) {
       try {
-        const response = await invoke<CoreHttpResponse<T>>(command, { request: await serializeTauriRequest(request) });
+        const { onResponse } = request;
+        const serializableRequest: Partial<HttpTransportRequest> = { ...request };
+        delete serializableRequest.onResponse;
+        delete serializableRequest.signal;
+        const response = await invoke<CoreHttpResponse<T>>(command, { request: await serializeTauriRequest(serializableRequest as HttpTransportRequest) });
+        onResponse?.({
+          status: response.status,
+          headers: response.headers,
+          requestId: response.requestId ?? response.headers?.["x-request-id"],
+          cache: response.cache
+        });
         return unwrapCoreHttpResponse<T>(response, request.responseType);
       } catch (error) {
         throw normalizeCoreError(error);

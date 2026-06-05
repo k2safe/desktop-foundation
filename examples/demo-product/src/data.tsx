@@ -1,5 +1,6 @@
 import type { DesktopMenuItem, TableColumn } from "@desktop-foundation/ui-react";
 import { AdminCellText, AdminMono, AdminStatusPill, AmountText } from "@desktop-foundation/ui-react";
+import type { LocaleContextValue } from "@desktop-foundation/ui-react";
 
 export type DemoScreen = "dashboard" | "orders" | "settings";
 
@@ -43,35 +44,61 @@ export const orders: OrderRow[] = [
   { id: "ORD-20260601-009", merchant: "Tailspin Toys", channel: "API", status: "success", amount: 188.72, currency: "USD", createdAt: "2026-06-01 15:21" }
 ];
 
-export function createMenus(active: DemoScreen): DesktopMenuItem[] {
+function menuIcon(value: string) {
+  return (
+    <span className="demo-menu-icon" aria-hidden="true">
+      {value}
+    </span>
+  );
+}
+
+export function createMenus(active: DemoScreen, t: LocaleContextValue["t"]): DesktopMenuItem[] {
   return [
-    { id: "dashboard", label: "工作台", href: "#dashboard", active: active === "dashboard" },
-    {
-      id: "business",
-      label: "业务",
-      children: [{ id: "orders", label: "订单中心", href: "#orders", active: active === "orders", permission: "orders:read" }]
-    },
+    { id: "deposit", label: t("product.nav.deposit"), icon: menuIcon("↓"), href: "#orders", active: false, permission: "orders:read" },
+    { id: "withdraw", label: t("product.nav.withdraw"), icon: menuIcon("↑"), href: "#orders", active: false, permission: "orders:read" },
+    { id: "wallet", label: t("product.nav.wallet"), icon: menuIcon("≡"), href: "#orders", active: active === "orders", permission: "orders:read" },
     {
       id: "system",
-      label: "系统",
-      children: [{ id: "settings", label: "底座设置", href: "#settings", active: active === "settings", permission: "settings:read" }]
+      label: t("product.nav.system"),
+      icon: menuIcon("S"),
+      children: [
+        { id: "admins", label: t("product.nav.admins"), icon: menuIcon("U"), href: "#settings", active: false, permission: "settings:read" },
+        { id: "roles", label: t("product.nav.roles"), icon: menuIcon("R"), href: "#settings", active: false, permission: "settings:read" },
+        { id: "menus", label: t("product.nav.menus"), icon: menuIcon("M"), href: "#settings", active: false, permission: "settings:read" },
+        { id: "api", label: t("product.nav.api"), icon: menuIcon("A"), href: "#settings", active: false, permission: "settings:read" },
+        { id: "release", label: t("product.nav.release"), icon: menuIcon("P"), href: "#settings", active: false, permission: "settings:read" },
+        { id: "audit", label: t("product.nav.audit"), icon: menuIcon("L"), href: "#settings", active: false, permission: "diagnostics:read" },
+        { id: "storage", label: t("product.nav.storage"), icon: menuIcon("D"), href: "#settings", active: false, permission: "settings:read" },
+        { id: "dashboard", label: t("product.nav.dashboard"), icon: menuIcon("文"), href: "#dashboard", active: active === "dashboard" }
+      ]
+    },
+    {
+      id: "foundation",
+      label: t("product.nav.business"),
+      icon: menuIcon("F"),
+      children: [
+        { id: "orders", label: t("product.nav.orders"), icon: menuIcon("O"), href: "#orders", active: false, permission: "orders:read" },
+        { id: "settings", label: t("product.nav.settings"), icon: menuIcon("C"), href: "#settings", active: active === "settings", permission: "settings:read" }
+      ]
     }
   ];
 }
 
-export const orderColumns: TableColumn<OrderRow>[] = [
-  { key: "id", header: "订单号", render: (row) => <AdminMono copyValue={row.id}>{row.id}</AdminMono>, sortable: true, sticky: "left", minWidth: 190 },
-  { key: "merchant", header: "客户", render: (row) => <AdminCellText title={row.merchant} description={row.channel} />, sortable: true, minWidth: 180 },
-  { key: "channel", header: "来源", accessor: "channel", minWidth: 100 },
-  { key: "status", header: "状态", render: (row) => <AdminStatusPill status={row.status} />, minWidth: 100 },
+export function createOrderColumns(t: LocaleContextValue["t"]): TableColumn<OrderRow>[] {
+  return [
+  { key: "id", header: t("product.orders.column.id"), render: (row) => <AdminMono copyValue={row.id}>{row.id}</AdminMono>, sortable: true, sticky: "left", minWidth: 190 },
+  { key: "merchant", header: t("product.orders.column.customer"), render: (row) => <AdminCellText title={row.merchant} description={row.channel} />, sortable: true, minWidth: 180 },
+  { key: "channel", header: t("product.orders.column.source"), accessor: "channel", minWidth: 100 },
+  { key: "status", header: t("product.orders.column.status"), render: (row) => <AdminStatusPill status={row.status} />, minWidth: 100 },
   {
     key: "amount",
-    header: "金额",
+    header: t("product.orders.column.amount"),
     render: (row) => <AmountText value={row.amount} currency={row.currency} sign="never" />,
     sortValue: (row) => row.amount,
     sortable: true,
     align: "right",
     minWidth: 120
   },
-  { key: "createdAt", header: "创建时间", accessor: "createdAt", sortable: true, minWidth: 150 }
-];
+  { key: "createdAt", header: t("product.orders.column.createdAt"), accessor: "createdAt", sortable: true, minWidth: 150 }
+  ];
+}

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capability for the product demo window.",
+  "windows": ["main"],
+  "permissions": ["desktop-core:default"]
+}

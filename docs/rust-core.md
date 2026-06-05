@@ -79,6 +79,7 @@ The scaffold includes this by default. Products with tighter policies can replac
 It also exports `createTauriDesktopClient`, which wires:
 
 - Rust HTTP command transport
+- Rust HTTP memory/persistent cache for bridge `client.http.*({ cache })`
 - Rust session command store
 - Rust storage command write-through cache
 - Rust secure storage commands
@@ -114,6 +115,7 @@ HTTP supports:
 - JSON, text, and base64 response modes
 - base64 request bodies for binary upload style calls
 - multipart form upload through `FormData` in the bridge or `HttpRequest.multipart` in Rust
+- Rust-owned HTTP cache through `HttpRequest.cache`: memory or persistent storage, TTL, refresh bypass, and stale response fallback after adapter errors
 - request id propagation
 
 The scaffold uses `CurlHttpAdapter` by default because it gives HTTPS/TLS support without forcing every generated product to pull a Rust TLS stack. It also supports multipart upload by handing fields/files to `curl --form`. Teams that want an embedded Rust HTTP client can enable `http-reqwest` and inject `ReqwestHttpAdapter` for JSON/raw-body calls; multipart should stay on the default Curl adapter unless the reqwest multipart feature and lockfile are added deliberately.
