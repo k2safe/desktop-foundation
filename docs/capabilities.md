@@ -48,7 +48,7 @@ artifacts/npm/foundation-capabilities.json
 | --- | --- | --- | --- |
 | Package Consumption | required | foundation | 产品复制 manifest 里的依赖块和 pnpm overrides；底座只发布 tarball 和 manifest。 |
 | App Shell | required | foundation | 产品维护路由、页面和接口路径；底座维护 Provider 和 shell 契约。 |
-| Theme And Layout | required | foundation | 产品维护品牌、菜单、布局模板和 token；不要复制底座源码或覆盖内部选择器。 |
+| Theme And Layout | required | foundation | 产品维护品牌、菜单、布局模板和 token；正式管理端优先用 AdminKit，不要复制底座源码或覆盖内部选择器。 |
 | Login Shell | recommended | foundation | 产品维护认证字段、MFA、登录接口和错误文案。 |
 | Access Control | recommended | shared | 产品维护真实权限模型和后端鉴权；底座只做前端入口隐藏和守卫。 |
 | I18n | recommended | shared | 产品维护业务文案、字段字典、币种、时区和语言 rollout。 |
@@ -58,7 +58,7 @@ artifacts/npm/foundation-capabilities.json
 | Desktop Core | required-for-tauri | foundation | 产品维护平台签名、额外权限、图标、bundle id 和 native plugin 选择。 |
 | Updates | recommended-before-release | shared | 产品维护 release hosting、签名、公证和灰度策略；底座提供默认 `df_update_install`，产品可在需要官方 signed updater 或定制流程时覆盖 adapter。 |
 | Link Proxy | optional | shared | 产品维护允许访问的 proxy/target origin，并区分业务 API 和第三方链接请求。 |
-| UI Overflow Guardrails | recommended | foundation | 产品维护页面组合和表格列定义；底座提供可复用的滚动安全组件。 |
+| UI Overflow Guardrails | recommended | foundation | 产品维护页面组合和表格列定义；底座提供 AdminKit、表格、抽屉和可复用的滚动安全组件。 |
 | CI And Release | recommended-before-release | shared | 产品维护 CI provider、签名密钥、发布审批和 artifact 上传。 |
 
 ## CI Output

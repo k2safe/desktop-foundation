@@ -37,6 +37,7 @@
 - [Error Handling](docs/error-handling.md)
 - [Audit Events](docs/audit-events.md)
 - [UI Component Catalog](docs/ui-component-catalog.md)
+- [AdminKit](docs/admin-kit.md)
 - [Scaffolding](docs/scaffolding.md)
 - [Rust Core](docs/rust-core.md)
 - [API Reference](docs/api-reference.md)

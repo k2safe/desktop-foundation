@@ -45,6 +45,22 @@
 - `SettingsPage`
 - `DetailDrawer`
 
+## AdminKit
+
+- `AdminPageShell`
+- `AdminToolbar`
+- `AdminFilterBar`
+- `AdminDataTable`
+- `AdminMetricCard`
+- `AdminStatusPill`
+- `AdminDrawer`
+- `AdminDetailGrid`
+- `AdminMono`
+- `AdminCellText`
+- `AdminFormActions`
+
+AdminKit 组件用于正式管理端页面，优先搭配 `ops-admin` 模板。它们复用底座基础组件，但默认提供更紧凑的筛选、表格、指标卡和抽屉形态。
+
 ## Data
 
 - `Table`

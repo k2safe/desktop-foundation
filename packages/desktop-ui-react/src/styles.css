@@ -1628,6 +1628,300 @@ body {
   gap: 10px;
 }
 
+.df-admin-page {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+}
+
+.df-admin-page > .df-page-header {
+  margin-bottom: 0;
+}
+
+.df-admin-page__body {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+}
+
+.df-admin-page__footer {
+  color: var(--df-color-text-muted);
+  font-size: 12px;
+}
+
+.df-admin-toolbar,
+.df-admin-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--df-color-border);
+  border-radius: 12px;
+  background: var(--df-color-surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.df-admin-toolbar__copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.df-admin-toolbar__title {
+  color: var(--df-color-text);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.df-admin-toolbar__description {
+  color: var(--df-color-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.df-admin-toolbar__content,
+.df-admin-toolbar__actions,
+.df-admin-form-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.df-admin-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.df-admin-toolbar__content {
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.df-admin-filter-bar {
+  margin-bottom: 0;
+  padding: 12px;
+}
+
+.df-admin-filter-bar .df-filter-bar__fields {
+  align-items: center;
+  gap: 10px;
+}
+
+.df-admin-filter-bar .df-field,
+.df-admin-filter-bar .df-date-range {
+  min-width: 140px;
+  flex: 0 1 180px;
+}
+
+.df-admin-filter-bar .df-field:first-child,
+.df-admin-filter-bar .df-date-range:first-child {
+  flex-basis: 220px;
+}
+
+.df-admin-data-table {
+  min-width: 0;
+}
+
+.df-admin-data-table .df-content-panel {
+  border-radius: 12px;
+}
+
+.df-admin-data-table .df-table th {
+  height: 46px;
+  background: #f8fafc;
+  color: var(--df-color-text-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.df-admin-data-table .df-table td {
+  height: 54px;
+  border-bottom-color: #edf1f5;
+}
+
+.df-admin-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.df-admin-metric-card {
+  display: grid;
+  min-width: 0;
+  gap: 9px;
+  padding: 16px;
+  border: 1px solid var(--df-color-border);
+  border-radius: 12px;
+  background: var(--df-color-surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.df-admin-metric-card__header,
+.df-admin-metric-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.df-admin-metric-card__label {
+  color: var(--df-color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.df-admin-metric-card__icon {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--df-color-primary-soft);
+  color: var(--df-color-primary);
+}
+
+.df-admin-metric-card__value {
+  color: var(--df-color-text);
+  font-size: 24px;
+  font-weight: 780;
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.df-admin-metric-card__footer {
+  min-height: 18px;
+  color: var(--df-color-text-muted);
+  font-size: 12px;
+}
+
+.df-admin-metric-card__trend {
+  color: var(--df-color-success);
+  font-weight: 750;
+}
+
+.df-admin-metric-card--danger .df-admin-metric-card__trend {
+  color: var(--df-color-danger);
+}
+
+.df-admin-metric-card--warning .df-admin-metric-card__trend {
+  color: var(--df-color-warning);
+}
+
+.df-admin-drawer {
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.df-admin-drawer .df-drawer__header,
+.df-admin-drawer .df-drawer__footer {
+  background: var(--df-color-surface);
+}
+
+.df-admin-drawer .df-drawer__body {
+  background: #f8fafc;
+}
+
+.df-admin-detail-grid {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.df-admin-detail-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.df-admin-detail-grid__row {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--df-color-border);
+  border-radius: 10px;
+  background: var(--df-color-surface);
+}
+
+.df-admin-detail-grid__row dt {
+  color: var(--df-color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.df-admin-detail-grid__row dd {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  margin: 0;
+  color: var(--df-color-text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.df-admin-detail-grid__row small {
+  color: var(--df-color-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.df-admin-mono {
+  display: inline-flex;
+  max-width: 340px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #334155;
+  font-family: var(--df-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.df-admin-mono .df-copyable {
+  min-width: 0;
+}
+
+.df-admin-mono .df-copyable__value,
+.df-admin-mono__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.df-admin-mono .df-copyable__button {
+  font-size: 11px;
+}
+
+.df-admin-cell-text {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.df-admin-cell-text__title {
+  overflow: hidden;
+  color: var(--df-color-text);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.df-admin-cell-text__description,
+.df-admin-cell-text__meta {
+  overflow: hidden;
+  color: var(--df-color-text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .df-pagination__summary,
 .df-pagination__page {
   color: var(--df-color-text-muted);
@@ -4142,9 +4436,33 @@ body {
   }
 
   .df-settings-page,
+  .df-admin-metric-grid,
   .df-metric-grid--2,
   .df-metric-grid--3,
   .df-metric-grid--4 {
+    grid-template-columns: 1fr;
+  }
+
+  .df-admin-toolbar,
+  .df-admin-filter-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .df-admin-toolbar__content,
+  .df-admin-toolbar__actions,
+  .df-filter-bar__actions {
+    width: 100%;
+  }
+
+  .df-admin-filter-bar .df-field,
+  .df-admin-filter-bar .df-date-range,
+  .df-admin-filter-bar .df-filter-bar__fields {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .df-admin-detail-grid--2 {
     grid-template-columns: 1fr;
   }
 

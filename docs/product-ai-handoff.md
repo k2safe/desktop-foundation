@@ -153,6 +153,8 @@ const commands = [
 
 HTTP、网络、未授权、业务 code 会被标准化为 `DesktopError`。业务请求优先用 `useRequest` / `useMutation`，自定义 `try/catch` 使用 `normalizeDesktopError(caught)`，不要在各页面里散落 `new Error(...)` 和字符串错误。
 
+正式管理端页面优先用 [AdminKit](admin-kit.md)。列表页用 `AdminPageShell + AdminFilterBar + AdminDataTable`，抽屉详情用 `AdminDrawer + AdminDetailGrid + AdminFormActions`。业务 AI 不要在每个页面临时重写筛选栏、表格容器、状态 pill、抽屉布局或大面积业务 CSS。
+
 审计/诊断事件在 client 边界接入。底座会自动记录登录、退出、权限拒绝、桌面能力、文件下载、更新检查和失败请求；真实业务把 `onAuditEvent` 转发到自己的上报服务：
 
 ```tsx

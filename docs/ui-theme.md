@@ -82,6 +82,8 @@ Recommended starting points:
 - `topnav-ops`: top navigation, workbench login, compact controls, and a calmer technical palette.
 - `ledger`: top navigation, centered login, financial table emphasis, and tabular numeric rhythm.
 
+For real admin pages, pair `ops-admin` with [AdminKit](admin-kit.md): `AdminPageShell`, `AdminFilterBar`, `AdminDataTable`, `AdminDrawer`, and `AdminDetailGrid`. This keeps product pages dense and predictable without copying product-specific CSS into the foundation.
+
 ## Rules
 
 - 组件只能读取 `--df-*` token。

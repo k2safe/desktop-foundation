@@ -26,6 +26,10 @@
         caret-color: transparent;
       }
 
+      .docs-page .df-admin-metric-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
       .docs-section {
         display: grid;
         gap: 14px;
@@ -468,6 +472,96 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section class="docs-section df-template-ops-admin" data-visual-target="admin-kit">
+        <div class="df-admin-page">
+          <header class="df-page-header">
+            <div class="df-page-header__title-row">
+              <div>
+                <h1>AdminKit operations page</h1>
+                <p>Compact filters, formal data tables, restrained cards, and drawer-ready detail surfaces.</p>
+              </div>
+              <div class="df-page-header__actions">
+                <button class="df-button df-button--outline df-button--sm"><span class="df-button__label">Refresh</span></button>
+                <button class="df-button df-button--primary df-button--sm"><span class="df-button__label">Export</span></button>
+              </div>
+            </div>
+          </header>
+          <div class="df-admin-page__body">
+            <div class="df-admin-metric-grid">
+              <section class="df-admin-metric-card df-admin-metric-card--success">
+                <div class="df-admin-metric-card__header"><div class="df-admin-metric-card__label">Orders</div></div>
+                <div class="df-admin-metric-card__value">1,284</div>
+                <div class="df-admin-metric-card__footer"><span>today</span><span class="df-admin-metric-card__trend">+8.4%</span></div>
+              </section>
+              <section class="df-admin-metric-card">
+                <div class="df-admin-metric-card__header"><div class="df-admin-metric-card__label">Volume</div></div>
+                <div class="df-admin-metric-card__value">$92.4k</div>
+                <div class="df-admin-metric-card__footer"><span>settled</span></div>
+              </section>
+              <section class="df-admin-metric-card df-admin-metric-card--warning">
+                <div class="df-admin-metric-card__header"><div class="df-admin-metric-card__label">Reviews</div></div>
+                <div class="df-admin-metric-card__value">17</div>
+                <div class="df-admin-metric-card__footer"><span>pending</span><span class="df-admin-metric-card__trend">needs action</span></div>
+              </section>
+              <section class="df-admin-metric-card">
+                <div class="df-admin-metric-card__header"><div class="df-admin-metric-card__label">Uptime</div></div>
+                <div class="df-admin-metric-card__value">99.9%</div>
+                <div class="df-admin-metric-card__footer"><span>gateway</span></div>
+              </section>
+            </div>
+            <div class="df-admin-filter-bar">
+              <div class="df-filter-bar__fields">
+                <label class="df-field"><span class="df-field__label">Keyword</span><span class="df-input-wrap"><input class="df-input" value="merchant" /></span></label>
+                <label class="df-field"><span class="df-field__label">Status</span><span class="df-select-wrap"><button class="df-select-control"><span class="df-select__value">All status</span><span class="df-select__chevron"></span></button></span></label>
+                <label class="df-field"><span class="df-field__label">Channel</span><span class="df-input-wrap"><input class="df-input" value="API" /></span></label>
+              </div>
+              <div class="df-filter-bar__actions">
+                <button class="df-button df-button--outline df-button--sm"><span class="df-button__label">Reset</span></button>
+                <button class="df-button df-button--primary df-button--sm"><span class="df-button__label">Search</span></button>
+              </div>
+            </div>
+            <div class="df-admin-data-table">
+              <section class="df-content-panel">
+                <div class="df-content-panel__header">
+                  <div><h2>Merchant orders</h2><p>Dense rows and neutral table chrome for scanning.</p></div>
+                </div>
+                <div class="df-content-panel__body">
+                  <div class="df-table-wrap df-table-wrap--compact">
+                    <table class="df-table">
+                      <thead>
+                        <tr>
+                          <th>Order</th>
+                          <th>Merchant</th>
+                          <th>Status</th>
+                          <th style="text-align: right">Amount</th>
+                          <th>Updated</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><span class="df-admin-mono"><span class="df-admin-mono__value">ORD-20260605-001</span></span></td>
+                          <td><span class="df-admin-cell-text"><span class="df-admin-cell-text__title">Northwind Market</span><span class="df-admin-cell-text__description">API channel</span></span></td>
+                          <td><span class="df-badge df-badge--success">success</span></td>
+                          <td style="text-align: right">$1,280.50</td>
+                          <td>2026-06-05 09:12</td>
+                        </tr>
+                        <tr>
+                          <td><span class="df-admin-mono"><span class="df-admin-mono__value">ORD-20260605-002</span></span></td>
+                          <td><span class="df-admin-cell-text"><span class="df-admin-cell-text__title">Blue Harbor Home</span><span class="df-admin-cell-text__description">Marketplace</span></span></td>
+                          <td><span class="df-badge df-badge--warning">review</span></td>
+                          <td style="text-align: right">$429.90</td>
+                          <td>2026-06-05 10:26</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
         </div>
       </section>
 
