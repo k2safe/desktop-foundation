@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "foundationVersion": "0.1.33",
-  "updatedAt": "2026-06-04",
+  "foundationVersion": "0.1.34",
+  "updatedAt": "2026-06-05",
   "name": "desktop-foundation capability registry",
   "description": "Machine-readable registry for product projects and external AI agents integrating desktop-foundation.",
   "docs": [
@@ -73,13 +73,14 @@
       "owner": "foundation",
       "phase": "required",
       "status": "stable",
-      "summary": "Use theme presets, DesktopLayout, product adapter settings, and token overrides instead of copying foundation component internals.",
+      "summary": "Use theme presets, DesktopLayout, AdminKit, product adapter settings, and token overrides instead of copying foundation component internals.",
       "packages": [
         "@desktop-foundation/theme-presets",
         "@desktop-foundation/ui-react"
       ],
       "docs": [
         "docs/ui-theme.md",
+        "docs/admin-kit.md",
         "docs/product-adapter.md"
       ],
       "integrationChecks": {
@@ -316,11 +317,12 @@
       "owner": "foundation",
       "phase": "recommended",
       "status": "stable",
-      "summary": "Use foundation table, drawer, modal, and layout components so long content and wide tables scroll inside the right container.",
+      "summary": "Use foundation AdminKit, table, drawer, modal, and layout components so long content and wide tables scroll inside the right container.",
       "packages": [
         "@desktop-foundation/ui-react"
       ],
       "docs": [
+        "docs/admin-kit.md",
         "docs/ui-component-catalog.md",
         "docs/product-ai-handoff.md"
       ],

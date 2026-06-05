@@ -74,7 +74,7 @@ pnpm smoke:external-ai-demo -- --keep
 To verify an immutable release manifest directly:
 
 ```bash
-pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.33/foundation-packages.json
+pnpm smoke:external-ai-demo -- --manifest https://github.com/k2safe/desktop-foundation/releases/download/v0.1.34/foundation-packages.json
 ```
 
 The smoke also reads `manifest.capabilities.url` and verifies the capability registry version and required capability ids. For the full handoff gate, see [External AI Acceptance](external-ai-acceptance.md).
