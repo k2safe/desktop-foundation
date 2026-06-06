@@ -5,6 +5,7 @@ pub mod error;
 pub mod file;
 pub mod http;
 pub mod persistence;
+pub mod proxy;
 #[cfg(feature = "http-reqwest")]
 pub mod reqwest_http;
 pub mod runtime;
@@ -26,6 +27,7 @@ pub use error::*;
 pub use file::*;
 pub use http::*;
 pub use persistence::*;
+pub use proxy::*;
 #[cfg(feature = "http-reqwest")]
 pub use reqwest_http::*;
 pub use runtime::*;

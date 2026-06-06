@@ -7,6 +7,7 @@ use serde_json::Value;
 
 use crate::error::{DesktopError, DesktopResult};
 use crate::http::HttpCacheEntry;
+use crate::proxy::ProxyConfig;
 use crate::runtime::StorageKey;
 use crate::session::SessionState;
 use crate::storage::StorageScope;
@@ -25,6 +26,8 @@ pub struct PersistedState {
     pub storage: Vec<PersistedStorageEntry>,
     #[serde(default)]
     pub http_cache: BTreeMap<String, HttpCacheEntry>,
+    #[serde(default)]
+    pub proxy_config: ProxyConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

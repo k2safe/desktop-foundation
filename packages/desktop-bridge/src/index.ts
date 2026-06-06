@@ -20,6 +20,7 @@ export {
   createTauriFileCapability,
   createTauriHttpTransport,
   createTauriKeyValueStore,
+  createTauriProxyCapability,
   createTauriSecureStorage,
   createTauriSessionStore,
   createTauriUpdateInstallAdapter
@@ -78,6 +79,10 @@ export type {
   AsyncKeyValueStore,
   KeyValueStore,
   OpenFileDialogOptions,
+  ProxyCapability,
+  ProxyConfig,
+  ProxyMode,
+  ProxyTestResult,
   QueryParams,
   QueryValue,
   RequestLogEntry,

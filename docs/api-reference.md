@@ -11,6 +11,7 @@
 - `client.desktop`
 - `client.files`
 - `client.updates`
+- `client.proxy`
 - `client.linkProxy`
 - `client.diagnostics`
 
@@ -29,6 +30,7 @@ Optional config:
 - `desktop`
 - `files`
 - `updates`
+- `proxy`
 - `updateConfig`
 - `linkProxy`
 - `version`
@@ -117,6 +119,42 @@ The foundation repo includes a local demo smoke for this path:
 ```bash
 pnpm smoke:multipart
 ```
+
+## Proxy Settings
+
+`client.proxy` is the desktop network proxy setting surface. In Tauri, it is backed by `desktop-core-rs` commands and affects foundation-owned HTTP paths that pass through the Rust core:
+
+- `client.http.*`
+- `client.files.downloadFile`
+- `client.updates.checkForUpdate`
+- `client.updates.downloadUpdate`
+
+```ts
+await client.proxy.setConfig({
+  enabled: true,
+  mode: "http",
+  host: "127.0.0.1",
+  port: 7890,
+  username: "operator",
+  password: "secret",
+  bypass: ["localhost", "127.0.0.1", "*.internal.local"]
+});
+
+const config = await client.proxy.getConfig();
+console.log(config.hasPassword); // true
+console.log(config.password); // undefined
+
+const result = await client.proxy.testConnection("https://api.example.com/health");
+```
+
+Supported modes:
+
+- `none`: disables proxy use for foundation Rust HTTP requests.
+- `system`: lets the platform/runtime proxy environment handle requests.
+- `http`: uses `http://host:port`, with optional username/password.
+- `socks5`: uses `socks5://host:port`, with optional username/password.
+
+Proxy passwords are stored through the Rust secure storage adapter. `getConfig()` does not return the clear-text password; it returns `hasPassword` when a saved password exists. Browser-only clients expose the same API shape, but proxy settings do not alter browser networking.
 
 ## Link Proxy
 

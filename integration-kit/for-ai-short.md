@@ -31,6 +31,8 @@ https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/f
 弹窗和抽屉里的长内容只在弹窗/抽屉 body 内滚动。
 Tauri 项目必须接 desktop-core-rs 和 desktop-core:default capability。
 
+如果产品需要“用户网络代理设置”（影响 API、语言包、菜单权限刷新、文件下载、更新下载），使用 client.proxy 的 getConfig/setConfig/clearConfig/testConnection；不要把它和 client.linkProxy 混淆。linkProxy 只用于任意第三方链接网关。
+
 如果产品需要请求任意第三方链接，必须走 client.linkProxy；本地/VPN/内网代理网关可以配 VITE_LINK_PROXY_URL，并用 VITE_LINK_PROXY_ORIGINS 显式允许代理网关。不要在业务页面直接 fetch/axios 请求第三方绝对 URL。
 
 如果产品需要上传文件，浏览器/Tauri UI 里直接传 FormData 给 client.http.post；不要手动设置 multipart/form-data 的 Content-Type。Node/headless smoke 里使用 createDesktopClient 时必须显式传 session、storage、secureStorage、desktop、files adapter 或 noop adapter，因为默认 web adapter 会访问 window/localStorage。

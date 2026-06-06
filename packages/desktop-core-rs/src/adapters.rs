@@ -8,6 +8,7 @@ use crate::file::{
     WriteTextFileRequest,
 };
 use crate::http::{HttpRequest, HttpResponse};
+use crate::proxy::ProxyConfig;
 use crate::runtime::DesktopAction;
 use crate::secure::{SecureStorageGetRequest, SecureStorageRemoveRequest, SecureStorageSetRequest};
 use crate::session::SessionState;
@@ -19,6 +20,7 @@ pub trait HttpAdapter: Send + Sync {
         &self,
         request: HttpRequest,
         session: Option<SessionState>,
+        proxy: Option<ProxyConfig>,
     ) -> DesktopResult<HttpResponse>;
 }
 
@@ -58,6 +60,7 @@ impl HttpAdapter for NoopHttpAdapter {
         &self,
         request: HttpRequest,
         _session: Option<SessionState>,
+        _proxy: Option<ProxyConfig>,
     ) -> DesktopResult<HttpResponse> {
         let mut error = DesktopError::new(
             "HTTP_TRANSPORT_NOT_CONFIGURED",

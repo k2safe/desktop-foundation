@@ -9,6 +9,7 @@
 - `desktop.openExternal`、`desktop.copyText`、`desktop.notify`、窗口标题和窗口状态变更
 - `file.openDialog`、`file.saveDialog`、`file.writeText`、`file.exportJson`、`file.download`
 - `update.check`、`update.download`、`update.install`、`update.openPage`
+- `proxy.setConfig`、`proxy.clearConfig`、`proxy.testConnection`
 - `linkProxy.open`、`linkProxy.request.failed`
 - `http.request.failed`
 

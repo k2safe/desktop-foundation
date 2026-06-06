@@ -11,6 +11,7 @@ use serde_json::Value;
 use crate::adapters::HttpAdapter;
 use crate::error::{DesktopError, DesktopResult};
 use crate::http::{HttpMethod, HttpMultipartForm, HttpRequest, HttpResponse, HttpResponseType};
+use crate::proxy::{ProxyConfig, ProxyMode};
 use crate::session::SessionState;
 
 #[derive(Clone, Default)]
@@ -21,6 +22,7 @@ impl HttpAdapter for CurlHttpAdapter {
         &self,
         request: HttpRequest,
         session: Option<SessionState>,
+        proxy: Option<ProxyConfig>,
     ) -> DesktopResult<HttpResponse> {
         let request_id = request.request_id.clone();
         let temp = CurlTempFiles::new();
@@ -33,6 +35,7 @@ impl HttpAdapter for CurlHttpAdapter {
         if let Some(timeout_ms) = request.timeout_ms {
             command.args(["--max-time", &format!("{:.3}", timeout_ms as f64 / 1000.0)]);
         }
+        apply_proxy_args(&mut command, proxy.as_ref())?;
 
         let is_multipart = request
             .multipart
@@ -163,6 +166,32 @@ impl HttpAdapter for CurlHttpAdapter {
             request_id: response_request_id,
             cache: None,
         })
+    }
+}
+
+fn apply_proxy_args(command: &mut Command, proxy: Option<&ProxyConfig>) -> DesktopResult<()> {
+    let Some(proxy) = proxy else {
+        return Ok(());
+    };
+
+    if proxy.is_direct() {
+        command.args(["--noproxy", "*"]);
+        return Ok(());
+    }
+
+    if let Some(bypass) = proxy.bypass_list() {
+        command.args(["--noproxy", &bypass]);
+    }
+
+    match proxy.mode {
+        ProxyMode::System => Ok(()),
+        ProxyMode::Http | ProxyMode::Socks5 => {
+            if let Some(url) = proxy.proxy_url()? {
+                command.args(["--proxy", &url]);
+            }
+            Ok(())
+        }
+        ProxyMode::None => Ok(()),
     }
 }
 
@@ -521,6 +550,7 @@ mod tests {
                     namespace: Some("multipart-demo".to_string()),
                     cache: None,
                 },
+                None,
                 None,
             )
             .unwrap();

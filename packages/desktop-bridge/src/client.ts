@@ -16,6 +16,8 @@ import type {
   HttpRequestOptions,
   LinkProxyMode,
   LinkProxyRequestOptions,
+  ProxyCapability,
+  ProxyConfig,
   RequestLogEntry,
   SessionStore
 } from "./types";
@@ -81,6 +83,37 @@ function assertOriginAllowed(url: string, patterns: string[] | undefined, code: 
 
 function assertRequestAllowed(config: DesktopClientConfig, url: string) {
   assertOriginAllowed(url, config.security?.allowedRequestOrigins, "REQUEST_ORIGIN_BLOCKED", "Request origin is not allowed");
+}
+
+function sanitizedProxyConfig(config: ProxyConfig): ProxyConfig {
+  const { password: _password, ...rest } = config;
+  return rest;
+}
+
+function createWebProxyCapability(): ProxyCapability {
+  let config: ProxyConfig = { enabled: false, mode: "none", bypass: [] };
+  return {
+    async getConfig() {
+      return { ...config };
+    },
+    async setConfig(nextConfig) {
+      config = sanitizedProxyConfig({
+        ...nextConfig,
+        bypass: nextConfig.bypass ?? [],
+        hasPassword: Boolean(nextConfig.password || nextConfig.hasPassword)
+      });
+      return { ...config };
+    },
+    async clearConfig() {
+      config = { enabled: false, mode: "none", bypass: [] };
+    },
+    async testConnection() {
+      return {
+        ok: !config.enabled || config.mode === "none",
+        message: config.enabled && config.mode !== "none" ? "Proxy settings require the Tauri desktop bridge." : undefined
+      };
+    }
+  };
 }
 
 function wrapDesktopCapability(desktop: DesktopCapability, config: DesktopClientConfig): DesktopCapability {
@@ -410,9 +443,50 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
     };
   }
 
+  function wrapAuditedProxyCapability(proxy: ProxyCapability): ProxyCapability {
+    return {
+      ...proxy,
+      setConfig: (nextConfig) =>
+        withAudit(
+          {
+            action: "proxy.setConfig",
+            metadata: {
+              enabled: nextConfig.enabled,
+              mode: nextConfig.mode,
+              host: nextConfig.host,
+              port: nextConfig.port,
+              bypassCount: nextConfig.bypass?.length ?? 0,
+              hasUsername: Boolean(nextConfig.username),
+              hasPassword: Boolean(nextConfig.password || nextConfig.hasPassword)
+            }
+          },
+          () => proxy.setConfig(nextConfig),
+          (result) => ({ enabled: result.enabled, mode: result.mode, hasPassword: result.hasPassword })
+        ),
+      clearConfig: () =>
+        withAudit(
+          {
+            action: "proxy.clearConfig"
+          },
+          () => proxy.clearConfig()
+        ),
+      testConnection: (url) =>
+        withAudit(
+          {
+            action: "proxy.testConnection",
+            target: url,
+            metadata: { url }
+          },
+          () => proxy.testConnection(url),
+          (result) => ({ ok: result.ok, latencyMs: result.latencyMs })
+        )
+    };
+  }
+
   const desktop = wrapAuditedDesktopCapability(rawDesktop);
   const files = wrapAuditedFileCapability(rawFiles);
   const updates = wrapAuditedUpdateCapability(config.updates ?? createManifestUpdateCapability(updateConfig, desktop, files));
+  const proxy = wrapAuditedProxyCapability(config.proxy ?? createWebProxyCapability());
 
   async function request<T>(method: HttpMethod, path: string, bodyOrOptions?: unknown, maybeOptions?: HttpRequestOptions) {
     const options = method === "GET" || method === "DELETE" ? (bodyOrOptions as HttpRequestOptions | undefined) : maybeOptions;
@@ -650,6 +724,7 @@ export function createDesktopClient(config: DesktopClientConfig): DesktopClient 
     desktop,
     files,
     updates,
+    proxy,
     linkProxy: {
       request: linkProxyRequest,
       resolve: resolveLinkTarget,

@@ -1029,6 +1029,17 @@ function runIntegrationCheck(options, packageJson) {
     pushFinding(findings, "pass", "updates:install-bypass", "No direct app replacement or relaunch bypass was detected.");
   }
 
+  const proxySettingsFiles = matchingSourceFiles(sourceFiles, cwd, [
+    /\bclient\.proxy\b/,
+    /\bcreateTauriProxyCapability\b/,
+    /\bdf_proxy_(?:get|set|clear|test)\b/
+  ]);
+  if (proxySettingsFiles.length) {
+    pushFinding(findings, "pass", "proxy-settings", "User network proxy settings usage detected.", { files: proxySettingsFiles });
+  } else {
+    pushFinding(findings, "pass", "proxy-settings", "No user network proxy settings UI was detected; add client.proxy when the product exposes one.");
+  }
+
   const linkProxySurfaceFiles = matchingSourceFiles(sourceFiles, cwd, [
     /\bclient\.linkProxy\b/,
     /\blinkProxy\s*:/,
@@ -1474,6 +1485,61 @@ function createCapabilitySmokeChecks({ bridge, client, bridgeSource }) {
       }
     },
     {
+      id: "tauri-proxy-adapter",
+      group: "Network",
+      name: "Tauri proxy command adapter",
+      run: async () => {
+        assertSmoke(
+          typeof bridge.createTauriProxyCapability === "function",
+          "createTauriProxyCapability export is missing."
+        );
+
+        const invocations = [];
+        const adapter = bridge.createTauriProxyCapability(async (command, args) => {
+          invocations.push({ command, args });
+          if (command === "plugin:desktop-core|df_proxy_get") {
+            return { enabled: false, mode: "none", bypass: [] };
+          }
+          if (command === "plugin:desktop-core|df_proxy_set") {
+            return { ...args.request, password: undefined, hasPassword: Boolean(args.request?.password) };
+          }
+          if (command === "plugin:desktop-core|df_proxy_test") {
+            return { ok: true, latencyMs: 3, message: "dry-run" };
+          }
+          return undefined;
+        });
+
+        const before = await adapter.getConfig();
+        const saved = await adapter.setConfig({
+          enabled: true,
+          mode: "socks5",
+          host: "127.0.0.1",
+          port: 1080,
+          username: "smoke",
+          password: "secret",
+          bypass: ["localhost"]
+        });
+        const tested = await adapter.testConnection("https://api.example.com/health");
+        await adapter.clearConfig();
+
+        assertSmoke(saved.password === undefined, "Tauri proxy adapter smoke leaked a clear-text password.", saved);
+        assertSmoke(saved.hasPassword === true, "Tauri proxy adapter smoke did not preserve hasPassword.", saved);
+        assertSmoke(tested.ok === true, "Tauri proxy adapter testConnection did not return ok=true.", tested);
+        assertSmoke(
+          invocations.map((item) => item.command).join(",") === [
+            "plugin:desktop-core|df_proxy_get",
+            "plugin:desktop-core|df_proxy_set",
+            "plugin:desktop-core|df_proxy_test",
+            "plugin:desktop-core|df_proxy_clear"
+          ].join(","),
+          "Tauri proxy adapter used unexpected desktop-core command names.",
+          invocations
+        );
+
+        return { before, saved, tested, commands: invocations.map((item) => item.command) };
+      }
+    },
+    {
       id: "http-json",
       group: "Network",
       name: "HTTP JSON",
@@ -1578,6 +1644,35 @@ function createCapabilitySmokeChecks({ bridge, client, bridgeSource }) {
         });
         await client.linkProxy.open("https://docs.example.com/releases");
         return { direct, resolved: client.linkProxy.resolve("https://status.example.com/health") };
+      }
+    },
+    {
+      id: "proxy-settings",
+      group: "Network",
+      name: "Proxy settings",
+      run: async () => {
+        const direct = await client.proxy.getConfig();
+        await client.proxy.setConfig({
+          enabled: true,
+          mode: "http",
+          host: "127.0.0.1",
+          port: 7890,
+          username: "smoke",
+          password: "secret",
+          bypass: ["localhost", "127.0.0.1"]
+        });
+        const saved = await client.proxy.getConfig();
+        const tested = await client.proxy.testConnection("https://api.example.com/health");
+        await client.proxy.clearConfig();
+        const cleared = await client.proxy.getConfig();
+
+        assertSmoke(saved.password === undefined, "Proxy config leaked a clear-text password.", saved);
+        assertSmoke(saved.hasPassword === true, "Proxy config did not retain hasPassword.", saved);
+        assertSmoke(Array.isArray(saved.bypass) && saved.bypass.includes("localhost"), "Proxy bypass list did not round-trip.", saved);
+        assertSmoke(tested.ok === false, "Web proxy fallback should report that Tauri is required for enabled proxies.", tested);
+        assertSmoke(cleared.enabled === false && cleared.mode === "none", "Proxy config did not clear back to none.", cleared);
+
+        return { direct, saved, tested, cleared };
       }
     },
     {

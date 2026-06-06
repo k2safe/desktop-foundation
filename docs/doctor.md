@@ -56,6 +56,7 @@ pnpm exec desktop-foundation smoke --report artifacts/foundation-smoke.json
 - file dialog、text read/write、JSON export、download checksum
 - desktop openExternal/copyText/notify/window commands
 - update manifest check、download size/sha256、`installUpdate` dry-run adapter
+- `client.proxy` config/password hiding/test API shape and Tauri proxy command adapter
 - `linkProxy` direct allowlist
 - blocked external URL、blocked file path、blocked download origin、blocked link target
 - request/audit diagnostics buffers
@@ -92,6 +93,7 @@ pnpm exec desktop-foundation smoke --report artifacts/foundation-smoke.json
 | `updates:placeholder` | warn | 更新仓库或 URL 还在用占位值。 | 发布前替换成产品自己的 `VITE_UPDATE_*` 配置。 |
 | `updates:install-boundary` | pass | 检测安装边界是否在 `createTauriDesktopClient`、`df_update_install`、client adapter 或 native adapter 接入。 | 业务 UI 只调用 `client.updates.installUpdate`，不要自己替换安装包。 |
 | `updates:install-bypass` | warn | 检测到疑似业务页面直接替换 `.app` 或重启。 | 删除业务侧安装/重启逻辑，统一放到底座 `df_update_install` 或 Tauri updater adapter。 |
+| `proxy-settings` | pass | 检测用户网络代理设置接入面。 | 有代理设置 UI 时统一调用 `client.proxy`；不要用 `client.linkProxy` 代替。 |
 | `link-proxy` | pass | 检测 link proxy 接入面。 | 需要请求任意第三方链接时，统一走 `client.linkProxy`。 |
 | `link-proxy:gateway-policy` | warn | 配了代理网关但没配代理网关白名单。 | 本地/VPN/内网代理网关写到 `allowedLinkProxyOrigins` 或 `VITE_LINK_PROXY_ORIGINS`。 |
 | `link-proxy:direct-policy` | warn | direct 模式缺目标白名单。 | direct 模式必须配 `allowedLinkTargetOrigins` 或 `VITE_LINK_TARGET_ORIGINS`。 |

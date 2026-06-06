@@ -237,12 +237,36 @@
       "businessBoundary": "Products own endpoint paths, auth behavior, backend multipart parsing, object storage, and upload retention rules. Desktop HTTP cache must be requested through client.http.*({ cache }) so Tauri apps keep cache state in desktop-core-rs rather than browser localStorage."
     },
     {
+      "id": "proxy-settings",
+      "name": "Proxy Settings",
+      "owner": "shared",
+      "phase": "recommended-for-desktop-networking",
+      "status": "beta",
+      "summary": "Expose client.proxy for user-managed none/system/http/socks5 proxy settings, secure proxy password storage, connection testing, and shared Rust HTTP/download/update behavior.",
+      "packages": [
+        "@desktop-foundation/bridge",
+        "desktop-core-rs"
+      ],
+      "docs": [
+        "docs/api-reference.md",
+        "docs/rust-core.md"
+      ],
+      "integrationChecks": {
+        "recommended": [
+          "proxy-settings",
+          "tauri-core",
+          "dependency:@desktop-foundation/bridge"
+        ]
+      },
+      "businessBoundary": "Products own proxy settings UI, target test URL, help copy, and network policy; the foundation owns persisted proxy config, secure password storage, and applying it to Rust-backed HTTP, file download, and default update download paths."
+    },
+    {
       "id": "desktop-core",
       "name": "Desktop Core",
       "owner": "foundation",
       "phase": "required-for-tauri",
       "status": "stable",
-      "summary": "Wire desktop-core-rs and Tauri ACL permissions for HTTP, storage, secure storage, files, windows, clipboard, notifications, downloads, and native update installation.",
+      "summary": "Wire desktop-core-rs and Tauri ACL permissions for HTTP, proxy settings, storage, secure storage, files, windows, clipboard, notifications, downloads, and native update installation.",
       "packages": [
         "desktop-core-rs",
         "@desktop-foundation/bridge"

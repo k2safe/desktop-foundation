@@ -415,6 +415,54 @@
           "markdownDescription": "Denies the df_open_external command without any pre-configured scope."
         },
         {
+          "description": "Enables the df_proxy_clear command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-df-proxy-clear",
+          "markdownDescription": "Enables the df_proxy_clear command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the df_proxy_clear command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-df-proxy-clear",
+          "markdownDescription": "Denies the df_proxy_clear command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the df_proxy_get command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-df-proxy-get",
+          "markdownDescription": "Enables the df_proxy_get command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the df_proxy_get command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-df-proxy-get",
+          "markdownDescription": "Denies the df_proxy_get command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the df_proxy_set command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-df-proxy-set",
+          "markdownDescription": "Enables the df_proxy_set command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the df_proxy_set command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-df-proxy-set",
+          "markdownDescription": "Denies the df_proxy_set command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the df_proxy_test command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-df-proxy-test",
+          "markdownDescription": "Enables the df_proxy_test command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the df_proxy_test command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-df-proxy-test",
+          "markdownDescription": "Denies the df_proxy_test command without any pre-configured scope."
+        },
+        {
           "description": "Enables the df_secure_storage_get command without any pre-configured scope.",
           "type": "string",
           "const": "allow-df-secure-storage-get",
@@ -571,10 +619,10 @@
           "markdownDescription": "Denies the df_window_set_title command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for desktop-foundation core capabilities.\n\n#### Granted Permissions\n\nThis exposes the platform bridge commands used by the TypeScript desktop client:\nHTTP, session, storage, secure storage, desktop actions, file operations, downloads,\nupdate installation, and window state.\n\n#### This default permission set includes:\n\n- `allow-df-http-request`\n- `allow-df-session-get`\n- `allow-df-session-set`\n- `allow-df-session-clear`\n- `allow-df-storage-get`\n- `allow-df-storage-set`\n- `allow-df-storage-remove`\n- `allow-df-open-external`\n- `allow-df-copy-text`\n- `allow-df-notify`\n- `allow-df-file-open-dialog`\n- `allow-df-file-save-dialog`\n- `allow-df-file-read-text`\n- `allow-df-file-write-text`\n- `allow-df-file-export-json`\n- `allow-df-file-download`\n- `allow-df-update-install`\n- `allow-df-secure-storage-get`\n- `allow-df-secure-storage-set`\n- `allow-df-secure-storage-remove`\n- `allow-df-window-get-state`\n- `allow-df-window-set-state`\n- `allow-df-window-set-title`",
+          "description": "Default permissions for desktop-foundation core capabilities.\n\n#### Granted Permissions\n\nThis exposes the platform bridge commands used by the TypeScript desktop client:\nHTTP, session, storage, secure storage, desktop actions, file operations, downloads,\nupdate installation, and window state.\n\n#### This default permission set includes:\n\n- `allow-df-http-request`\n- `allow-df-proxy-get`\n- `allow-df-proxy-set`\n- `allow-df-proxy-clear`\n- `allow-df-proxy-test`\n- `allow-df-session-get`\n- `allow-df-session-set`\n- `allow-df-session-clear`\n- `allow-df-storage-get`\n- `allow-df-storage-set`\n- `allow-df-storage-remove`\n- `allow-df-open-external`\n- `allow-df-copy-text`\n- `allow-df-notify`\n- `allow-df-file-open-dialog`\n- `allow-df-file-save-dialog`\n- `allow-df-file-read-text`\n- `allow-df-file-write-text`\n- `allow-df-file-export-json`\n- `allow-df-file-download`\n- `allow-df-update-install`\n- `allow-df-secure-storage-get`\n- `allow-df-secure-storage-set`\n- `allow-df-secure-storage-remove`\n- `allow-df-window-get-state`\n- `allow-df-window-set-state`\n- `allow-df-window-set-title`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for desktop-foundation core capabilities.\n\n#### Granted Permissions\n\nThis exposes the platform bridge commands used by the TypeScript desktop client:\nHTTP, session, storage, secure storage, desktop actions, file operations, downloads,\nupdate installation, and window state.\n\n#### This default permission set includes:\n\n- `allow-df-http-request`\n- `allow-df-session-get`\n- `allow-df-session-set`\n- `allow-df-session-clear`\n- `allow-df-storage-get`\n- `allow-df-storage-set`\n- `allow-df-storage-remove`\n- `allow-df-open-external`\n- `allow-df-copy-text`\n- `allow-df-notify`\n- `allow-df-file-open-dialog`\n- `allow-df-file-save-dialog`\n- `allow-df-file-read-text`\n- `allow-df-file-write-text`\n- `allow-df-file-export-json`\n- `allow-df-file-download`\n- `allow-df-update-install`\n- `allow-df-secure-storage-get`\n- `allow-df-secure-storage-set`\n- `allow-df-secure-storage-remove`\n- `allow-df-window-get-state`\n- `allow-df-window-set-state`\n- `allow-df-window-set-title`"
+          "markdownDescription": "Default permissions for desktop-foundation core capabilities.\n\n#### Granted Permissions\n\nThis exposes the platform bridge commands used by the TypeScript desktop client:\nHTTP, session, storage, secure storage, desktop actions, file operations, downloads,\nupdate installation, and window state.\n\n#### This default permission set includes:\n\n- `allow-df-http-request`\n- `allow-df-proxy-get`\n- `allow-df-proxy-set`\n- `allow-df-proxy-clear`\n- `allow-df-proxy-test`\n- `allow-df-session-get`\n- `allow-df-session-set`\n- `allow-df-session-clear`\n- `allow-df-storage-get`\n- `allow-df-storage-set`\n- `allow-df-storage-remove`\n- `allow-df-open-external`\n- `allow-df-copy-text`\n- `allow-df-notify`\n- `allow-df-file-open-dialog`\n- `allow-df-file-save-dialog`\n- `allow-df-file-read-text`\n- `allow-df-file-write-text`\n- `allow-df-file-export-json`\n- `allow-df-file-download`\n- `allow-df-update-install`\n- `allow-df-secure-storage-get`\n- `allow-df-secure-storage-set`\n- `allow-df-secure-storage-remove`\n- `allow-df-window-get-state`\n- `allow-df-window-set-state`\n- `allow-df-window-set-title`"
         }
       ]
     }

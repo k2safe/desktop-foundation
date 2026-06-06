@@ -11,6 +11,10 @@ update installation, and window state.
 #### This default permission set includes the following:
 
 - `allow-df-http-request`
+- `allow-df-proxy-get`
+- `allow-df-proxy-set`
+- `allow-df-proxy-clear`
+- `allow-df-proxy-test`
 - `allow-df-session-get`
 - `allow-df-session-set`
 - `allow-df-session-clear`
@@ -299,6 +303,110 @@ Enables the df_open_external command without any pre-configured scope.
 <td>
 
 Denies the df_open_external command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:allow-df-proxy-clear`
+
+</td>
+<td>
+
+Enables the df_proxy_clear command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:deny-df-proxy-clear`
+
+</td>
+<td>
+
+Denies the df_proxy_clear command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:allow-df-proxy-get`
+
+</td>
+<td>
+
+Enables the df_proxy_get command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:deny-df-proxy-get`
+
+</td>
+<td>
+
+Denies the df_proxy_get command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:allow-df-proxy-set`
+
+</td>
+<td>
+
+Enables the df_proxy_set command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:deny-df-proxy-set`
+
+</td>
+<td>
+
+Denies the df_proxy_set command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:allow-df-proxy-test`
+
+</td>
+<td>
+
+Enables the df_proxy_test command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-core-rs:deny-df-proxy-test`
+
+</td>
+<td>
+
+Denies the df_proxy_test command without any pre-configured scope.
 
 </td>
 </tr>

@@ -34,6 +34,10 @@ fn main() {
 ## Commands
 
 - `df_http_request`
+- `df_proxy_get`
+- `df_proxy_set`
+- `df_proxy_clear`
+- `df_proxy_test`
 - `df_session_get`
 - `df_session_set`
 - `df_session_clear`
@@ -62,6 +66,7 @@ When registered as the `desktop-core` plugin, TypeScript can invoke them through
 - `plugin:desktop-core|df_open_external`
 - `plugin:desktop-core|df_copy_text`
 - `plugin:desktop-core|df_notify`
+- `plugin:desktop-core|df_proxy_set`
 - `plugin:desktop-core|df_update_install`
 
 `@desktop-foundation/bridge` exports `createTauriHttpTransport` and `createTauriDesktopCapability` for this command contract.
@@ -75,6 +80,8 @@ For Tauri 2 products, enable the plugin permission set in `src-tauri/capabilitie
 ```
 
 The scaffold includes this by default. Products with tighter policies can replace `desktop-core:default` with specific generated permissions such as `desktop-core:allow-df-file-download`.
+
+`df_proxy_get`, `df_proxy_set`, `df_proxy_clear`, and `df_proxy_test` manage the process-wide foundation proxy config. `df_http_request` and `df_file_download` read that config before dispatching through the Rust HTTP adapter, so app update manifest checks and update downloads also inherit it when the product uses the default bridge update capability.
 
 It also exports `createTauriDesktopClient`, which wires:
 

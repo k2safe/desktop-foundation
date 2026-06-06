@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use base64::engine::general_purpose;
 use base64::Engine as _;
@@ -27,6 +27,7 @@ use crate::http::{
 use crate::persistence::{
     storage_entries_to_map, storage_map_to_entries, FilePersistence, PersistedState,
 };
+use crate::proxy::{ProxyConfig, ProxyTestRequest, ProxyTestResult};
 use crate::secure::{SecureStorageGetRequest, SecureStorageRemoveRequest, SecureStorageSetRequest};
 use crate::security::SecurityPolicy;
 use crate::session::{SessionClearRequest, SessionGetRequest, SessionSetRequest, SessionState};
@@ -38,6 +39,10 @@ use crate::system::{
     SystemUpdateInstallerAdapter,
 };
 use crate::update::{UpdateInstallReply, UpdateInstallRequest};
+
+const PROXY_NAMESPACE: &str = "desktop-foundation.proxy";
+const PROXY_PASSWORD_KEY: &str = "password";
+const DEFAULT_PROXY_TEST_URL: &str = "https://www.gstatic.com/generate_204";
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DesktopAction {
@@ -51,6 +56,7 @@ pub struct DesktopCore {
     sessions: Arc<Mutex<BTreeMap<String, SessionState>>>,
     storage: Arc<Mutex<BTreeMap<StorageKey, Value>>>,
     http_cache: Arc<Mutex<BTreeMap<String, HttpCacheEntry>>>,
+    proxy_config: Arc<Mutex<ProxyConfig>>,
     actions: Arc<Mutex<Vec<DesktopAction>>>,
     http_adapter: Arc<dyn HttpAdapter>,
     desktop_adapter: Arc<dyn DesktopAdapter>,
@@ -63,6 +69,10 @@ pub struct DesktopCore {
 
 fn empty_http_cache() -> Arc<Mutex<BTreeMap<String, HttpCacheEntry>>> {
     Arc::new(Mutex::new(BTreeMap::new()))
+}
+
+fn default_proxy_config() -> Arc<Mutex<ProxyConfig>> {
+    Arc::new(Mutex::new(ProxyConfig::default()))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -92,6 +102,7 @@ impl DesktopCore {
             sessions: Arc::new(Mutex::new(BTreeMap::new())),
             storage: Arc::new(Mutex::new(BTreeMap::new())),
             http_cache: empty_http_cache(),
+            proxy_config: default_proxy_config(),
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
@@ -108,6 +119,7 @@ impl DesktopCore {
             sessions: Arc::new(Mutex::new(BTreeMap::new())),
             storage: Arc::new(Mutex::new(BTreeMap::new())),
             http_cache: empty_http_cache(),
+            proxy_config: default_proxy_config(),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter: Arc::new(NoopHttpAdapter),
             desktop_adapter,
@@ -141,6 +153,7 @@ impl DesktopCore {
             sessions: Arc::new(Mutex::new(BTreeMap::new())),
             storage: Arc::new(Mutex::new(BTreeMap::new())),
             http_cache: empty_http_cache(),
+            proxy_config: default_proxy_config(),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter,
             desktop_adapter,
@@ -206,6 +219,7 @@ impl DesktopCore {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
             http_cache: Arc::new(Mutex::new(state.http_cache)),
+            proxy_config: Arc::new(Mutex::new(state.proxy_config.for_persistence())),
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
@@ -228,6 +242,7 @@ impl DesktopCore {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
             http_cache: Arc::new(Mutex::new(state.http_cache)),
+            proxy_config: Arc::new(Mutex::new(state.proxy_config.for_persistence())),
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
@@ -250,6 +265,7 @@ impl DesktopCore {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
             http_cache: Arc::new(Mutex::new(state.http_cache)),
+            proxy_config: Arc::new(Mutex::new(state.proxy_config.for_persistence())),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter,
             desktop_adapter,
@@ -274,6 +290,7 @@ impl DesktopCore {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
             http_cache: Arc::new(Mutex::new(state.http_cache)),
+            proxy_config: Arc::new(Mutex::new(state.proxy_config.for_persistence())),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter,
             desktop_adapter,
@@ -296,6 +313,7 @@ impl DesktopCore {
             sessions: Arc::new(Mutex::new(state.sessions)),
             storage: Arc::new(Mutex::new(storage_entries_to_map(state.storage))),
             http_cache: Arc::new(Mutex::new(state.http_cache)),
+            proxy_config: Arc::new(Mutex::new(state.proxy_config.for_persistence())),
             actions: Arc::new(Mutex::new(Vec::new())),
             http_adapter,
             desktop_adapter: Arc::new(SystemDesktopAdapter),
@@ -323,6 +341,12 @@ impl DesktopCore {
         let http_cache = self.http_cache.lock().map_err(|_| {
             DesktopError::new("HTTP_CACHE_LOCK_FAILED", "Failed to lock HTTP cache")
         })?;
+        let proxy_config = self
+            .proxy_config
+            .lock()
+            .map_err(|_| DesktopError::new("PROXY_LOCK_FAILED", "Failed to lock proxy config"))?
+            .clone()
+            .for_persistence();
         persistence.save(&PersistedState {
             sessions,
             storage: storage_map_to_entries(&storage),
@@ -331,6 +355,7 @@ impl DesktopCore {
                 .filter(|(_key, entry)| entry.storage == HttpCacheStorage::Persistent)
                 .map(|(key, entry)| (key.clone(), entry.clone()))
                 .collect(),
+            proxy_config,
         })
     }
 
@@ -354,7 +379,11 @@ impl DesktopCore {
                 .ok()
             })
         };
-        match self.http_adapter.request(request.clone(), session) {
+        let proxy = self.effective_proxy_config()?;
+        match self
+            .http_adapter
+            .request(request.clone(), session, Some(proxy))
+        {
             Ok(mut response) => {
                 if let Some(context) = cache_context {
                     self.write_http_cache(&context, &response)?;
@@ -387,6 +416,129 @@ impl DesktopCore {
                 Err(error)
             }
         }
+    }
+
+    pub fn proxy_get_config(&self) -> DesktopResult<ProxyConfig> {
+        let config = self
+            .proxy_config
+            .lock()
+            .map_err(|_| DesktopError::new("PROXY_LOCK_FAILED", "Failed to lock proxy config"))?
+            .clone();
+        Ok(config.without_password(self.proxy_password()?.is_some()))
+    }
+
+    pub fn proxy_set_config(&self, mut config: ProxyConfig) -> DesktopResult<ProxyConfig> {
+        config.proxy_url()?;
+        let stores_credentials = config.uses_explicit_proxy();
+        let password = if stores_credentials {
+            config.password.take().filter(|value| !value.is_empty())
+        } else {
+            config.password = None;
+            None
+        };
+        let keep_existing_password =
+            stores_credentials && config.has_password && password.is_none();
+        let has_password = if let Some(password) = password {
+            self.secure_storage_adapter.set(SecureStorageSetRequest {
+                namespace: PROXY_NAMESPACE.to_string(),
+                key: PROXY_PASSWORD_KEY.to_string(),
+                value: Value::String(password),
+            })?;
+            true
+        } else if keep_existing_password {
+            self.proxy_password()?.is_some()
+        } else {
+            self.secure_storage_adapter
+                .remove(SecureStorageRemoveRequest {
+                    namespace: PROXY_NAMESPACE.to_string(),
+                    key: PROXY_PASSWORD_KEY.to_string(),
+                })?;
+            false
+        };
+
+        let stored = config.without_password(false).for_persistence();
+        {
+            *self.proxy_config.lock().map_err(|_| {
+                DesktopError::new("PROXY_LOCK_FAILED", "Failed to lock proxy config")
+            })? = stored.clone();
+        }
+        self.persist_state()?;
+        Ok(stored.without_password(has_password))
+    }
+
+    pub fn proxy_clear_config(&self) -> DesktopResult<DesktopActionReply> {
+        {
+            *self.proxy_config.lock().map_err(|_| {
+                DesktopError::new("PROXY_LOCK_FAILED", "Failed to lock proxy config")
+            })? = ProxyConfig::default();
+        }
+        self.secure_storage_adapter
+            .remove(SecureStorageRemoveRequest {
+                namespace: PROXY_NAMESPACE.to_string(),
+                key: PROXY_PASSWORD_KEY.to_string(),
+            })?;
+        self.persist_state()?;
+        Ok(DesktopActionReply { ok: true })
+    }
+
+    pub fn proxy_test(&self, request: ProxyTestRequest) -> ProxyTestResult {
+        let url = request
+            .url
+            .filter(|value| !value.trim().is_empty())
+            .unwrap_or_else(|| DEFAULT_PROXY_TEST_URL.to_string());
+        let started = Instant::now();
+        let result = self.http_request(HttpRequest {
+            method: HttpMethod::Get,
+            url,
+            headers: BTreeMap::new(),
+            query: BTreeMap::new(),
+            body: None,
+            body_base64: None,
+            body_content_type: None,
+            multipart: None,
+            response_type: Some(HttpResponseType::Text),
+            timeout_ms: Some(request.timeout_ms.unwrap_or(10_000)),
+            auth: Some(false),
+            request_id: Some("proxy-test".to_string()),
+            namespace: Some(PROXY_NAMESPACE.to_string()),
+            cache: None,
+        });
+        let latency_ms = started.elapsed().as_millis().try_into().unwrap_or(u64::MAX);
+        match result {
+            Ok(_) => ProxyTestResult {
+                ok: true,
+                latency_ms: Some(latency_ms),
+                message: None,
+            },
+            Err(error) => ProxyTestResult {
+                ok: false,
+                latency_ms: Some(latency_ms),
+                message: Some(error.message),
+            },
+        }
+    }
+
+    fn effective_proxy_config(&self) -> DesktopResult<ProxyConfig> {
+        let mut config = self
+            .proxy_config
+            .lock()
+            .map_err(|_| DesktopError::new("PROXY_LOCK_FAILED", "Failed to lock proxy config"))?
+            .clone();
+        if config.password.is_none() {
+            config.password = self.proxy_password()?;
+        }
+        Ok(config)
+    }
+
+    fn proxy_password(&self) -> DesktopResult<Option<String>> {
+        let value = self.secure_storage_adapter.get(SecureStorageGetRequest {
+            namespace: PROXY_NAMESPACE.to_string(),
+            key: PROXY_PASSWORD_KEY.to_string(),
+        })?;
+        Ok(value.value.and_then(|value| match value {
+            Value::String(value) if !value.is_empty() => Some(value),
+            _ => None,
+        }))
     }
 
     fn resolve_http_cache(&self, request: &HttpRequest) -> DesktopResult<Option<HttpCacheContext>> {
@@ -869,6 +1021,7 @@ impl Default for DesktopCore {
             sessions: Arc::new(Mutex::new(BTreeMap::new())),
             storage: Arc::new(Mutex::new(BTreeMap::new())),
             http_cache: empty_http_cache(),
+            proxy_config: default_proxy_config(),
             desktop_adapter: Arc::new(RecordingDesktopAdapter::new(actions.clone())),
             file_adapter: Arc::new(NoopFileAdapter),
             secure_storage_adapter: Arc::new(NoopSecureStorageAdapter),
@@ -890,6 +1043,8 @@ mod tests {
     use serde_json::json;
 
     use crate::http::{HttpCacheOptions, HttpCacheStorage, HttpMethod, HttpRequest, HttpResponse};
+    use crate::proxy::ProxyMode;
+    use crate::system::FileSecureStorageAdapter;
 
     use super::*;
 
@@ -906,11 +1061,16 @@ mod tests {
         seen: Mutex<Vec<UpdateInstallRequest>>,
     }
 
+    struct ProxyRecordingHttpAdapter {
+        seen_proxy: Mutex<Option<ProxyConfig>>,
+    }
+
     impl HttpAdapter for EchoHttpAdapter {
         fn request(
             &self,
             _request: HttpRequest,
             session: Option<SessionState>,
+            _proxy: Option<ProxyConfig>,
         ) -> DesktopResult<HttpResponse> {
             *self.seen_token.lock().unwrap() = session.and_then(|state| state.token);
             Ok(HttpResponse {
@@ -929,6 +1089,7 @@ mod tests {
             &self,
             _request: HttpRequest,
             _session: Option<SessionState>,
+            _proxy: Option<ProxyConfig>,
         ) -> DesktopResult<HttpResponse> {
             let mut calls = self.calls.lock().unwrap();
             *calls += 1;
@@ -942,6 +1103,25 @@ mod tests {
                 status: 200,
                 headers: BTreeMap::new(),
                 body: Some(json!({ "count": *calls })),
+                body_base64: None,
+                request_id: None,
+                cache: None,
+            })
+        }
+    }
+
+    impl HttpAdapter for ProxyRecordingHttpAdapter {
+        fn request(
+            &self,
+            _request: HttpRequest,
+            _session: Option<SessionState>,
+            proxy: Option<ProxyConfig>,
+        ) -> DesktopResult<HttpResponse> {
+            *self.seen_proxy.lock().unwrap() = proxy;
+            Ok(HttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                body: Some(json!({ "ok": true })),
                 body_base64: None,
                 request_id: None,
                 cache: None,
@@ -999,6 +1179,83 @@ mod tests {
             .token,
             Some("merchant-token".to_string())
         );
+    }
+
+    #[test]
+    fn proxy_config_hides_password_and_applies_to_http_requests() {
+        let adapter = Arc::new(ProxyRecordingHttpAdapter {
+            seen_proxy: Mutex::new(None),
+        });
+        let secure_root = std::env::temp_dir().join(format!(
+            "desktop-foundation-proxy-test-{}",
+            current_time_ms()
+        ));
+        let core = DesktopCore::with_all_adapters(
+            adapter.clone(),
+            Arc::new(RecordingDesktopAdapter::new(Arc::new(Mutex::new(
+                Vec::new(),
+            )))),
+            Arc::new(NoopFileAdapter),
+            Arc::new(FileSecureStorageAdapter::with_root(secure_root)),
+        );
+
+        let saved = core
+            .proxy_set_config(ProxyConfig {
+                enabled: true,
+                mode: ProxyMode::Http,
+                host: Some("127.0.0.1".to_string()),
+                port: Some(7890),
+                username: Some("operator".to_string()),
+                password: Some("secret".to_string()),
+                bypass: vec!["localhost".to_string()],
+                has_password: false,
+            })
+            .unwrap();
+        assert!(saved.has_password);
+        assert_eq!(saved.password, None);
+
+        let config = core.proxy_get_config().unwrap();
+        assert!(config.has_password);
+        assert_eq!(config.password, None);
+
+        core.http_request(HttpRequest {
+            method: HttpMethod::Get,
+            url: "https://example.test".to_string(),
+            headers: BTreeMap::new(),
+            query: BTreeMap::new(),
+            body: None,
+            body_base64: None,
+            body_content_type: None,
+            multipart: None,
+            response_type: None,
+            timeout_ms: None,
+            auth: Some(false),
+            request_id: None,
+            namespace: None,
+            cache: None,
+        })
+        .unwrap();
+
+        let seen = adapter.seen_proxy.lock().unwrap().clone().unwrap();
+        assert_eq!(seen.mode, ProxyMode::Http);
+        assert_eq!(seen.host.as_deref(), Some("127.0.0.1"));
+        assert_eq!(seen.password.as_deref(), Some("secret"));
+        assert_eq!(seen.bypass, vec!["localhost".to_string()]);
+
+        let disabled = core
+            .proxy_set_config(ProxyConfig {
+                enabled: false,
+                mode: ProxyMode::None,
+                host: None,
+                port: None,
+                username: None,
+                password: Some("should-not-stay".to_string()),
+                bypass: Vec::new(),
+                has_password: true,
+            })
+            .unwrap();
+        assert!(!disabled.has_password);
+        assert!(!core.proxy_get_config().unwrap().has_password);
     }
 
     #[test]

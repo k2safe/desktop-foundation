@@ -55,6 +55,7 @@ artifacts/npm/foundation-capabilities.json
 | Errors And Request State | recommended | foundation | 产品维护业务错误码和业务补救文案。 |
 | Audit Events | recommended | shared | 产品维护日志存储、保留周期、PII 策略和审计上报服务。 |
 | HTTP And Upload | required-for-networked-products | foundation | 产品维护 endpoint、auth、后端 multipart 解析、对象存储和上传留存规则；桌面端 HTTP cache 放在 Rust 层，通过 `client.http.*({ cache })` 使用。 |
+| Proxy Settings | recommended-for-desktop-networking | shared | 产品维护代理设置 UI 和连通性目标；底座保存代理配置并让 Rust HTTP、文件下载和默认更新下载链路统一读取。 |
 | Desktop Core | required-for-tauri | foundation | 产品维护平台签名、额外权限、图标、bundle id 和 native plugin 选择。 |
 | Updates | recommended-before-release | shared | 产品维护 release hosting、签名、公证和灰度策略；底座提供默认 `df_update_install`，产品可在需要官方 signed updater 或定制流程时覆盖 adapter。 |
 | Link Proxy | optional | shared | 产品维护允许访问的 proxy/target origin，并区分业务 API 和第三方链接请求。 |

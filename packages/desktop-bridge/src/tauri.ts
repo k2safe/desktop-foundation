@@ -22,6 +22,9 @@ import type {
   HttpTransportRequest,
   KeyValueStore,
   NotifyOptions,
+  ProxyCapability,
+  ProxyConfig,
+  ProxyTestResult,
   SessionStore,
   StorageScope
 } from "./types";
@@ -244,6 +247,17 @@ export function createTauriFileCapability(invoke: TauriInvoke, namespace: string
   };
 }
 
+export function createTauriProxyCapability(invoke: TauriInvoke): ProxyCapability {
+  return {
+    getConfig: () => invoke<ProxyConfig>("plugin:desktop-core|df_proxy_get"),
+    setConfig: (config: ProxyConfig) => invoke<ProxyConfig>("plugin:desktop-core|df_proxy_set", { request: config }),
+    clearConfig: async () => {
+      await invoke("plugin:desktop-core|df_proxy_clear");
+    },
+    testConnection: (url?: string) => invoke<ProxyTestResult>("plugin:desktop-core|df_proxy_test", { request: { url } })
+  };
+}
+
 function metadataString(metadata: Record<string, unknown> | undefined, key: string) {
   const value = metadata?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
@@ -369,6 +383,7 @@ export async function createTauriDesktopClient(
   const commandFiles = createTauriFileCapability(invoke, namespace);
   const desktop = config.nativePlugins ? createTauriNativeDesktopCapability(config.nativePlugins, commandDesktop) : commandDesktop;
   const files = config.nativePlugins ? createTauriNativeFileCapability(config.nativePlugins, commandFiles) : commandFiles;
+  const proxy = createTauriProxyCapability(invoke);
   const transport = createTauriHttpTransport(invoke);
   const updateConfig = {
     ...config.updateConfig,
@@ -393,6 +408,7 @@ export async function createTauriDesktopClient(
     transport,
     desktop,
     files,
+    proxy,
     updates
   });
 }

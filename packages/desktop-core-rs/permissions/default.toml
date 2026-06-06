@@ -13,6 +13,10 @@ update installation, and window state.
 
 permissions = [
   "allow-df-http-request",
+  "allow-df-proxy-get",
+  "allow-df-proxy-set",
+  "allow-df-proxy-clear",
+  "allow-df-proxy-test",
   "allow-df-session-get",
   "allow-df-session-set",
   "allow-df-session-clear",

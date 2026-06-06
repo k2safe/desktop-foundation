@@ -3,13 +3,15 @@ use std::time::Duration;
 
 use base64::engine::general_purpose;
 use base64::Engine as _;
-use reqwest::blocking::Client;
+use reqwest::blocking::{Client, ClientBuilder};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use reqwest::{NoProxy, Proxy};
 use serde_json::Value;
 
 use crate::adapters::HttpAdapter;
 use crate::error::{DesktopError, DesktopResult};
 use crate::http::{HttpMethod, HttpRequest, HttpResponse, HttpResponseType};
+use crate::proxy::{ProxyConfig, ProxyMode};
 use crate::session::SessionState;
 
 #[derive(Clone)]
@@ -26,6 +28,26 @@ impl ReqwestHttpAdapter {
     pub fn with_client(client: Client) -> Self {
         Self { client }
     }
+
+    fn client_for_proxy(&self, proxy: Option<&ProxyConfig>) -> DesktopResult<Client> {
+        let Some(proxy) = proxy else {
+            return Ok(self.client.clone());
+        };
+        if proxy.is_direct() {
+            return Client::builder()
+                .no_proxy()
+                .build()
+                .map_err(to_desktop_error);
+        }
+        match proxy.mode {
+            ProxyMode::System => Ok(self.client.clone()),
+            ProxyMode::Http | ProxyMode::Socks5 => build_proxy_client(Client::builder(), proxy),
+            ProxyMode::None => Client::builder()
+                .no_proxy()
+                .build()
+                .map_err(to_desktop_error),
+        }
+    }
 }
 
 impl HttpAdapter for ReqwestHttpAdapter {
@@ -33,6 +55,7 @@ impl HttpAdapter for ReqwestHttpAdapter {
         &self,
         request: HttpRequest,
         session: Option<SessionState>,
+        proxy: Option<ProxyConfig>,
     ) -> DesktopResult<HttpResponse> {
         let method = match request.method {
             HttpMethod::Get => reqwest::Method::GET,
@@ -65,7 +88,8 @@ impl HttpAdapter for ReqwestHttpAdapter {
                 pairs.append_pair(key, &query_value_to_string(value));
             }
         }
-        let mut builder = self.client.request(method, url).headers(headers);
+        let client = self.client_for_proxy(proxy.as_ref())?;
+        let mut builder = client.request(method, url).headers(headers);
         if let Some(timeout_ms) = request.timeout_ms {
             builder = builder.timeout(Duration::from_millis(timeout_ms));
         }
@@ -163,6 +187,20 @@ impl HttpAdapter for ReqwestHttpAdapter {
             cache: None,
         })
     }
+}
+
+fn build_proxy_client(builder: ClientBuilder, proxy_config: &ProxyConfig) -> DesktopResult<Client> {
+    let proxy_url = proxy_config.proxy_url()?.ok_or_else(|| {
+        DesktopError::new(
+            "PROXY_URL_REQUIRED",
+            "Proxy URL is required for this proxy mode",
+        )
+    })?;
+    let mut proxy = Proxy::all(&proxy_url).map_err(to_desktop_error)?;
+    if let Some(bypass) = proxy_config.bypass_list() {
+        proxy = proxy.no_proxy(NoProxy::from_string(&bypass));
+    }
+    builder.proxy(proxy).build().map_err(to_desktop_error)
 }
 
 fn has_authorization(headers: &BTreeMap<String, String>) -> bool {

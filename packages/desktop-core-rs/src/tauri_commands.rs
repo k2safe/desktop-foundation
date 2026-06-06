@@ -8,6 +8,7 @@ use crate::file::{
     TextFileReply, WriteTextFileRequest,
 };
 use crate::http::{HttpRequest, HttpResponse};
+use crate::proxy::{ProxyConfig, ProxyTestRequest, ProxyTestResult};
 use crate::runtime::DesktopCore;
 use crate::secure::{SecureStorageGetRequest, SecureStorageRemoveRequest, SecureStorageSetRequest};
 use crate::session::{SessionClearRequest, SessionGetRequest, SessionSetRequest, SessionState};
@@ -27,6 +28,40 @@ pub async fn df_http_request(
             DesktopError::new("HTTP_TASK_FAILED", "HTTP task failed")
                 .with_details(serde_json::Value::String(error.to_string()))
         })?
+}
+
+#[tauri::command]
+pub async fn df_proxy_get(core: State<'_, DesktopCore>) -> Result<ProxyConfig, DesktopError> {
+    core.proxy_get_config()
+}
+
+#[tauri::command]
+pub async fn df_proxy_set(
+    core: State<'_, DesktopCore>,
+    request: ProxyConfig,
+) -> Result<ProxyConfig, DesktopError> {
+    core.proxy_set_config(request)
+}
+
+#[tauri::command]
+pub async fn df_proxy_clear(
+    core: State<'_, DesktopCore>,
+) -> Result<DesktopActionReply, DesktopError> {
+    core.proxy_clear_config()
+}
+
+#[tauri::command]
+pub async fn df_proxy_test(
+    core: State<'_, DesktopCore>,
+    request: ProxyTestRequest,
+) -> Result<ProxyTestResult, DesktopError> {
+    let core = core.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || core.proxy_test(request))
+        .await
+        .map_err(|error| {
+            DesktopError::new("PROXY_TEST_TASK_FAILED", "Proxy test task failed")
+                .with_details(serde_json::Value::String(error.to_string()))
+        })
 }
 
 #[tauri::command]
@@ -286,6 +321,10 @@ pub fn desktop_core_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
     tauri::plugin::Builder::new("desktop-core")
         .invoke_handler(tauri::generate_handler![
             df_http_request,
+            df_proxy_get,
+            df_proxy_set,
+            df_proxy_clear,
+            df_proxy_test,
             df_session_get,
             df_session_set,
             df_session_clear,

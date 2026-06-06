@@ -260,6 +260,32 @@ export interface LinkProxyCapability {
   open(url: string, options?: { requestId?: string; namespace?: string }): Promise<void>;
 }
 
+export type ProxyMode = "none" | "system" | "http" | "socks5";
+
+export interface ProxyConfig {
+  enabled: boolean;
+  mode: ProxyMode;
+  host?: string;
+  port?: number;
+  username?: string;
+  password?: string;
+  bypass?: string[];
+  hasPassword?: boolean;
+}
+
+export interface ProxyTestResult {
+  ok: boolean;
+  latencyMs?: number;
+  message?: string;
+}
+
+export interface ProxyCapability {
+  getConfig(): Promise<ProxyConfig>;
+  setConfig(config: ProxyConfig): Promise<ProxyConfig>;
+  clearConfig(): Promise<void>;
+  testConnection(url?: string): Promise<ProxyTestResult>;
+}
+
 export interface AppUpdateConfig {
   currentVersion?: string;
   manifestUrl?: string;
@@ -389,6 +415,7 @@ export interface DesktopClientConfig {
   desktop?: DesktopCapability;
   files?: FileCapability;
   updates?: AppUpdateCapability;
+  proxy?: ProxyCapability;
   updateConfig?: AppUpdateConfig;
   linkProxy?: LinkProxyConfig;
   version?: string;
@@ -416,6 +443,7 @@ export interface DesktopClient {
   desktop: DesktopCapability;
   files: FileCapability;
   updates: AppUpdateCapability;
+  proxy: ProxyCapability;
   linkProxy: LinkProxyCapability;
   diagnostics: DesktopDiagnostics;
 }

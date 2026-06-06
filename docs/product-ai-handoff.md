@@ -44,7 +44,8 @@ import "@desktop-foundation/ui-react/styles.css";
 6. 把表格、表单、弹窗、设置页替换为 foundation 组件。
 7. 配置 `updateConfig`，Tauri 项目默认通过 `df_update_install` 接安装边界。
 8. 配置 `onAuditEvent` 或 `auditObserver`，把底座 audit events 接到产品日志/审计服务。
-9. 跑验收命令，失败项先修复再迁移业务页面。
+9. 如产品有网络代理设置入口，接 `client.proxy`，不要用 `client.linkProxy` 代替用户代理。
+10. 跑验收命令，失败项先修复再迁移业务页面。
 
 ## 2. 最小代码形状
 
@@ -168,6 +169,22 @@ const languages = await client.http.get("/settings/languages", {
 ```
 
 Web/mock demo 可以用 adapter 模拟缓存状态；Tauri 真桌面端由 `desktop-core-rs` 负责 memory/persistent cache、TTL、refresh 和 stale fallback。业务接口返回体不需要包一层 cache envelope，cache metadata 从 `onResponse` 或 `client.diagnostics.getRecentRequests()` 读。
+
+用户网络代理设置也从 client 边界接入。CoinPay 这类管理端需要影响 API、语言包、菜单权限刷新、文件下载和更新下载时，设置页调用 `client.proxy`：
+
+```ts
+await client.proxy.setConfig({
+  enabled: true,
+  mode: "http",
+  host: "127.0.0.1",
+  port: 7890,
+  bypass: ["localhost", "127.0.0.1"]
+});
+
+const result = await client.proxy.testConnection("https://api.example.com/health");
+```
+
+`client.proxy` 影响 Tauri/Rust-backed 的 `client.http.*`、`client.files.downloadFile` 和默认 `client.updates` 下载链路；`getConfig()` 不返回明文密码，只返回 `hasPassword`。`client.linkProxy` 是任意第三方链接网关能力，不是用户网络代理设置。
 
 正式管理端页面优先用 [AdminKit](admin-kit.md)。列表页用 `AdminPageShell + AdminFilterBar + AdminDataTable`，抽屉详情用 `AdminDrawer + AdminDetailGrid + AdminFormActions`。业务 AI 不要在每个页面临时重写筛选栏、表格容器、状态 pill、抽屉布局或大面积业务 CSS。
 

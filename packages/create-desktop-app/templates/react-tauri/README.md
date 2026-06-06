@@ -89,6 +89,17 @@ pnpm exec desktop-foundation-ci --no-type-check --no-build --package-desktop --m
 
 Upload the files from `artifacts/desktop/release-plan.json` however the product team prefers. The included `.github/workflows/desktop-release.yml` is artifact-only by default; it does not force automatic release publishing.
 
+## User Network Proxy
+
+Tauri clients expose `client.proxy` for user-managed none/system/http/socks5 proxy settings. Use it for product settings pages that must affect Rust-backed API requests, language/public-parameter refreshes, file downloads, and default update downloads:
+
+```ts
+await client.proxy.setConfig({ enabled: true, mode: "http", host: "127.0.0.1", port: 7890 });
+await client.proxy.testConnection("https://api.example.com/health");
+```
+
+`getConfig()` does not return clear-text proxy passwords. `client.linkProxy` below is a separate arbitrary third-party URL gateway and should not be used as a user network proxy.
+
 ## Link Proxy
 
 Generated clients can route arbitrary URL requests through a product-owned local, VPN, or intranet proxy gateway:
