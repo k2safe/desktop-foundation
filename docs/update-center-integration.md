@@ -34,7 +34,7 @@
 稳定接入优先读取当前 release manifest：
 
 ```text
-https://github.com/k2safe/desktop-foundation/releases/download/v0.1.36/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.37/foundation-packages.json
 ```
 
 把 `consumer.dependencies`、`consumer.devDependencies` 和 `consumer.pnpm.overrides` 合并到产品 `package.json`。不要在产品提示词或代码里写死某个旧 tarball URL。

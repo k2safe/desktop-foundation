@@ -11,7 +11,7 @@ fi
 
 tag="${TAG:-v${version}}"
 github_repo="${GITHUB_REPO:-k2safe/desktop-foundation}"
-proxy="${PROXY:-http://127.0.0.1:10900}"
+proxy="${PROXY-http://127.0.0.1:10900}"
 
 if [[ -z "${GH_TOKEN:-}" ]]; then
   echo "GH_TOKEN is required. Export it first or run through Makefile prompt." >&2
