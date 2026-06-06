@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const defaultArtifactDir = "artifacts/npm";
-const defaultBaseUrl = "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm";
+const defaultRepo = "k2safe/desktop-foundation";
 
 const packages = [
   { name: "@desktop-foundation/bridge", dir: "packages/desktop-bridge", section: "dependencies" },
@@ -18,6 +18,8 @@ const packages = [
 ];
 
 function parseArgs(argv) {
+  const rootPackageJson = JSON.parse(readFileSync(resolve(repoRoot, "package.json"), "utf8"));
+  const defaultBaseUrl = `https://github.com/${defaultRepo}/releases/download/v${rootPackageJson.version}`;
   const options = { artifactDir: defaultArtifactDir, baseUrl: defaultBaseUrl };
   const args = [...argv];
   while (args.length) {
@@ -32,6 +34,7 @@ function parseArgs(argv) {
     }
     if (arg === "--help" || arg === "-h") {
       console.log("pack-foundation-packages [--artifact-dir artifacts/npm] [--base-url URL]");
+      console.log(`Default base URL: ${defaultBaseUrl}`);
       process.exit(0);
     }
     throw new Error(`Unknown argument: ${arg}`);
@@ -119,6 +122,10 @@ function main() {
       }
     }
   };
+  if (/^https:\/\/github\.com\/[-._A-Za-z0-9]+\/[-._A-Za-z0-9]+\/releases\/download\/v[-._A-Za-z0-9]+$/.test(options.baseUrl)) {
+    manifest.releaseTag = options.baseUrl.split("/").at(-1);
+    manifest.immutable = true;
+  }
 
   const manifestPath = join(artifactDir, "foundation-packages.json");
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");

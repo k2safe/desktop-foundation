@@ -81,7 +81,7 @@ Actions are optional. When quota is unavailable, build and normalize on a local 
 pnpm release:local-check
 ```
 
-This is the foundation repo's local release gate. It runs package manifest drift detection, multipart upload smoke, clean external demo smoke, package build/type-check, and Rust tests. The external demo smoke uses a local artifact server during this gate, so it can verify newly packed tarballs before those files are pushed to GitHub raw. Treat a green local gate as the replacement for GitHub Actions while quota is unavailable.
+This is the foundation repo's local release gate. It runs package manifest drift detection, multipart upload smoke, clean external demo smoke, package build/type-check, and Rust tests. The external demo smoke uses a local artifact server during this gate, so it can verify newly packed tarballs before those files are uploaded to GitHub Releases. Treat a green local gate as the replacement for GitHub Actions while quota is unavailable.
 
 ```bash
 pnpm tauri build

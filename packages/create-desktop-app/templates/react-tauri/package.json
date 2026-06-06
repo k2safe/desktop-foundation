@@ -20,10 +20,10 @@
     "visual:regression:update": "node scripts/visual-regression.mjs --update"
   },
   "dependencies": {
-    "@desktop-foundation/app-shell": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-{{FOUNDATION_VERSION}}.tgz",
-    "@desktop-foundation/bridge": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-{{FOUNDATION_VERSION}}.tgz",
-    "@desktop-foundation/theme-presets": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-{{FOUNDATION_VERSION}}.tgz",
-    "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-{{FOUNDATION_VERSION}}.tgz",
+    "@desktop-foundation/app-shell": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-app-shell-{{FOUNDATION_VERSION}}.tgz",
+    "@desktop-foundation/bridge": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-bridge-{{FOUNDATION_VERSION}}.tgz",
+    "@desktop-foundation/theme-presets": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-theme-presets-{{FOUNDATION_VERSION}}.tgz",
+    "@desktop-foundation/ui-react": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-ui-react-{{FOUNDATION_VERSION}}.tgz",
     "@tauri-apps/api": "^2.0.0",
     "@vitejs/plugin-react": "^5.0.4",
     "react": "^19.0.1",
@@ -35,15 +35,15 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "typescript": "~5.8.2",
-    "@desktop-foundation/create-desktop-app": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-{{FOUNDATION_VERSION}}.tgz"
+    "@desktop-foundation/create-desktop-app": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-create-desktop-app-{{FOUNDATION_VERSION}}.tgz"
   },
   "pnpm": {
     "overrides": {
-      "@desktop-foundation/app-shell": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-app-shell-{{FOUNDATION_VERSION}}.tgz",
-      "@desktop-foundation/bridge": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-bridge-{{FOUNDATION_VERSION}}.tgz",
-      "@desktop-foundation/theme-presets": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-theme-presets-{{FOUNDATION_VERSION}}.tgz",
-      "@desktop-foundation/ui-react": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-ui-react-{{FOUNDATION_VERSION}}.tgz",
-      "@desktop-foundation/create-desktop-app": "https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/desktop-foundation-create-desktop-app-{{FOUNDATION_VERSION}}.tgz"
+      "@desktop-foundation/app-shell": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-app-shell-{{FOUNDATION_VERSION}}.tgz",
+      "@desktop-foundation/bridge": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-bridge-{{FOUNDATION_VERSION}}.tgz",
+      "@desktop-foundation/theme-presets": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-theme-presets-{{FOUNDATION_VERSION}}.tgz",
+      "@desktop-foundation/ui-react": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-ui-react-{{FOUNDATION_VERSION}}.tgz",
+      "@desktop-foundation/create-desktop-app": "https://github.com/k2safe/desktop-foundation/releases/download/v{{FOUNDATION_VERSION}}/desktop-foundation-create-desktop-app-{{FOUNDATION_VERSION}}.tgz"
     }
   }
 }

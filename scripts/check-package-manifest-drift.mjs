@@ -91,6 +91,12 @@ function compareVersions(left, right) {
   return a.prerelease > b.prerelease ? 1 : -1;
 }
 
+function isRawGithubTarballUrl(value) {
+  return /^https:\/\/raw\.githubusercontent\.com\/k2safe\/desktop-foundation\/main\/artifacts\/npm\/.+\.tgz$/.test(
+    String(value || "")
+  );
+}
+
 async function readManifest(location) {
   if (/^https?:\/\//.test(location)) {
     return readUrl(location);
@@ -105,6 +111,7 @@ async function main() {
   const stale = [];
   const rootPackage = readJson(join(repoRoot, "package.json"));
   const capabilityRegistry = readJson(join(repoRoot, "packages/create-desktop-app/foundation-capabilities.json"));
+  const rawTarballUrls = [];
 
   for (const item of packages) {
     const localPackage = readJson(join(repoRoot, item.dir, "package.json"));
@@ -120,6 +127,26 @@ async function main() {
     if (comparison < 0) {
       stale.push(`${item.name}: local ${localPackage.version} < manifest ${manifestPackage.version}`);
     }
+    if (isRawGithubTarballUrl(manifestPackage.url)) {
+      rawTarballUrls.push(`${item.name}: ${manifestPackage.url}`);
+    }
+  }
+
+  for (const section of ["dependencies", "devDependencies"]) {
+    for (const [name, url] of Object.entries(manifest.consumer?.[section] || {})) {
+      if (isRawGithubTarballUrl(url)) rawTarballUrls.push(`consumer.${section}.${name}: ${url}`);
+    }
+  }
+  for (const [name, url] of Object.entries(manifest.consumer?.pnpm?.overrides || {})) {
+    if (isRawGithubTarballUrl(url)) rawTarballUrls.push(`consumer.pnpm.overrides.${name}: ${url}`);
+  }
+  if (rawTarballUrls.length) {
+    stale.push(
+      [
+        "package manifest contains GitHub raw tarball URLs; use GitHub Release URLs or commit the tarballs to main",
+        ...rawTarballUrls.map((line) => `  ${line}`)
+      ].join("\n")
+    );
   }
 
   if (!manifest.capabilities?.file) {

@@ -11,7 +11,13 @@ The product app owns business data, API paths, routing, permission semantics, co
 
 ## 1. Install Foundation Packages
 
-Before a registry publish is available, install from the GitHub raw tarballs listed in:
+Before a registry publish is available, install from the immutable GitHub Release manifest:
+
+```text
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.36/foundation-packages.json
+```
+
+The latest manifest is also mirrored on `main` for convenience, but its package URLs still point to GitHub Release assets:
 
 ```text
 https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json

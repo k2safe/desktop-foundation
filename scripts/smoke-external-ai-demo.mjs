@@ -551,14 +551,14 @@ export function DashboardPage({ onUpload }: { onUpload: () => void }) {
 
       <ContentPanel
         title="External AI integration"
-        description="This demo consumes desktop-foundation only through GitHub tarballs and the public package manifest."
+        description="This demo consumes desktop-foundation only through GitHub Release tarballs and the public package manifest."
         actions={<Button onClick={onUpload}>Run upload mock</Button>}
       >
         <DataTable columns={columns} rows={rows} rowKey="id" />
       </ContentPanel>
 
       <ContentPanel title="AI handoff inputs" description="The external project should not copy foundation source code.">
-        <CodeBlock>{\`manifest: https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json
+        <CodeBlock>{\`manifest: https://github.com/k2safe/desktop-foundation/releases/download/v${foundationVersion}/foundation-packages.json
 docs: https://github.com/k2safe/desktop-foundation/blob/main/integration-kit/for-ai-short.md
 validation: pnpm exec desktop-foundation-ci --integration-check --integration-summary\`}</CodeBlock>
       </ContentPanel>

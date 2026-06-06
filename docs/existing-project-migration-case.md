@@ -34,7 +34,7 @@ Move product brand, menu labels, user menu items, API defaults, and update confi
 Copy `consumer.dependencies`, `consumer.devDependencies`, and `consumer.pnpm.overrides` from:
 
 ```text
-https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.36/foundation-packages.json
 ```
 
 Then run:

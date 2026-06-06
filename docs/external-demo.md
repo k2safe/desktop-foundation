@@ -28,7 +28,7 @@ After the foundation packages are released, the standalone demo should depend on
 }
 ```
 
-Before a registry publish is available, copy `consumer.dependencies`, `consumer.devDependencies`, and `consumer.pnpm.overrides` from `artifacts/npm/foundation-packages.json` instead of using semver ranges.
+Before a registry publish is available, copy `consumer.dependencies`, `consumer.devDependencies`, and `consumer.pnpm.overrides` from the GitHub Release `foundation-packages.json` instead of using semver ranges.
 
 If using GitHub Packages, the package scope must match the GitHub owner or organization. For the current package names, the cleanest GitHub Packages owner is `desktop-foundation`. If the repository lives under another owner, either publish to npm with the `@desktop-foundation` scope or rename the package scope to that owner.
 
@@ -57,7 +57,7 @@ The standalone version can add Vite, Tauri, and CI without bringing those depend
 
 ## Clean External Smoke
 
-Before handing the foundation to an outside AI, validate it in a fresh directory outside this monorepo. The demo must consume only the GitHub manifest tarballs and the Git Cargo dependency from `artifacts/npm/foundation-packages.json`.
+Before handing the foundation to an outside AI, validate it in a fresh directory outside this monorepo. The demo must consume only the GitHub Release manifest tarballs and the Git Cargo dependency from `foundation-packages.json`.
 
 Minimum smoke:
 
@@ -80,7 +80,7 @@ make smoke-external-release VERSION=0.1.36
 The smoke also reads `manifest.capabilities.url` and verifies the capability registry version and required capability ids. For the full handoff gate, see [External AI Acceptance](external-ai-acceptance.md).
 It writes a JSON report to `artifacts/external-ai-demo-smoke.json` by default.
 
-Before pushing a new version's tarballs to GitHub raw, use local artifact mode:
+Before uploading a new version's tarballs to GitHub Releases, use local artifact mode:
 
 ```bash
 pnpm smoke:external-ai-demo -- --local-artifacts

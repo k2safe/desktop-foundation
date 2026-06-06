@@ -39,7 +39,7 @@ Collect these before editing:
 Read the current package manifest:
 
 ```text
-https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json
+https://github.com/k2safe/desktop-foundation/releases/download/v0.1.36/foundation-packages.json
 ```
 
 Copy `consumer.dependencies`, `consumer.devDependencies`, and `consumer.pnpm.overrides` into the product `package.json`, then run:
@@ -238,7 +238,7 @@ You are integrating this product app with desktop-foundation.
 
 Do not edit desktop-foundation internals. Consume the published packages and use product-level adapters.
 
-Use https://raw.githubusercontent.com/k2safe/desktop-foundation/main/artifacts/npm/foundation-packages.json for package URLs.
+Use https://github.com/k2safe/desktop-foundation/releases/download/v0.1.36/foundation-packages.json for package URLs.
 
 Tasks:
 1. Add @desktop-foundation/bridge, ui-react, app-shell, theme-presets, and create-desktop-app from the manifest.

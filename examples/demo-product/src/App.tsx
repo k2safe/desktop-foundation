@@ -180,7 +180,7 @@ function ProductWorkspace({ client, logs, templateId, locale, onTemplateChange, 
             </div>
             <div>
               <span>Version</span>
-              <strong>v0.1.34</strong>
+              <strong>v0.1.36</strong>
             </div>
           </div>
         }

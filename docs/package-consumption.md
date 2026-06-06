@@ -18,9 +18,9 @@ https://github.com/k2safe/desktop-foundation/releases/download/v0.1.36/desktop-f
 
 This keeps product installs pinned to a specific foundation release even after `main` moves forward.
 
-## Development Path: GitHub Raw Tarballs
+## Latest Pointer On Main
 
-The foundation repo also publishes package tarballs into `artifacts/npm` on `main`. Product apps can install them directly from GitHub raw URLs when they intentionally want to track the latest committed manifest.
+The foundation repo also keeps a copy of the latest package manifest on `main`. This file is a convenience pointer only; package tarball URLs inside it point at immutable GitHub Release assets.
 
 Manifest:
 
@@ -54,11 +54,13 @@ pnpm build
 pnpm pack:packages
 ```
 
-`pnpm pack:packages` writes:
+`pnpm pack:packages` writes the latest Release-backed manifest and local tarball files:
 
 - `artifacts/npm/*.tgz`
 - `artifacts/npm/foundation-packages.json`
 - `artifacts/npm/foundation-capabilities.json`
+
+By default, package URLs use `https://github.com/k2safe/desktop-foundation/releases/download/v<version>/...`. Pass `--base-url` only when publishing to another stable artifact host.
 
 To create an immutable release manifest:
 
