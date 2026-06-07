@@ -74,7 +74,7 @@ pnpm smoke:external-ai-demo -- --keep
 To verify an immutable release manifest directly:
 
 ```bash
-make smoke-external-release VERSION=0.1.37
+make smoke-external-release VERSION=0.1.38
 ```
 
 The smoke also reads `manifest.capabilities.url` and verifies the capability registry version and required capability ids. For the full handoff gate, see [External AI Acceptance](external-ai-acceptance.md).
