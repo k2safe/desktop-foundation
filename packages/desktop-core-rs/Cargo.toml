@@ -11,14 +11,15 @@ name = "desktop_core_rs"
 path = "src/lib.rs"
 
 [features]
-default = []
-http-reqwest = ["dep:reqwest"]
+default = ["http-reqwest"]
+http-reqwest = ["dep:reqwest", "dep:rustls"]
 tauri = ["dep:tauri"]
 
 [dependencies]
 base64 = "0.22"
 dirs = "6"
-reqwest = { version = "0.13.4", optional = true, default-features = false, features = ["blocking", "json", "socks"] }
+reqwest = { version = "0.13.4", optional = true, default-features = false, features = ["blocking", "json", "socks", "rustls-no-provider"] }
+rustls = { version = "0.23", optional = true, default-features = false, features = ["ring"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"

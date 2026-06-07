@@ -37,7 +37,7 @@ Origins can be exact hosts, full origins, wildcard host suffixes such as `*.exam
 Rust commands can be protected with `SecurityPolicy`:
 
 ```rust
-let core = DesktopCore::persistent_platform_with_http_adapter("product", Arc::new(CurlHttpAdapter))?
+let core = DesktopCore::persistent_platform("product")?
     .with_security_policy(SecurityPolicy {
         allowed_http_hosts: vec!["api.example.com".into()],
         allowed_external_hosts: vec!["docs.example.com".into()],

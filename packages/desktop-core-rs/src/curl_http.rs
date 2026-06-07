@@ -1,12 +1,13 @@
 use std::collections::BTreeMap;
+use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::engine::general_purpose;
 use base64::Engine as _;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::adapters::HttpAdapter;
 use crate::error::{DesktopError, DesktopResult};
@@ -25,9 +26,10 @@ impl HttpAdapter for CurlHttpAdapter {
         proxy: Option<ProxyConfig>,
     ) -> DesktopResult<HttpResponse> {
         let request_id = request.request_id.clone();
-        let temp = CurlTempFiles::new();
+        let curl_path = resolve_curl_path()?;
+        let temp = CurlTempFiles::new()?;
         let url = append_query(&request.url, &request.query);
-        let mut command = Command::new("curl");
+        let mut command = Command::new(&curl_path);
         command.args(["-sS", "-L", "-X", method_name(&request.method)]);
         command.args(["-D", &temp.headers.to_string_lossy()]);
         command.args(["-o", &temp.body.to_string_lossy()]);
@@ -74,13 +76,7 @@ impl HttpAdapter for CurlHttpAdapter {
                     )
                     .with_details(Value::String(error.to_string()))
                 })?;
-            fs::write(&temp.request_body, bytes).map_err(|error| {
-                DesktopError::new(
-                    "HTTP_BODY_WRITE_FAILED",
-                    "Failed to write temporary HTTP body",
-                )
-                .with_details(Value::String(error.to_string()))
-            })?;
+            fs::write(&temp.request_body, bytes).map_err(|error| temp_file_error(error))?;
             if let Some(content_type) = request.body_content_type {
                 command.args(["-H", &format!("Content-Type: {content_type}")]);
             }
@@ -94,35 +90,25 @@ impl HttpAdapter for CurlHttpAdapter {
                 )
                 .with_details(Value::String(error.to_string()))
             })?;
-            fs::write(&temp.request_body, text).map_err(|error| {
-                DesktopError::new(
-                    "HTTP_BODY_WRITE_FAILED",
-                    "Failed to write temporary HTTP body",
-                )
-                .with_details(Value::String(error.to_string()))
-            })?;
+            fs::write(&temp.request_body, text).map_err(|error| temp_file_error(error))?;
             command.args(["-H", "Content-Type: application/json"]);
             command.arg("--data-binary");
             command.arg(format!("@{}", temp.request_body.to_string_lossy()));
         }
 
         command.arg(url);
-        let output = command.output().map_err(|error| {
-            if error.kind() == std::io::ErrorKind::NotFound {
-                DesktopError::new(
-                    "HTTP_CURL_UNAVAILABLE",
-                    "curl is not available for HTTPS transport",
-                )
-            } else {
-                DesktopError::new("HTTP_CURL_FAILED", "Failed to execute curl")
-                    .with_details(Value::String(error.to_string()))
-            }
-        })?;
+        let output = command
+            .output()
+            .map_err(|error| curl_execute_error(error, &curl_path))?;
         if !output.status.success() {
-            let mut error = DesktopError::new("HTTP_CURL_FAILED", "curl request failed")
-                .with_details(Value::String(
-                    String::from_utf8_lossy(&output.stderr).to_string(),
-                ));
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+            let mut error =
+                DesktopError::new(classify_curl_failure(&stderr), "curl request failed")
+                    .with_details(json!({
+                        "curlPath": curl_path,
+                        "status": output.status.code(),
+                        "stderr": stderr
+                    }));
             if let Some(request_id) = request_id {
                 error = error.with_request_id(request_id);
             }
@@ -130,11 +116,11 @@ impl HttpAdapter for CurlHttpAdapter {
         }
 
         let header_text = fs::read_to_string(&temp.headers).map_err(|error| {
-            DesktopError::new("HTTP_HEADER_READ_FAILED", "Failed to read HTTP headers")
+            DesktopError::new("HTTP_READ_FAILED", "Failed to read HTTP headers")
                 .with_details(Value::String(error.to_string()))
         })?;
         let body_bytes = fs::read(&temp.body).map_err(|error| {
-            DesktopError::new("HTTP_BODY_READ_FAILED", "Failed to read HTTP body")
+            DesktopError::new("HTTP_READ_FAILED", "Failed to read HTTP body")
                 .with_details(Value::String(error.to_string()))
         })?;
         let (status, headers) = parse_headers(&header_text)?;
@@ -195,6 +181,88 @@ fn apply_proxy_args(command: &mut Command, proxy: Option<&ProxyConfig>) -> Deskt
     }
 }
 
+fn resolve_curl_path() -> DesktopResult<PathBuf> {
+    let candidates = curl_path_candidates();
+    for path in &candidates {
+        if path.is_file() {
+            return Ok(path.clone());
+        }
+    }
+    Err(
+        DesktopError::new("HTTP_CURL_UNAVAILABLE", "curl executable was not found").with_details(
+            json!({
+                "searchedPaths": candidates
+            }),
+        ),
+    )
+}
+
+fn curl_path_candidates() -> Vec<PathBuf> {
+    let mut candidates = Vec::new();
+    #[cfg(target_family = "unix")]
+    {
+        candidates.push(PathBuf::from("/usr/bin/curl"));
+        candidates.push(PathBuf::from("/bin/curl"));
+    }
+    #[cfg(target_os = "windows")]
+    {
+        candidates.push(PathBuf::from(r"C:\Windows\System32\curl.exe"));
+    }
+
+    let binary_name = if cfg!(target_os = "windows") {
+        "curl.exe"
+    } else {
+        "curl"
+    };
+    if let Some(path) = env::var_os("PATH") {
+        candidates.extend(env::split_paths(&path).map(|dir| dir.join(binary_name)));
+    }
+    candidates.sort();
+    candidates.dedup();
+    candidates
+}
+
+fn curl_execute_error(error: std::io::Error, curl_path: &Path) -> DesktopError {
+    let code = match error.kind() {
+        std::io::ErrorKind::NotFound | std::io::ErrorKind::PermissionDenied => {
+            "HTTP_CURL_UNAVAILABLE"
+        }
+        _ => "HTTP_CURL_FAILED",
+    };
+    DesktopError::new(code, "Failed to execute curl").with_details(json!({
+        "curlPath": curl_path,
+        "error": error.to_string()
+    }))
+}
+
+fn classify_curl_failure(stderr: &str) -> &'static str {
+    let lower = stderr.to_lowercase();
+    if lower.contains("could not resolve host")
+        || lower.contains("failed to connect")
+        || lower.contains("connection refused")
+        || lower.contains("couldn't connect")
+    {
+        "HTTP_CONNECT_FAILED"
+    } else if lower.contains("operation timed out") || lower.contains("connection timed out") {
+        "HTTP_TIMEOUT"
+    } else if lower.contains("failed to open")
+        || lower.contains("could not open")
+        || lower.contains("client returned error on write")
+    {
+        "HTTP_TEMP_FILE_FAILED"
+    } else {
+        "HTTP_CURL_FAILED"
+    }
+}
+
+fn temp_file_error(error: std::io::Error) -> DesktopError {
+    DesktopError::new(
+        "HTTP_TEMP_FILE_FAILED",
+        "Failed to write temporary HTTP file",
+    )
+    .with_details(Value::String(error.to_string()))
+}
+
 struct CurlTempFiles {
     headers: PathBuf,
     body: PathBuf,
@@ -203,21 +271,31 @@ struct CurlTempFiles {
 }
 
 impl CurlTempFiles {
-    fn new() -> Self {
+    fn new() -> DesktopResult<Self> {
         let stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|value| value.as_nanos())
             .unwrap_or_default();
-        let base = std::env::temp_dir().join(format!(
+        let temp_dir = env::temp_dir();
+        if !temp_dir.is_dir() {
+            return Err(DesktopError::new(
+                "HTTP_TEMP_FILE_FAILED",
+                "Temporary directory is not available",
+            )
+            .with_details(json!({
+                "tempDir": temp_dir
+            })));
+        }
+        let base = temp_dir.join(format!(
             "desktop-foundation-curl-{}-{stamp}",
             std::process::id()
         ));
-        Self {
+        Ok(Self {
             headers: base.with_extension("headers"),
             body: base.with_extension("body"),
             request_body: base.with_extension("request"),
             base,
-        }
+        })
     }
 
     fn multipart_file(&self, index: usize) -> PathBuf {
@@ -377,13 +455,7 @@ fn multipart_args(
                 .with_details(Value::String(error.to_string()))
             })?;
         let file_path = temp.multipart_file(index);
-        fs::write(&file_path, bytes).map_err(|error| {
-            DesktopError::new(
-                "HTTP_MULTIPART_FILE_WRITE_FAILED",
-                "Failed to write temporary multipart file",
-            )
-            .with_details(Value::String(error.to_string()))
-        })?;
+        fs::write(&file_path, bytes).map_err(|error| temp_file_error(error))?;
         args.push("--form".to_string());
         let mut form = format!(
             "{name}=@{};filename={}",
@@ -434,7 +506,7 @@ mod tests {
 
     #[test]
     fn multipart_args_write_file_parts_for_curl_form_upload() {
-        let temp = CurlTempFiles::new();
+        let temp = CurlTempFiles::new().unwrap();
         let args = multipart_args(
             HttpMultipartForm {
                 fields: vec![HttpMultipartField {

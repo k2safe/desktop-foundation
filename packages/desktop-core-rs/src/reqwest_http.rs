@@ -19,8 +19,11 @@ pub struct ReqwestHttpAdapter {
     client: Client,
 }
 
+pub type NativeHttpAdapter = ReqwestHttpAdapter;
+
 impl ReqwestHttpAdapter {
     pub fn new() -> DesktopResult<Self> {
+        let _ = rustls::crypto::ring::default_provider().install_default();
         let client = Client::builder().build().map_err(to_desktop_error)?;
         Ok(Self { client })
     }
@@ -236,7 +239,22 @@ fn query_value_to_string(value: &Value) -> String {
 }
 
 fn to_desktop_error(error: reqwest::Error) -> DesktopError {
-    let mut desktop_error = DesktopError::new("HTTP_TRANSPORT_ERROR", error.to_string());
+    let code = if error.is_timeout() {
+        "HTTP_TIMEOUT"
+    } else if error.is_connect() {
+        "HTTP_CONNECT_FAILED"
+    } else if error.is_body() || error.is_decode() {
+        "HTTP_READ_FAILED"
+    } else if error.is_builder() {
+        "HTTP_CLIENT_BUILD_FAILED"
+    } else if error.is_redirect() {
+        "HTTP_REDIRECT_FAILED"
+    } else if error.is_request() {
+        "HTTP_REQUEST_FAILED"
+    } else {
+        "HTTP_TRANSPORT_ERROR"
+    };
+    let mut desktop_error = DesktopError::new(code, error.to_string());
     if let Some(status) = error.status() {
         desktop_error = desktop_error.with_status(status.as_u16());
     }

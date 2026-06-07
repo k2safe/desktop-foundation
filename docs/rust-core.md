@@ -6,22 +6,17 @@
 
 ```toml
 [dependencies]
-desktop-core-rs = { path = "../../../packages/desktop-core-rs", features = ["tauri"] }
+desktop-core-rs = { path = "../../../packages/desktop-core-rs", features = ["tauri", "http-reqwest"] }
 ```
 
 ## Tauri Setup
 
 ```rust
 use desktop_core_rs::tauri_commands::desktop_core_plugin;
-use desktop_core_rs::{CurlHttpAdapter, DesktopCore};
-use std::sync::Arc;
+use desktop_core_rs::DesktopCore;
 
 fn main() {
-    let core = DesktopCore::persistent_platform_with_http_adapter(
-        "product",
-        Arc::new(CurlHttpAdapter),
-    )
-    .expect("failed to initialize desktop core");
+    let core = DesktopCore::persistent_platform("product").expect("failed to initialize desktop core");
 
     tauri::Builder::default()
         .manage(core)
@@ -121,18 +116,18 @@ HTTP supports:
 - query values as strings, numbers, and booleans
 - JSON, text, and base64 response modes
 - base64 request bodies for binary upload style calls
-- multipart form upload through `FormData` in the bridge or `HttpRequest.multipart` in Rust
+- multipart form command shape through `FormData` in the bridge or `HttpRequest.multipart` in Rust; use explicit `CurlHttpAdapter` for multipart until native multipart support lands
 - Rust-owned HTTP cache through `HttpRequest.cache`: memory or persistent storage, TTL, refresh bypass, and stale response fallback after adapter errors
 - request id propagation
 
-The scaffold uses `CurlHttpAdapter` by default because it gives HTTPS/TLS support without forcing every generated product to pull a Rust TLS stack. It also supports multipart upload by handing fields/files to `curl --form`. Teams that want an embedded Rust HTTP client can enable `http-reqwest` and inject `ReqwestHttpAdapter` for JSON/raw-body calls; multipart should stay on the default Curl adapter unless the reqwest multipart feature and lockfile are added deliberately.
+The scaffold uses the native Rust HTTP adapter by default. `NativeHttpAdapter` is an alias for `ReqwestHttpAdapter` with embedded Rust TLS, token/session injection, query/body/json support, timeout, proxy, cache integration, and structured 2xx/non-2xx handling. `CurlHttpAdapter` remains available as an explicit legacy/multipart adapter, but generated desktop apps should not depend on an external `curl` process for normal API traffic.
 
 ## Security Policy
 
 `SecurityPolicy` can gate direct Rust/Tauri command access:
 
 ```rust
-let core = DesktopCore::persistent_platform_with_http_adapter("product", Arc::new(CurlHttpAdapter))?
+let core = DesktopCore::persistent_platform("product")?
     .with_security_policy(SecurityPolicy {
         allowed_http_hosts: vec!["api.example.com".into()],
         allowed_external_hosts: vec!["docs.example.com".into()],
@@ -168,7 +163,7 @@ The in-memory runtime is still available for tests and non-platform integration.
 - `FileAdapter`
 - `SecureStorageAdapter`
 
-The default runtime uses no-op/recording adapters for tests. Products can enable `http-reqwest`, inject `ReqwestHttpAdapter`, and use the platform constructor while preserving the same public command contract.
+The default runtime uses no-op/recording adapters for tests. Products can inject a custom `HttpAdapter` with `DesktopCore::persistent_platform_with_http_adapter` when they need a product-owned transport, while preserving the same public command contract.
 
 ## Formatting And Checks
 

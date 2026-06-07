@@ -342,7 +342,7 @@ function assertReleaseManifest(manifest, manifestPath) {
 function getCargoDependency(manifest) {
   return (
     manifest.consumer?.cargo?.dependency ||
-    'desktop-core-rs = { git = "ssh://git@github.com/k2safe/desktop-foundation.git", branch = "main", package = "desktop-core-rs", features = ["tauri"] }'
+    'desktop-core-rs = { git = "ssh://git@github.com/k2safe/desktop-foundation.git", branch = "main", package = "desktop-core-rs", features = ["tauri", "http-reqwest"] }'
   );
 }
 

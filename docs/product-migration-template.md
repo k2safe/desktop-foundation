@@ -179,7 +179,7 @@ export async function createProductClient() {
 Add the Rust foundation package:
 
 ```toml
-desktop-core-rs = { git = "ssh://git@github.com/k2safe/desktop-foundation.git", branch = "main", package = "desktop-core-rs", features = ["tauri"] }
+desktop-core-rs = { git = "ssh://git@github.com/k2safe/desktop-foundation.git", branch = "main", package = "desktop-core-rs", features = ["tauri", "http-reqwest"] }
 ```
 
 Add the generated Tauri permission:

@@ -41,7 +41,7 @@ The manifest also includes `capabilities.url`, which points to the machine-reada
 Use this Rust dependency in product `src-tauri/Cargo.toml`:
 
 ```toml
-desktop-core-rs = { git = "ssh://git@github.com/k2safe/desktop-foundation.git", branch = "main", package = "desktop-core-rs", features = ["tauri"] }
+desktop-core-rs = { git = "ssh://git@github.com/k2safe/desktop-foundation.git", branch = "main", package = "desktop-core-rs", features = ["tauri", "http-reqwest"] }
 ```
 
 ## Generate Package Artifacts

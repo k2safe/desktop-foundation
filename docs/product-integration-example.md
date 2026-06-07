@@ -172,7 +172,7 @@ export function RecordsPage() {
 
 ```toml
 [dependencies]
-desktop-core-rs = { version = "0.1", features = ["tauri"] }
+desktop-core-rs = { version = "0.1", features = ["tauri", "http-reqwest"] }
 ```
 
 `src-tauri/capabilities/default.json` 至少包含：

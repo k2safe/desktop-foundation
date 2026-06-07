@@ -70,7 +70,7 @@ Options:
 - `cache`
 - `onResponse`
 
-Desktop HTTP supports browser `FormData` for multipart upload. In a Tauri client, the bridge serializes `FormData` into the Rust command contract and the default `CurlHttpAdapter` generates the multipart boundary:
+Desktop HTTP uses the native Rust HTTP adapter for ordinary JSON/raw-body API calls in Tauri. Browser `FormData` is still serialized into the Rust command contract; products that require multipart before native multipart lands can explicitly inject `CurlHttpAdapter` as a temporary adapter:
 
 ```ts
 const form = new FormData();
@@ -388,16 +388,13 @@ HTTP, session, storage, secure storage, text file read/write, JSON export, file 
 Use the Tauri feature for commands:
 
 ```toml
-desktop-core-rs = { path = "../../../packages/desktop-core-rs", features = ["tauri"] }
+desktop-core-rs = { path = "../../../packages/desktop-core-rs", features = ["tauri", "http-reqwest"] }
 ```
 
 Use platform adapters in products:
 
 ```rust
-let core = DesktopCore::persistent_platform_with_http_adapter(
-    "product",
-    Arc::new(CurlHttpAdapter),
-);
+let core = DesktopCore::persistent_platform("product")?;
 ```
 
 Command groups:

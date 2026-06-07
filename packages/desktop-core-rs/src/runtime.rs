@@ -183,6 +183,25 @@ impl DesktopCore {
     }
 
     pub fn persistent_platform(app_id: &str) -> DesktopResult<Self> {
+        #[cfg(feature = "http-reqwest")]
+        {
+            return Self::persistent_platform_with_http_adapter(
+                app_id,
+                Arc::new(crate::NativeHttpAdapter::new()?),
+            );
+        }
+
+        #[cfg(not(feature = "http-reqwest"))]
+        {
+            let _ = app_id;
+            return Err(DesktopError::new(
+                "HTTP_NATIVE_ADAPTER_UNAVAILABLE",
+                "Enable the http-reqwest feature to use the default native HTTP adapter",
+            ));
+        }
+    }
+
+    pub fn persistent_platform_without_http(app_id: &str) -> DesktopResult<Self> {
         Self::with_persistence_and_platform_adapters(
             FilePersistence::default_path(app_id)?,
             app_id,
